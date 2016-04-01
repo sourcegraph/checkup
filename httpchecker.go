@@ -21,12 +21,13 @@ type HTTPChecker struct {
 	// a healthy endpoint. Default is http.StatusOK.
 	UpStatus int
 
-	// MaxRTT is the maximum round trip time to allow
-	// for a healthy endpoint. If non-zero and a request
-	// takes longer than MaxRTT, the endpoint will be
-	// considered unhealthy. Note that this duration
-	// includes any in-between network latency.
-	MaxRTT time.Duration
+	// ThresholdRTT is the maximum round trip time to
+	// allow for a healthy endpoint. If non-zero and a
+	// request takes longer than ThresholdRTT, the
+	// endpoint will be considered unhealthy. Note that
+	// this duration includes any in-between network
+	// latency.
+	ThresholdRTT time.Duration
 
 	// MustContain is a string that the response body
 	// must contain in order to be considered up.
@@ -110,7 +111,7 @@ func (c HTTPChecker) computeStats(result Result) Result {
 		}
 	}
 	result.Down = anyDown
-	result.MaxRTT = c.MaxRTT
+	result.ThresholdRTT = c.ThresholdRTT
 	return result
 }
 
@@ -123,8 +124,8 @@ func (c HTTPChecker) checkDown(resp *http.Response, rtt time.Duration) error {
 	}
 
 	// Check round trip time
-	if c.MaxRTT > 0 && rtt > c.MaxRTT {
-		return fmt.Errorf("round trip time exceeded threshold (%s)", c.MaxRTT)
+	if c.ThresholdRTT > 0 && rtt > c.ThresholdRTT {
+		return fmt.Errorf("round trip time exceeded threshold (%s)", c.ThresholdRTT)
 	}
 
 	// Check response body

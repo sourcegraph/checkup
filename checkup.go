@@ -147,8 +147,8 @@ type Result struct {
 	// Title is the title (or name) of the thing that was checked.
 	Title string `json:"title,omitempty"`
 
-	// Endpoint is the URL/address/identifier/whatever of what was
-	// checked.
+	// Endpoint is the URL/address/path/identifier/locator/whatever
+	// of what was checked.
 	Endpoint string `json:"endpoint,omitempty"`
 
 	// Timestamp is when the check occurred; UTC UnixNano format.
@@ -157,9 +157,9 @@ type Result struct {
 	// Times is a list of each individual check attempt.
 	Times Attempts `json:"times,omitempty"`
 
-	// MaxRTT is the maximum RTT that was be tolerated before
+	// ThresholdRTT is the maximum RTT that was tolerated before
 	// marking an endpoint as down. Leave 0 if irrelevant.
-	MaxRTT time.Duration `json:"max_rtt,omitempty"`
+	ThresholdRTT time.Duration `json:"threshold,omitempty"`
 
 	// Down is the conclusion about whether the endpoint is down.
 	Down bool `json:"down"`

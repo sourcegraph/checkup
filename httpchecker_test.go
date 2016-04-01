@@ -49,7 +49,7 @@ func TestHTTPChecker(t *testing.T) {
 	}
 
 	hc.UpStatus = 200
-	hc.MaxRTT = 1 * time.Nanosecond
+	hc.ThresholdRTT = 1 * time.Nanosecond
 	result, err = hc.Check()
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
@@ -58,7 +58,7 @@ func TestHTTPChecker(t *testing.T) {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
 	}
 
-	hc.MaxRTT = 0
+	hc.ThresholdRTT = 0
 	hc.MustContain = "up"
 	result, err = hc.Check()
 	if err != nil {
