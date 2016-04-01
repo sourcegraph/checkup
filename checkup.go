@@ -6,6 +6,7 @@ package checkup
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -14,9 +15,24 @@ import (
 // Checkup performs a routine checkup on endpoints or
 // services.
 type Checkup struct {
-	Storage          Storage
-	Checkers         []Checker
+	// Checkers is the list of Checkers to use with
+	// which to perform checks.
+	Checkers []Checker
+
+	// Storage is the storage mechanism for saving the
+	// results of checks. Required if calling Store().
+	Storage Storage
+
+	// ConcurrentChecks is how many checks, at most, to
+	// perform concurrently. Default is
+	// DefaultConcurrentChecks.
 	ConcurrentChecks int
+
+	// Timestamp is the timestamp to force for all checks.
+	// Useful if wanting to perform distributed check
+	// "at the same time" even if they might actually
+	// be a few milliseconds or seconds apart.
+	Timestamp time.Time
 }
 
 // Check performs the health checks. An error is only
@@ -46,6 +62,12 @@ func (c Checkup) Check() ([]Result, error) {
 		}(i, checker)
 	}
 	wg.Wait()
+
+	if !c.Timestamp.IsZero() {
+		for i := range results {
+			results[i].Timestamp = c.Timestamp.UTC().UnixNano()
+		}
+	}
 
 	if !errs.Empty() {
 		return results, errs
@@ -130,20 +152,43 @@ type Result struct {
 	Endpoint string `json:"endpoint,omitempty"`
 
 	// Timestamp is when the check occurred; UTC UnixNano format.
-	Timestamp int64 `json:"timestamp"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 
-	// Times is a summary of performance metrics, namely round
-	// trip times, as well as each individual RTT.
-	Times struct {
-		Average time.Duration `json:"average"`
-		Median  time.Duration `json:"median"`
-		Min     time.Duration `json:"min"`
-		Max     time.Duration `json:"max"`
-		All     Attempts      `json:"all,omitempty"`
-	} `json:"times"`
+	// Times is a list of each individual check attempt.
+	Times Attempts `json:"times,omitempty"`
+
+	// MaxRTT is the maximum RTT that was be tolerated before
+	// marking an endpoint as down. Leave 0 if irrelevant.
+	MaxRTT time.Duration `json:"max_rtt,omitempty"`
 
 	// Down is the conclusion about whether the endpoint is down.
 	Down bool `json:"down"`
+}
+
+// ComputeStats computes basic statistics about r.
+func (r Result) ComputeStats() Stats {
+	var s Stats
+	var sum, min, max time.Duration
+	for _, a := range r.Times {
+		sum += a.RTT
+		if a.RTT < min || min == 0 {
+			min = a.RTT
+		}
+		if a.RTT > max || max == 0 {
+			max = a.RTT
+		}
+	}
+	sorted := make(Attempts, len(r.Times))
+	copy(sorted, r.Times)
+	sort.Sort(sorted)
+
+	s.Total = sum
+	s.Average = time.Duration(int64(sum) / int64(len(r.Times)))
+	s.Median = sorted[len(sorted)/2].RTT
+	s.Min = min
+	s.Max = max
+
+	return s
 }
 
 // Attempt is an attempt to communicate with the endpoint.
@@ -158,6 +203,16 @@ type Attempts []Attempt
 func (a Attempts) Len() int           { return len(a) }
 func (a Attempts) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a Attempts) Less(i, j int) bool { return a[i].RTT < a[j].RTT }
+
+// Stats is a type that holds information about a Result,
+// especially its various Attempts.
+type Stats struct {
+	Total   time.Duration `json:"total,omitempty"`
+	Average time.Duration `json:"avg,omitempty"`
+	Median  time.Duration `json:"median,omitempty"`
+	Min     time.Duration `json:"min,omitempty"`
+	Max     time.Duration `json:"max,omitempty"`
+}
 
 // Errors is an error type that concatenates multiple errors.
 type Errors []error

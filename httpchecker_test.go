@@ -29,7 +29,7 @@ func TestHTTPChecker(t *testing.T) {
 	if got, want := result.Down, false; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
 	}
-	if got, want := len(result.Times.All), hc.Attempts; got != want {
+	if got, want := len(result.Times), hc.Attempts; got != want {
 		t.Errorf("Expected %d attempts, got %d", want, got)
 	}
 	ts := time.Unix(0, result.Timestamp)
@@ -102,7 +102,7 @@ func TestHTTPChecker(t *testing.T) {
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
-	if got, want := len(result.Times.All), hc.Attempts; got != want {
+	if got, want := len(result.Times), hc.Attempts; got != want {
 		t.Errorf("Expected %d attempts, got %d", want, got)
 	}
 	if got, want := result.Down, true; got != want {

@@ -27,12 +27,13 @@ func main() {
 	}
 
 	for _, result := range results {
+		stats := result.ComputeStats()
 		fmt.Printf("== %s (%s)\n", result.Title, result.Endpoint)
-		fmt.Printf("     Max: %s\n", result.Times.Max)
-		fmt.Printf("     Min: %s\n", result.Times.Min)
-		fmt.Printf("  Median: %s\n", result.Times.Median)
-		fmt.Printf(" Average: %s\n", result.Times.Average)
-		fmt.Printf("     All: %v\n", result.Times.All)
+		fmt.Printf("     Max: %s\n", stats.Max)
+		fmt.Printf("     Min: %s\n", stats.Min)
+		fmt.Printf("  Median: %s\n", stats.Median)
+		fmt.Printf(" Average: %s\n", stats.Average)
+		fmt.Printf("     All: %v\n", result.Times)
 		fmt.Printf("    Down: %v\n\n", result.Down)
 	}
 }

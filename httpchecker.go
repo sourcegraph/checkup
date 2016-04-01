@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-	"sort"
 	"strings"
 	"time"
 )
@@ -75,7 +74,7 @@ func (c HTTPChecker) Check() (Result, error) {
 		return result, err
 	}
 
-	result.Times.All = c.doChecks(req)
+	result.Times = c.doChecks(req)
 
 	return c.computeStats(result), nil
 }
@@ -103,31 +102,15 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 // computeStats takes the data in result from the attempts
 // and computes remaining values needed to fill out the result.
 func (c HTTPChecker) computeStats(result Result) Result {
-	var sum, med, min, max time.Duration
 	var anyDown bool
-	for _, a := range result.Times.All {
-		sum += a.RTT
-		if a.RTT < min || min == 0 {
-			min = a.RTT
-		}
-		if a.RTT > max || max == 0 {
-			max = a.RTT
-		}
+	for _, a := range result.Times {
 		if a.Error != "" {
 			anyDown = true
+			break
 		}
 	}
-	sorted := make(Attempts, len(result.Times.All))
-	copy(sorted, result.Times.All)
-	sort.Sort(sorted)
-	med = sorted[len(sorted)/2].RTT
-
-	result.Times.Average = time.Duration(int64(sum) / int64(len(result.Times.All)))
-	result.Times.Max = max
-	result.Times.Min = min
-	result.Times.Median = med
 	result.Down = anyDown
-
+	result.MaxRTT = c.MaxRTT
 	return result
 }
 
