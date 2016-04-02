@@ -71,7 +71,7 @@ func TestComputeStats(t *testing.T) {
 	if got, want := s.Average, 5*time.Second; got != want {
 		t.Errorf("Expected Average=%v, got %v", want, got)
 	}
-	if got, want := s.Median, 6*time.Second; got != want {
+	if got, want := s.Median, 5*time.Second; got != want {
 		t.Errorf("Expected Median=%v, got %v", want, got)
 	}
 	if got, want := s.Min, 3*time.Second; got != want {

@@ -168,25 +168,28 @@ type Result struct {
 // ComputeStats computes basic statistics about r.
 func (r Result) ComputeStats() Stats {
 	var s Stats
-	var sum, min, max time.Duration
+
 	for _, a := range r.Times {
-		sum += a.RTT
-		if a.RTT < min || min == 0 {
-			min = a.RTT
+		s.Total += a.RTT
+		if a.RTT < s.Min || s.Min == 0 {
+			s.Min = a.RTT
 		}
-		if a.RTT > max || max == 0 {
-			max = a.RTT
+		if a.RTT > s.Max || s.Max == 0 {
+			s.Max = a.RTT
 		}
 	}
 	sorted := make(Attempts, len(r.Times))
 	copy(sorted, r.Times)
 	sort.Sort(sorted)
 
-	s.Total = sum
-	s.Average = time.Duration(int64(sum) / int64(len(r.Times)))
-	s.Median = sorted[len(sorted)/2].RTT
-	s.Min = min
-	s.Max = max
+	half := len(sorted) / 2
+	if len(sorted)%2 == 0 {
+		s.Median = (sorted[half-1].RTT + sorted[half].RTT) / 2
+	} else {
+		s.Median = sorted[half].RTT
+	}
+
+	s.Average = time.Duration(int64(s.Total) / int64(len(r.Times)))
 
 	return s
 }
