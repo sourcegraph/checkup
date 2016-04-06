@@ -29,6 +29,12 @@ func TestHTTPChecker(t *testing.T) {
 	if got, want := result.Down, false; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
 	}
+	if got, want := result.Degraded, false; got != want {
+		t.Errorf("Expected result.Degraded=%v, got %v", want, got)
+	}
+	if got, want := result.Healthy, true; got != want {
+		t.Errorf("Expected result.Healthy=%v, got %v", want, got)
+	}
 	if got, want := len(result.Times), hc.Attempts; got != want {
 		t.Errorf("Expected %d attempts, got %d", want, got)
 	}
@@ -54,7 +60,7 @@ func TestHTTPChecker(t *testing.T) {
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
-	if got, want := result.Down, true; got != want {
+	if got, want := result.Degraded, true; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
 	}
 

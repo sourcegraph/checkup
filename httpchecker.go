@@ -91,7 +91,7 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 			checks[i].Error = err.Error()
 			continue
 		}
-		err = c.checkDown(resp, checks[i].RTT)
+		err = c.checkDown(resp)
 		if err != nil {
 			checks[i].Error = err.Error()
 		}
@@ -102,30 +102,43 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 
 // computeStats takes the data in result from the attempts
 // and computes remaining values needed to fill out the result.
+// It detects degraded (high-latency) responses.
 func (c HTTPChecker) computeStats(result Result) Result {
-	var anyDown bool
-	for _, a := range result.Times {
-		if a.Error != "" {
+	result.ThresholdRTT = c.ThresholdRTT
+
+	var anyDown, anyDegraded bool
+	for i := range result.Times {
+		// Check error (down)
+		if result.Times[i].Error != "" {
 			anyDown = true
-			break
+			continue
+		}
+
+		// Check round trip time (degraded)
+		if c.ThresholdRTT > 0 && result.Times[i].RTT > c.ThresholdRTT {
+			result.Times[i].Error = fmt.Sprintf("round trip time exceeded threshold (%s)", c.ThresholdRTT)
+			anyDegraded = true
 		}
 	}
-	result.Down = anyDown
-	result.ThresholdRTT = c.ThresholdRTT
+
+	if anyDown {
+		result.Down = true
+	} else if anyDegraded {
+		result.Degraded = true
+	} else {
+		result.Healthy = true
+	}
+
 	return result
 }
 
-// checkDown checks whether the endpoint is down according to resp and rtt
-// and the configuration of c. It returns a non-nil error if down.
-func (c HTTPChecker) checkDown(resp *http.Response, rtt time.Duration) error {
+// checkDown checks whether the endpoint is down based on resp and
+// the configuration of c. It returns a non-nil error if down.
+// Note that it does not check for degraded response.
+func (c HTTPChecker) checkDown(resp *http.Response) error {
 	// Check status code
 	if resp.StatusCode != c.UpStatus {
 		return fmt.Errorf("response status %s", resp.Status)
-	}
-
-	// Check round trip time
-	if c.ThresholdRTT > 0 && rtt > c.ThresholdRTT {
-		return fmt.Errorf("round trip time exceeded threshold (%s)", c.ThresholdRTT)
 	}
 
 	// Check response body

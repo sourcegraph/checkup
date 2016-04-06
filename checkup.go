@@ -94,13 +94,14 @@ func (c Checkup) CheckAndStore() error {
 // CheckAndStoreEvery calls CheckAndStore every interval. It returns
 // the ticker that it's using so you can stop it when you don't want
 // it to run anymore. This function does NOT block (it runs the ticker
-// in a goroutine). Any errors are written to the standard logger.
+// in a goroutine). Any errors are written to the standard logger. It
+// would not be wise to set an interval lower than the time it takes
+// to perform the checks.
 func (c Checkup) CheckAndStoreEvery(interval time.Duration) *time.Ticker {
 	ticker := time.NewTicker(interval)
 	go func() {
 		for range ticker.C {
-			err := c.CheckAndStore()
-			if err != nil {
+			if err := c.CheckAndStore(); err != nil {
 				log.Println(err)
 			}
 		}
@@ -158,11 +159,18 @@ type Result struct {
 	Times Attempts `json:"times,omitempty"`
 
 	// ThresholdRTT is the maximum RTT that was tolerated before
-	// marking an endpoint as down. Leave 0 if irrelevant.
+	// considering performance to be degraded. Leave 0 if irrelevant.
 	ThresholdRTT time.Duration `json:"threshold,omitempty"`
 
-	// Down is the conclusion about whether the endpoint is down.
-	Down bool `json:"down"`
+	// Healthy, Degraded, and Down contain the ultimate conclusion
+	// about the endpoint. Exactly one of these should be true;
+	// any more or less is a bug.
+	Healthy  bool `json:"healthy,omitempty"`
+	Degraded bool `json:"degraded,omitempty"`
+	Down     bool `json:"down,omitempty"`
+
+	// Message is an optional message to show on the status page.
+	Message string `json:"message,omitempty"`
 }
 
 // ComputeStats computes basic statistics about r.
@@ -193,6 +201,54 @@ func (r Result) ComputeStats() Stats {
 
 	return s
 }
+
+// Status returns a text representation of the overall status
+// indicated in r.
+func (r Result) Status() StatusText {
+	if r.Down {
+		return Down
+	} else if r.Degraded {
+		return Degraded
+	} else if r.Healthy {
+		return Healthy
+	}
+	return Unknown
+}
+
+// StatusText is the textual representation of the
+// result of a status check.
+type StatusText string
+
+// PriorityOver returns whether s has priority over other.
+// For example, a Down status has priority over Degraded.
+func (s StatusText) PriorityOver(other StatusText) bool {
+	if s == other {
+		return false
+	}
+	switch s {
+	case Down:
+		return true
+	case Degraded:
+		if other == Down {
+			return false
+		}
+		return true
+	case Healthy:
+		if other == Unknown {
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+// Text representations for the status of a check.
+const (
+	Healthy  StatusText = "healthy"
+	Degraded StatusText = "degraded"
+	Down     StatusText = "down"
+	Unknown  StatusText = "unknown"
+)
 
 // Attempt is an attempt to communicate with the endpoint.
 type Attempt struct {

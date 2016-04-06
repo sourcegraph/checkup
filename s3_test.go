@@ -17,7 +17,7 @@ func TestS3Store(t *testing.T) {
 	keyID, accessKey, region, bucket := "fakeKeyID", "fakeKey", "fakeRegion", "fakeBucket"
 	fakes3 := new(s3Mock)
 	results := []Result{{Title: "Testing"}}
-	resultsBytes := []byte(`[{"title":"Testing","down":false}]`)
+	resultsBytes := []byte(`[{"title":"Testing"}]`)
 	newS3 = func(p client.ConfigProvider, cfgs ...*aws.Config) objectPutter {
 		if len(cfgs) != 1 {
 			t.Fatalf("Expected 1 aws.Config, got %d", len(cfgs))
