@@ -19,10 +19,6 @@ type Checkup struct {
 	// which to perform checks.
 	Checkers []Checker
 
-	// Storage is the storage mechanism for saving the
-	// results of checks. Required if calling Store().
-	Storage Storage
-
 	// ConcurrentChecks is how many checks, at most, to
 	// perform concurrently. Default is
 	// DefaultConcurrentChecks.
@@ -33,6 +29,18 @@ type Checkup struct {
 	// "at the same time" even if they might actually
 	// be a few milliseconds or seconds apart.
 	Timestamp time.Time
+
+	// Storage is the storage mechanism for saving the
+	// results of checks. Required if calling Store().
+	// If Storage is also a Maintainer, its Maintain()
+	// method will also be called in c.CheckAndStore().
+	Storage Storage
+
+	// Notifier is a notifier that will be passed the
+	// results after checks from all checkers have
+	// completed. Notifier may evaluate and choose to
+	// send a notification of potential problems.
+	Notifier Notifier
 }
 
 // Check performs the health checks. An error is only
@@ -73,13 +81,21 @@ func (c Checkup) Check() ([]Result, error) {
 		return results, errs
 	}
 
+	if c.Notifier != nil {
+		err := c.Notifier.Notify(results)
+		if err != nil {
+			return results, err
+		}
+	}
+
 	return results, nil
 }
 
 // CheckAndStore performs health checks and immediately
 // stores the results to the configured storage if there
 // were no errors. Checks are not performed if c.Storage
-// is nil.
+// is nil. If c.Storage is also a Maintainer, Maintain()
+// will be called if Store() is successful.
 func (c Checkup) CheckAndStore() error {
 	if c.Storage == nil {
 		return fmt.Errorf("no storage mechanism defined")
@@ -88,7 +104,17 @@ func (c Checkup) CheckAndStore() error {
 	if err != nil {
 		return err
 	}
-	return c.Storage.Store(results)
+
+	err = c.Storage.Store(results)
+	if err != nil {
+		return err
+	}
+
+	if m, ok := c.Storage.(Maintainer); ok {
+		return m.Maintain()
+	}
+
+	return nil
 }
 
 // CheckAndStoreEvery calls CheckAndStore every interval. It returns
@@ -117,6 +143,21 @@ type Checker interface {
 // Storage can store results.
 type Storage interface {
 	Store([]Result) error
+}
+
+// Maintainer can maintain a store of results by
+// deleting old check files that are no longer
+// needed or performing other required tasks.
+type Maintainer interface {
+	Maintain() error
+}
+
+// Notifier can notify ops or sysadmins of
+// potential problems. A Notifier should keep
+// state to avoid sending repeated notices
+// more often than the admin would like.
+type Notifier interface {
+	Notify([]Result) error
 }
 
 // DefaultConcurrentChecks is how many checks,
@@ -169,6 +210,11 @@ type Result struct {
 	Degraded bool `json:"degraded,omitempty"`
 	Down     bool `json:"down,omitempty"`
 
+	// Notice contains a description of some condition of this
+	// check that might have affected the result in some way.
+	// For example, that the median RTT is above the threshold.
+	Notice string `json:"notice,omitempty"`
+
 	// Message is an optional message to show on the status page.
 	Message string `json:"message,omitempty"`
 }
@@ -197,7 +243,7 @@ func (r Result) ComputeStats() Stats {
 		s.Median = sorted[half].RTT
 	}
 
-	s.Average = time.Duration(int64(s.Total) / int64(len(r.Times)))
+	s.Mean = time.Duration(int64(s.Total) / int64(len(r.Times)))
 
 	return s
 }
@@ -266,11 +312,11 @@ func (a Attempts) Less(i, j int) bool { return a[i].RTT < a[j].RTT }
 // Stats is a type that holds information about a Result,
 // especially its various Attempts.
 type Stats struct {
-	Total   time.Duration `json:"total,omitempty"`
-	Average time.Duration `json:"avg,omitempty"`
-	Median  time.Duration `json:"median,omitempty"`
-	Min     time.Duration `json:"min,omitempty"`
-	Max     time.Duration `json:"max,omitempty"`
+	Total  time.Duration `json:"total,omitempty"`
+	Mean   time.Duration `json:"mean,omitempty"`
+	Median time.Duration `json:"median,omitempty"`
+	Min    time.Duration `json:"min,omitempty"`
+	Max    time.Duration `json:"max,omitempty"`
 }
 
 // Errors is an error type that concatenates multiple errors.

@@ -13,6 +13,7 @@ func TestCheckAndStore(t *testing.T) {
 		Checkers:         []Checker{f, f},
 		ConcurrentChecks: 1,
 		Timestamp:        time.Now(),
+		Notifier:         f,
 	}
 
 	err := c.CheckAndStore()
@@ -29,6 +30,12 @@ func TestCheckAndStore(t *testing.T) {
 		if i > 0 && f.stored[i].Timestamp != f.stored[i-1].Timestamp {
 			t.Error("Expected timestamps to be the same, but they weren't")
 		}
+	}
+	if got, want := f.notified, 1; got != want {
+		t.Errorf("Expected Notify() to be called %d time, called %d times", want, got)
+	}
+	if got, want := f.maintained, 1; got != want {
+		t.Errorf("Expected Maintain() to be called %d time, called %d times", want, got)
 	}
 
 	// Check error handling
@@ -80,8 +87,8 @@ func TestComputeStats(t *testing.T) {
 	if got, want := s.Total, 30*time.Second; got != want {
 		t.Errorf("Expected Total=%v, got %v", want, got)
 	}
-	if got, want := s.Average, 5*time.Second; got != want {
-		t.Errorf("Expected Average=%v, got %v", want, got)
+	if got, want := s.Mean, 5*time.Second; got != want {
+		t.Errorf("Expected Mean=%v, got %v", want, got)
 	}
 	if got, want := s.Median, 5*time.Second; got != want {
 		t.Errorf("Expected Median=%v, got %v", want, got)
@@ -165,9 +172,11 @@ func TestPriorityOver(t *testing.T) {
 var errTest = errors.New("i'm an error")
 
 type fake struct {
-	returnErr bool
-	checked   int
-	stored    []Result
+	returnErr  bool
+	checked    int
+	stored     []Result
+	maintained int
+	notified   int
 }
 
 func (f *fake) Check() (Result, error) {
@@ -184,5 +193,15 @@ func (f *fake) Store(results []Result) error {
 	if f.returnErr {
 		return errTest
 	}
+	return nil
+}
+
+func (f *fake) Maintain() error {
+	f.maintained++
+	return nil
+}
+
+func (f *fake) Notify(results []Result) error {
+	f.notified++
 	return nil
 }

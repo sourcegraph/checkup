@@ -77,7 +77,7 @@ func (c HTTPChecker) Check() (Result, error) {
 
 	result.Times = c.doChecks(req)
 
-	return c.computeStats(result), nil
+	return c.conclude(result), nil
 }
 
 // doChecks executes req using c.Client and returns each attempt.
@@ -100,35 +100,32 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 	return checks
 }
 
-// computeStats takes the data in result from the attempts
-// and computes remaining values needed to fill out the result.
-// It detects degraded (high-latency) responses.
-func (c HTTPChecker) computeStats(result Result) Result {
+// conclude takes the data in result from the attempts and
+// computes remaining values needed to fill out the result.
+// It detects degraded (high-latency) responses and makes
+// the conclusion about the result's status.
+func (c HTTPChecker) conclude(result Result) Result {
 	result.ThresholdRTT = c.ThresholdRTT
 
-	var anyDown, anyDegraded bool
+	// Check errors (down)
 	for i := range result.Times {
-		// Check error (down)
 		if result.Times[i].Error != "" {
-			anyDown = true
-			continue
-		}
-
-		// Check round trip time (degraded)
-		if c.ThresholdRTT > 0 && result.Times[i].RTT > c.ThresholdRTT {
-			result.Times[i].Error = fmt.Sprintf("round trip time exceeded threshold (%s)", c.ThresholdRTT)
-			anyDegraded = true
+			result.Down = true
+			return result
 		}
 	}
 
-	if anyDown {
-		result.Down = true
-	} else if anyDegraded {
-		result.Degraded = true
-	} else {
-		result.Healthy = true
+	// Check round trip time (degraded)
+	if c.ThresholdRTT > 0 {
+		stats := result.ComputeStats()
+		if stats.Median > c.ThresholdRTT {
+			result.Notice = fmt.Sprintf("median round trip time exceeded threshold (%s)", c.ThresholdRTT)
+			result.Degraded = true
+			return result
+		}
 	}
 
+	result.Healthy = true
 	return result
 }
 

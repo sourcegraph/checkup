@@ -32,7 +32,7 @@ func main() {
 		fmt.Printf("        Max: %s\n", stats.Max)
 		fmt.Printf("        Min: %s\n", stats.Min)
 		fmt.Printf("     Median: %s\n", stats.Median)
-		fmt.Printf("    Average: %s\n", stats.Average)
+		fmt.Printf("       Mean: %s\n", stats.Mean)
 		fmt.Printf("        All: %v\n", result.Times)
 		fmt.Printf(" Assessment: %v\n\n", result.Status())
 	}
