@@ -18,7 +18,7 @@ func TestS3Store(t *testing.T) {
 	fakes3 := new(s3Mock)
 	results := []Result{{Title: "Testing"}}
 	resultsBytes := []byte(`[{"title":"Testing"}]`)
-	newS3 = func(p client.ConfigProvider, cfgs ...*aws.Config) objectPutter {
+	newS3 = func(p client.ConfigProvider, cfgs ...*aws.Config) s3svc {
 		if len(cfgs) != 1 {
 			t.Fatalf("Expected 1 aws.Config, got %d", len(cfgs))
 		}
@@ -80,12 +80,55 @@ func TestS3Store(t *testing.T) {
 	}
 }
 
+func TestS3Maintain(t *testing.T) {
+	fakes3 := new(s3Mock)
+	newS3 = func(p client.ConfigProvider, cfgs ...*aws.Config) s3svc {
+		return fakes3
+	}
+
+	var specimen S3
+	err := specimen.Maintain()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if fakes3.deleted {
+		t.Fatal("No deletions should happen unless CheckExpiry is set")
+	}
+
+	specimen.CheckExpiry = 24 * 30 * time.Hour
+	err = specimen.Maintain()
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if !fakes3.deleted {
+		t.Fatal("Expected deletions, but there weren't any")
+	}
+}
+
 // s3Mock mocks s3.S3.
 type s3Mock struct {
-	input *s3.PutObjectInput
+	input   *s3.PutObjectInput
+	deleted bool
 }
 
 func (s *s3Mock) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
 	s.input = input
+	return nil, nil
+}
+
+func (s *s3Mock) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
+	return &s3.ListObjectsOutput{
+		Contents: []*s3.Object{
+			&s3.Object{
+				Key:          aws.String("foobar"),
+				LastModified: new(time.Time),
+			},
+		},
+		IsTruncated: aws.Bool(input.Marker == nil),
+	}, nil
+}
+
+func (s *s3Mock) DeleteObjects(input *s3.DeleteObjectsInput) (*s3.DeleteObjectsOutput, error) {
+	s.deleted = true
 	return nil, nil
 }

@@ -18,6 +18,7 @@ func main() {
 			SecretAccessKey: "...",
 			Region:          "us-east-1",
 			Bucket:          "srcgraph-monitor-test",
+			CheckExpiry:     24 * time.Hour * 7,
 		},
 	}
 
