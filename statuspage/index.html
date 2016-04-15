@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Status Page</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/d3.v3.min.js" charset="utf-8"></script>
+		<script src="js/s3.js"></script>
+		<script src="js/checkup.js"></script>
+		<script src="js/statuspage.js"></script>
+		<link rel="icon" href="images/favicon.png" id="favicon">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,700">
+		<link rel="stylesheet" href="css/unsemantic-custom.css">
+		<link rel="stylesheet" href="css/style.css">
+	</head>
+	<body>
+		<header id="overall-status" class="gray">
+			<div id="overall-status-text">
+				Loading
+			</div>
+			<div class="infobar">
+				<div class="item">
+					<b><span id="info-checkcount">&mdash;</span> checks</b> in the last <b><span id="info-timeframe">&mdash;</span></b>
+				</div>
+				<div class="item">
+					<b>Last check:</b> <span id="info-lastcheck">&mdash;</span>
+				</div>
+			</div>
+		</header>
+
+		<div class="grid-container">
+			<div class="grid-75 grid-parent" id="chart-grid">
+				<!-- Populated by JavaScript -->
+			</div>
+			<div class="grid-25" id="timeline">
+				<div class="event green">
+					<span class="time">Since 12:42</span> Healthy
+				</div>
+				<div class="message">
+					<div class="message-head">4 minutes ago</div>
+					<div class="message-body">
+						This is a status message. This is a status message. This is a status message. This is a status message. This is a status message. 
+					</div>
+				</div>
+				<div class="event red">
+					<span class="time">12:30&mdash;12:42</span> Down
+				</div>
+
+				<div id="big-gap">
+					Why does this graph look weird? There is a big gap of time in this window where no checkups were performed.
+				</div>
+
+				<div id="bg-line"></div>
+			</div>
+		</div>
+
+		<footer>
+			Powered by <img src="images/checkup.png" id="checkup-logo">
+		</footer>
+	</body>
+</html>

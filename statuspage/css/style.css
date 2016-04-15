@@ -1,0 +1,282 @@
+* {
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	font-family: 'Source Sans Pro', sans-serif;
+	font-size: 16px;
+}
+
+header {
+	margin-bottom: 20px;
+	box-shadow: 0 2px 100px rgba(0, 0, 0, .15);
+	transition: background-color 2s ease;
+	border-bottom: 1px solid #FFF;
+}
+
+#overall-status-text {
+	padding: 50px 10px 10px 10px;
+	color: #FFF;
+}
+
+#overall-status.green  { background-color: #40D24C; }
+#overall-status.yellow { background-color: #D2C640; }
+#overall-status.red    { background-color: #D24040; }
+#overall-status.gray   { background-color: #B8B8B8; }
+
+#overall-status-text {
+	font: bold 42px 'Source Sans Pro', sans-serif;
+	text-transform: uppercase;
+	text-align: center;
+	line-height: 1em;
+}
+
+.infobar {
+	font-size: 12px;
+	font-family: sans-serif;
+	padding: 10px;
+	background: rgba(255, 255, 255, .8);
+}
+
+.infobar .item {
+	display: inline-block;
+	margin-right: 2em;
+}
+
+#timeline {
+	position: relative;
+	z-index: 1;
+}
+
+#timeline > div {
+	position: relative;
+	z-index: 2;
+	margin: 2em 0;
+}
+
+#timeline > div:first-child {
+	margin-top: 0;
+}
+
+#timeline .message {
+	font-size: 14px;
+	border: 1px solid #FFAC3B;
+	background: #FFF;
+	margin-left: 3em;
+}
+
+#timeline .message-head,
+#timeline .message-body {
+	padding: 8px;
+}
+
+#timeline .message-head {
+	background: #FFAC3B;
+	color: #FFF;
+	padding-top: 4px;
+	padding-bottom: 4px;
+	font-size: 12px;
+}
+
+#timeline .event {
+	line-height: 2em;
+	background-position: .6em;
+	background-repeat: no-repeat;
+	background-size: auto 2em;
+	padding-left: 3.5em;
+}
+
+#timeline .event.green  { background-image: url('../images/status-green.png'); }
+#timeline .event.yellow { background-image: url('../images/status-yellow.png'); }
+#timeline .event.red    { background-image: url('../images/status-red.png'); }
+#timeline .event.gray   { background-image: url('../images/status-gray.png'); }
+
+#timeline #bg-line {
+	position: absolute;
+	height: 100%;
+	border-left: 3px solid #EEE;
+	left: 35px;
+	top: 0;
+	margin: 0;
+	z-index: 0;
+}
+
+#timeline .event .time {
+	margin-right: .25em;
+	font-weight: bold;
+}
+
+
+
+/* TODO */
+#big-gap {
+	display: none;
+	color: #CC0000;
+}
+
+
+
+
+.chart {
+	padding-bottom: 20px;
+}
+
+svg {
+  font: 10px sans-serif;
+  max-width: 100%; /* thanks for nothin, Safari */
+}
+
+.chart-container .chart svg {
+	font-size: 16px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #CCC;
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+  stroke-linecap: square;
+}
+
+.line {
+  fill: none;
+  stroke: #CCC;
+  stroke-width: 2px;
+}
+
+.chart-container .chart .line {
+	stroke-width: 4px;
+}
+
+.min.line,
+.max.line {
+	stroke-dasharray: 1, 1;
+}
+
+.chart-container .chart .min.line,
+.chart-container .chart .max.line {
+	stroke-width: 2px;
+	stroke-dasharray: 5, 2;
+}
+
+.chart-container .chart .tolerance.line {
+	stroke-width: 1px;
+    stroke-dasharray: 5, 5;
+}
+
+.line.min {
+	stroke: #B1DC9C;
+}
+
+.line.main {
+	stroke: #333;
+	stroke-linecap: round;
+}
+
+.line.max {
+	stroke: #FFA447;
+}
+
+.line.tolerance {
+	stroke: #FF7070;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+	fill: #333;
+	stroke: #333;
+}
+
+.focus text {
+	font-size: 16px;
+
+	/* this nonsense makes it look halfway decent across browsers */
+	text-shadow:
+	   1px 1px 0 #FFF,
+	 -1px -1px 0 #FFF,  
+	  1px -1px 0 #FFF,
+	  -1px 1px 0 #FFF;
+}
+
+footer {
+	padding: 50px;
+	font-size: 12px;
+	color: #AAA;
+	font-family: sans-serif;
+	text-align: center;
+}
+
+#checkup-logo {
+	height: 1.75em;
+	vertical-align: top;
+	margin-left: 3px;
+}
+
+
+
+
+@media (max-width: 1200px) {
+	.focus text {
+		font-size: 22px;
+	}
+}
+
+
+@media (max-width: 899px) {
+	#overall-status-text {
+		font-size: 34px;
+		padding: 15px;
+	}
+
+	#timeline .message {
+		font-size: 16px;
+	}
+
+	.infobar .item {
+		margin-right: 1em;
+	}
+
+	.message {
+		font-size: 16px;
+	}
+
+	.message-head,
+	.message-body {
+		padding: 16px;
+	}
+
+	.message-head {
+		padding-top: 6px;
+		padding-bottom: 6px;
+		font-size: 14px;
+	}
+
+	svg {
+		font-size: 20px;
+	}
+
+	.axis path,
+	.axis line {
+		stroke: #DDD;
+		stroke-width: 2px;
+	}
+
+	.line {
+		stroke-width: 4px;
+	}
+
+	.min.line,
+	.max.line {
+		stroke-dasharray: 4, 3;
+	}
+
+	.focus text {
+		font-size: 20px;
+	}
+}
