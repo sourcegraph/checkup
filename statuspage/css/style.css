@@ -61,9 +61,10 @@ header {
 
 #timeline .message {
 	font-size: 14px;
-	border: 1px solid #FFAC3B;
+	border-width: 1px;
+	border-style: solid;
 	background: #FFF;
-	margin-left: 3em;
+	margin-left: 2.25em;
 }
 
 #timeline .message-head,
@@ -72,19 +73,24 @@ header {
 }
 
 #timeline .message-head {
-	background: #FFAC3B;
 	color: #FFF;
 	padding-top: 4px;
 	padding-bottom: 4px;
 	font-size: 12px;
 }
 
+#timeline .message.green                { border-color: #40D24C; }
+#timeline .message.green .message-head  { background-color: #40D24C; }
+#timeline .message.yellow               { border-color: #FFAC3B; }
+#timeline .message.yellow .message-head { background-color: #FFAC3B; }
+#timeline .message.red                  { border-color: #D24040; }
+#timeline .message.red .message-head    { background-color: #D24040; }
+
 #timeline .event {
 	line-height: 2em;
-	background-position: .6em;
 	background-repeat: no-repeat;
 	background-size: auto 2em;
-	padding-left: 3.5em;
+	padding-left: 3em;
 }
 
 #timeline .event.green  { background-image: url('../images/status-green.png'); }
@@ -92,19 +98,19 @@ header {
 #timeline .event.red    { background-image: url('../images/status-red.png'); }
 #timeline .event.gray   { background-image: url('../images/status-gray.png'); }
 
+#timeline .event .time {
+	margin-right: .25em;
+	font-weight: bold;
+}
+
 #timeline #bg-line {
 	position: absolute;
 	height: 100%;
 	border-left: 3px solid #EEE;
-	left: 35px;
+	left: 24px;
 	top: 0;
 	margin: 0;
 	z-index: 0;
-}
-
-#timeline .event .time {
-	margin-right: .25em;
-	font-weight: bold;
 }
 
 

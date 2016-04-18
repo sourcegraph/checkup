@@ -49,6 +49,7 @@ checkup.formatDuration = function(d) {
 		return Math.round(d*1e-9 / 60/60/24)+" days";
 };
 
+// timeSince renders the duration d (in milliseconds) in human-friendly form.
 checkup.timeSince = function(d) {
 	var seconds = Math.floor((new Date() - d) / 1000);
 	var interval = Math.floor(seconds / 31536000);
@@ -74,6 +75,7 @@ checkup.CHART_HEIGHT = 200;
 // A couple bits of state to coordinate rendering the page
 checkup.domReady = false;   // whether DOM is loaded
 checkup.graphsMade = false; // whether graphs have been rendered at least once
+checkup.placeholdersRemoved = false; // whether chart placeholders have been removed
 
 // Stores the checks that are downloaded (1:1 ratio with check files)
 checkup.checks = [];
@@ -82,11 +84,18 @@ checkup.checks = [];
 // of the check file (may be multiple results with same timestamp)
 checkup.results = {};
 
+// Stores the results in ascending timestamp order; order may not be
+// guaranteed until all results are loaded
+checkup.orderedResults = [];
+
 // Stores the charts (keyed by endpoint) and all their data/info/elements
 checkup.charts = {};
 
 // ID counter for the charts, always incremented
 checkup.chartCounter = 0;
+
+// Events that get rendered to the timeline
+checkup.events = [];
 
 // Duration of chart animations in ms
 checkup.animDuration = 150;

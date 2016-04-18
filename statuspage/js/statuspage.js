@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	checkup.dom.timeframe = document.getElementById("info-timeframe");
 	checkup.dom.checkcount = document.getElementById("info-checkcount");
 	checkup.dom.lastcheck = document.getElementById("info-lastcheck");
+	checkup.dom.timeline = document.getElementById("timeline");
 
 	if (!checkup.graphsMade) makeGraphs();
 }, false);
@@ -42,6 +43,8 @@ function processNewCheckFile(json, filename) {
 
 	for (var j = 0; j < json.length; j++) {
 		var result = json[j];
+
+		checkup.orderedResults.push(result); // will sort later, more efficient that way
 
 		if (!checkup.results[result.timestamp])
 			checkup.results[result.timestamp] = [result];
@@ -76,31 +79,88 @@ function processNewCheckFile(json, filename) {
 		makeGraphs();
 }
 
-function allCheckFilesLoaded(checksLoaded) {
-	// If done loading all the checks, update DOM now that we have the whole picture
+function allCheckFilesLoaded(numChecksLoaded) {
+	checkup.orderedResults.sort(function(a, b) { return a.timestamp - b.timestamp; });
+
+	// Create events for the timeline
+	var statuses = {}; // keyed by endpoint
+	for (var i = 0; i < checkup.orderedResults.length; i++) {
+		var result = checkup.orderedResults[i];
+
+		// TODO: Change status to a single field in the results struct?
+		// Could make processing here a bit easier...
+		var status = "healthy";
+		if (result.degraded) status = "degraded";
+		else if (result.down) status = "down";
+
+		if (status != statuses[result.endpoint]) {
+			// New event because status changed
+			checkup.events.push({
+				result: result,
+				status: status
+			});
+		}
+		if (result.message) {
+			// New event because message posted
+			checkup.events.push({
+				result: result,
+				status: status,
+				message: result.message
+			});
+		}
+
+		statuses[result.endpoint] = status;
+	}
+
+	function renderTime(ns) {
+		var d = new Date(ns * 1e-6);
+		var hours = d.getHours();
+		var ampm = "AM";
+		if (hours > 12) {
+			hours -= 12;
+			ampm = "PM";
+		}
+		return hours+":"+d.getMinutes()+" "+ampm;
+	}
+
+	// Render events
+	// TODO: replace class color names with status names so we don't have to map like this
+	var color = {healthy: "green", degraded: "yellow", down: "red"};
+	for (var i = 0; i < checkup.events.length && i < numChecksLoaded; i++) {
+		var e = checkup.events[checkup.events.length-i-1];
+
+		var evtElem = document.createElement("div");
+		if (e.message) {
+			evtElem.className = "message "+color[e.status];
+			evtElem.innerHTML = '<div class="message-head">'+checkup.timeSince(e.result.timestamp*1e-6)+'</div>';
+			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>'; // TODO: Sanitize?
+		} else {
+			evtElem.className = "event "+color[e.status];
+			// TODO: Even time should have the timeframe, like begin and end time (12:42 PM&mdash;12:45 PM)
+			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
+		}
+		checkup.dom.timeline.appendChild(evtElem);
+	}
+
+	// Update DOM now that we have the whole picture
 	checkup.dom.favicon.href = "images/status-green.png";
 	checkup.dom.status.className = "green"; // TODO: Color based on result of loading stats
 	checkup.dom.statustext.innerHTML = config.status_text.healthy || "Healthy";
 
-	// Remove placeholder to make way for the charts;
-	// placeholder necessary to give space in absense of charts.
-	if (checkup.charts.length > 0) {
-		var phElem = document.getElementById("chart-placeholder");
-		if (phElem) phElem.remove();
-	}
-
 	var bigGap = false;
+	var lastTimeDiff;
 	for (var key in checkup.charts) {
 		for (var k = 1; k < checkup.charts[key].results.length; k++) {
-			if ((checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp) > (config.timeframe / 2)) {
-				bigGap = true;
+			var timeDiff = Math.abs(checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp);
+			bigGap = lastTimeDiff && timeDiff > lastTimeDiff * 10;
+			lastTimeDiff = timeDiff;
+			if (bigGap)
+			{
+				document.getElementById("big-gap").style.display = 'block';
 				break;
 			}
 		}
-		if (bigGap) {
-			document.getElementById("big-gap").style.display = 'block';
-			break;
-		}
+		if (bigGap) break;
 	}
 	if (!bigGap) {
 		document.getElementById("big-gap").style.display = 'none';
@@ -111,8 +171,17 @@ function makeGraphs() {
 	checkup.dom.timeframe.innerHTML = checkup.formatDuration(config.timeframe);
 	checkup.dom.checkcount.innerHTML = checkup.checks.length;
 
+	if (!checkup.placeholdersRemoved && checkup.checks.length > 0) {
+		// Remove placeholder to make way for the charts;
+		// placeholder necessary to give space in absense of charts.
+		if (phElem = document.getElementById("chart-placeholder"))
+			phElem.remove();
+		checkup.placeholdersRemoved = true;
+	}
+
 	for (var endpoint in checkup.charts)
 		makeGraph(checkup.charts[endpoint]);
+
 	checkup.graphsMade = true;
 }
 
