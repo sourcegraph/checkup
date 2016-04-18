@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
 }, false);
 
 // Immediately begin downloading check files, and keep page updated 
-checkup.storage.getChecksWithin(config.timeframe, processNewCheckFile);
+checkup.storage.getChecksWithin(config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 setInterval(function() {
-	checkup.storage.getChecksWithin(60 * time.Second, processNewCheckFile);
+	checkup.storage.getChecksWithin(60 * time.Second, processNewCheckFile, allCheckFilesLoaded);
 }, 60000);
 
 
-function processNewCheckFile(json, filename, done) {
+function processNewCheckFile(json, filename) {
 	checkup.checks.push(json);
 
 	for (var j = 0; j < json.length; j++) {
@@ -74,29 +74,36 @@ function processNewCheckFile(json, filename, done) {
 
 	if (checkup.domReady)
 		makeGraphs();
+}
 
+function allCheckFilesLoaded(checksLoaded) {
 	// If done loading all the checks, update DOM now that we have the whole picture
-	if (done) {
-		checkup.dom.favicon.href = "images/status-green.png";
-		checkup.dom.status.className = "green"; // TODO: Color based on result of loading stats
-		checkup.dom.statustext.innerHTML = config.status_text.healthy || "Healthy";
+	checkup.dom.favicon.href = "images/status-green.png";
+	checkup.dom.status.className = "green"; // TODO: Color based on result of loading stats
+	checkup.dom.statustext.innerHTML = config.status_text.healthy || "Healthy";
 
-		var bigGap = false;
-		for (var key in checkup.charts) {
-			for (var k = 1; k < checkup.charts[key].results.length; k++) {
-				if ((checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp) > (config.timeframe / 2)) {
-					bigGap = true;
-					break;
-				}
-			}
-			if (bigGap) {
-				document.getElementById("big-gap").style.display = 'block';
+	// Remove placeholder to make way for the charts;
+	// placeholder necessary to give space in absense of charts.
+	if (checkup.charts.length > 0) {
+		var phElem = document.getElementById("chart-placeholder");
+		if (phElem) phElem.remove();
+	}
+
+	var bigGap = false;
+	for (var key in checkup.charts) {
+		for (var k = 1; k < checkup.charts[key].results.length; k++) {
+			if ((checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp) > (config.timeframe / 2)) {
+				bigGap = true;
 				break;
 			}
 		}
-		if (!bigGap) {
-			document.getElementById("big-gap").style.display = 'none';
+		if (bigGap) {
+			document.getElementById("big-gap").style.display = 'block';
+			break;
 		}
+	}
+	if (!bigGap) {
+		document.getElementById("big-gap").style.display = 'none';
 	}
 }
 

@@ -62,14 +62,21 @@ checkup.storage = (function() {
 
 	// getChecksWithin gets all the checks within timeframe as a unit
 	// of nanoseconds, and executes callback for each check file.
-	this.getChecksWithin = function(timeframe, callback) {
+	this.getChecksWithin = function(timeframe, fileCallback, doneCallback) {
 		var checksLoaded = 0;
 		getCheckFileList(timeframe, function(list) {
-			for (var i = 0; i < list.length; i++) {
-				checkup.getJSON("https://s3.amazonaws.com/"+bucketName+"/"+list[i], function(json, url) {
-					checksLoaded++;
-					callback(json, list[i], checksLoaded >= list.length);
-				});
+			if (list.length == 0 && (typeof doneCallback === 'function')) {
+				doneCallback(checksLoaded);
+			} else {
+				for (var i = 0; i < list.length; i++) {
+					checkup.getJSON("https://s3.amazonaws.com/"+bucketName+"/"+list[i], function(json, url) {
+						checksLoaded++;
+						if (typeof fileCallback === 'function')
+							fileCallback(json, list[i]);
+						if (checksLoaded >= list.length && (typeof doneCallback === 'function'))
+							doneCallback(checksLoaded);
+					});
+				}
 			}
 		});
 	};
