@@ -33,7 +33,7 @@ type Checkup struct {
 	// Storage is the storage mechanism for saving the
 	// results of checks. Required if calling Store().
 	// If Storage is also a Maintainer, its Maintain()
-	// method will also be called in c.CheckAndStore().
+	// method will be called by c.CheckAndStore().
 	Storage Storage
 
 	// Notifier is a notifier that will be passed the
@@ -216,6 +216,7 @@ type Result struct {
 	Notice string `json:"notice,omitempty"`
 
 	// Message is an optional message to show on the status page.
+	// For example, what you're doing to fix a problem.
 	Message string `json:"message,omitempty"`
 }
 
