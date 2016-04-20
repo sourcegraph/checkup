@@ -49,9 +49,19 @@ checkup.formatDuration = function(d) {
 		return Math.round(d*1e-9 / 60/60/24)+" days";
 };
 
-// timeSince renders the duration d (in milliseconds) in human-friendly form.
-checkup.timeSince = function(d) {
-	var seconds = Math.floor((new Date() - d) / 1000);
+// I'm not even joking
+checkup.leftpad = function(str, len, ch) {
+	str = String(str);
+	var i = -1;
+	if (!ch && ch !== 0) ch = ' ';
+	len = len - str.length;
+	while (++i < len) str = ch + str;
+	return str;
+}
+
+// timeSince renders the duration ms (in milliseconds) in human-friendly form.
+checkup.timeSince = function(ms) {
+	var seconds = Math.floor((new Date() - ms) / 1000);
 	var interval = Math.floor(seconds / 31536000);
 	if (interval > 1) return interval + " years";
 	interval = Math.floor(seconds / 2592000);
@@ -64,6 +74,27 @@ checkup.timeSince = function(d) {
 	if (interval > 1) return interval + " minutes";
 	return Math.floor(seconds) + " seconds";
 };
+
+// makeTimeTag returns a <time> tag (as a string) that
+// has the time since the timestamp, ms (in milliseconds).
+checkup.makeTimeTag = function(ms) {
+	// dateTimeString converts ms (in milliseconds) into
+	// a value usable in a <time> tag's datetime attribute.
+	function dateTimeString(ms) {
+		var d = new Date(ms);
+		return d.getFullYear()+"-"
+			+ checkup.leftpad(d.getMonth()+1, 2, "0")+"-"
+			+ checkup.leftpad(d.getDate(), 2, "0")+"T"
+			+ checkup.leftpad(d.getHours(), 2, "0")+":"
+			+ checkup.leftpad(d.getMinutes(), 2, "0")+":"
+			+ checkup.leftpad(d.getSeconds(), 2, "0")+"-"
+			+ checkup.leftpad((d.getTimezoneOffset()/60), 2, "0")+":00";
+	}
+
+	return '<time class="dynamic" datetime="'+dateTimeString(ms)+'">'
+			+ checkup.timeSince(ms)
+			+ '</time>';
+}
 
 // All check files must have this suffix.
 checkup.checkFileSuffix = "-check.json";
@@ -80,9 +111,12 @@ checkup.placeholdersRemoved = false; // whether chart placeholders have been rem
 // Stores the checks that are downloaded (1:1 ratio with check files)
 checkup.checks = [];
 
+// Stores all the results, keyed by endpoint
+checkup.results = {};
+
 // Stores all the results, keyed by timestamp indicated in the JSON
 // of the check file (may be multiple results with same timestamp)
-checkup.results = {};
+checkup.groupedResults = {};
 
 // Stores the results in ascending timestamp order; order may not be
 // guaranteed until all results are loaded

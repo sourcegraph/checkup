@@ -37,6 +37,16 @@ setInterval(function() {
 	checkup.storage.getChecksWithin(60 * time.Second, processNewCheckFile, allCheckFilesLoaded);
 }, 60000);
 
+// Update "time ago" tags every so often
+setInterval(function() {
+	var times = document.querySelectorAll("time.dynamic");
+	for (var i = 0; i < times.length; i++) {
+		var timeEl = times[i];
+		var ms = Date.parse(timeEl.getAttribute("datetime"));
+		timeEl.innerHTML = checkup.timeSince(ms);
+	}
+}, 10000);
+
 
 function processNewCheckFile(json, filename) {
 	checkup.checks.push(json);
@@ -46,10 +56,15 @@ function processNewCheckFile(json, filename) {
 
 		checkup.orderedResults.push(result); // will sort later, more efficient that way
 
-		if (!checkup.results[result.timestamp])
-			checkup.results[result.timestamp] = [result];
+		if (!checkup.groupedResults[result.timestamp])
+			checkup.groupedResults[result.timestamp] = [result];
 		else
-			checkup.results[result.timestamp].push(result);
+			checkup.groupedResults[result.timestamp].push(result);
+
+		if (!checkup.results[result.endpoint])
+			checkup.results[result.endpoint] = [result];
+		else
+			checkup.results[result.endpoint].push(result);
 
 		var chart = checkup.charts[result.endpoint] || checkup.makeChart(result.title);
 		chart.results.push(result);
@@ -71,7 +86,7 @@ function processNewCheckFile(json, filename) {
 
 		if (!checkup.lastCheck || ts > checkup.lastCheck) {
 			checkup.lastCheck = ts;
-			checkup.dom.lastcheck.innerHTML = checkup.timeSince(checkup.lastCheck) + " ago";
+			checkup.dom.lastcheck.innerHTML = checkup.makeTimeTag(checkup.lastCheck)+" ago";
 		}
 	}
 
@@ -79,12 +94,16 @@ function processNewCheckFile(json, filename) {
 		makeGraphs();
 }
 
-function allCheckFilesLoaded(numChecksLoaded) {
+function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
+	// Sort the result lists
 	checkup.orderedResults.sort(function(a, b) { return a.timestamp - b.timestamp; });
+	for (var endpoint in checkup.results)
+		checkup.results[endpoint].sort(function(a, b) { return a.timestamp - b.timestamp; });
 
 	// Create events for the timeline
+	var newEvents = [];
 	var statuses = {}; // keyed by endpoint
-	for (var i = 0; i < checkup.orderedResults.length; i++) {
+	for (var i = checkup.orderedResults.length-numResultsLoaded; i < checkup.orderedResults.length; i++) {
 		var result = checkup.orderedResults[i];
 
 		// TODO: Change status to a single field in the results struct?
@@ -95,14 +114,14 @@ function allCheckFilesLoaded(numChecksLoaded) {
 
 		if (status != statuses[result.endpoint]) {
 			// New event because status changed
-			checkup.events.push({
+			newEvents.push({
 				result: result,
 				status: status
 			});
 		}
 		if (result.message) {
 			// New event because message posted
-			checkup.events.push({
+			newEvents.push({
 				result: result,
 				status: status,
 				message: result.message
@@ -112,6 +131,8 @@ function allCheckFilesLoaded(numChecksLoaded) {
 		statuses[result.endpoint] = status;
 	}
 
+	checkup.events = checkup.events.concat(newEvents);
+
 	function renderTime(ns) {
 		var d = new Date(ns * 1e-6);
 		var hours = d.getHours();
@@ -120,33 +141,63 @@ function allCheckFilesLoaded(numChecksLoaded) {
 			hours -= 12;
 			ampm = "PM";
 		}
-		return hours+":"+d.getMinutes()+" "+ampm;
+		return hours+":"+checkup.leftpad(d.getMinutes(), 2, "0")+" "+ampm;
 	}
 
 	// Render events
-	// TODO: replace class color names with status names so we don't have to map like this
+	// TODO: replace class color names with status names so we don't have to map like this?
 	var color = {healthy: "green", degraded: "yellow", down: "red"};
-	for (var i = 0; i < checkup.events.length && i < numChecksLoaded; i++) {
-		var e = checkup.events[checkup.events.length-i-1];
+	for (var i = 0; i < newEvents.length; i++) {
+		var e = newEvents[i];
 
 		var evtElem = document.createElement("div");
 		if (e.message) {
 			evtElem.className = "message "+color[e.status];
-			evtElem.innerHTML = '<div class="message-head">'+checkup.timeSince(e.result.timestamp*1e-6)+'</div>';
+			evtElem.innerHTML = '<div class="message-head">'+checkup.makeTimeTag(e.result.timestamp*1e-6)+' ago</div>';
 			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>'; // TODO: Sanitize?
 		} else {
 			evtElem.className = "event "+color[e.status];
-			// TODO: Even time should have the timeframe, like begin and end time (12:42 PM&mdash;12:45 PM)
 			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
 		}
-		checkup.dom.timeline.appendChild(evtElem);
+
+		checkup.dom.timeline.insertBefore(evtElem, checkup.dom.timeline.childNodes[0]);
 	}
 
 	// Update DOM now that we have the whole picture
-	checkup.dom.favicon.href = "images/status-green.png";
-	checkup.dom.status.className = "green"; // TODO: Color based on result of loading stats
-	checkup.dom.statustext.innerHTML = config.status_text.healthy || "Healthy";
 
+	// Update overall status
+	var overall = "healthy";
+	for (var endpoint in checkup.results) {
+		if (overall == "down") break;
+		var lastResult = checkup.results[endpoint][checkup.results[endpoint].length-1];
+		if (lastResult) {
+			if (lastResult.down)
+				overall = "down";
+			else if (lastResult.degraded)
+				overall = "degraded";
+		}
+	}
+
+	if (overall == "healthy") {
+		checkup.dom.favicon.href = "images/status-green.png";
+		checkup.dom.status.className = "green";
+		checkup.dom.statustext.innerHTML = config.status_text.healthy || "System Nominal"; // Healthy
+	} else if (overall == "degraded") {
+		checkup.dom.favicon.href = "images/status-yellow.png";
+		checkup.dom.status.className = "yellow";
+		checkup.dom.statustext.innerHTML = config.status_text.degraded || "Sub-Optimal"; // Degraded
+	} else if (overall == "down") {
+		checkup.dom.favicon.href = "images/status-red.png";
+		checkup.dom.status.className = "red";
+		checkup.dom.statustext.innerHTML = config.status_text.down || "Outage"; // Down
+	} else {
+		checkup.dom.favicon.href = "images/status-gray.png";
+		checkup.dom.status.className = "gray";
+		checkup.dom.statustext.innerHTML = config.status_text.unknown || "Status Unknown"; // Unknown?
+	}
+
+
+	// Detect big gaps in any of the charts, and if there is one, show an explanation.
 	var bigGap = false;
 	var lastTimeDiff;
 	for (var key in checkup.charts) {
