@@ -1,6 +1,7 @@
 // TODO: Put into an external JSON file?
 var config = {
 	"timeframe": 1 * time.Day,
+	"refresh_interval": 60, // in seconds
 	"storage": {
 		"AccessKeyID": "AKIAIQKTZO465CR5YMTQ",
 		"SecretAccessKey": "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",
@@ -34,8 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Immediately begin downloading check files, and keep page updated 
 checkup.storage.getChecksWithin(config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 setInterval(function() {
-	checkup.storage.getChecksWithin(60 * time.Second, processNewCheckFile, allCheckFilesLoaded);
-}, 60000);
+	checkup.storage.getChecksWithin(config.refresh_interval * time.Second, processNewCheckFile, allCheckFilesLoaded);
+}, config.refresh_interval * 1000);
 
 // Update "time ago" tags every so often
 setInterval(function() {
@@ -45,7 +46,7 @@ setInterval(function() {
 		var ms = Date.parse(timeEl.getAttribute("datetime"));
 		timeEl.innerHTML = checkup.timeSince(ms);
 	}
-}, 10000);
+}, 5000);
 
 
 function processNewCheckFile(json, filename) {
@@ -101,8 +102,18 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		checkup.results[endpoint].sort(function(a, b) { return a.timestamp - b.timestamp; });
 
 	// Create events for the timeline
+
 	var newEvents = [];
 	var statuses = {}; // keyed by endpoint
+
+	// First load the last known status of each endpoint
+	for (var i = checkup.events.length-1; i >= 0; i--) {
+		var result = checkup.events[i].result;
+		if (!statuses[result.endpoint])
+			statuses[result.endpoint] = checkup.events[i].status;
+	}
+
+	// Then go through the new results and look for new events
 	for (var i = checkup.orderedResults.length-numResultsLoaded; i < checkup.orderedResults.length; i++) {
 		var result = checkup.orderedResults[i];
 
