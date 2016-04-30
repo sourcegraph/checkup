@@ -55,6 +55,9 @@ function processNewCheckFile(json, filename) {
 	for (var j = 0; j < json.length; j++) {
 		var result = json[j];
 
+		// Save stats with the result so we don't have to recompute them later
+		result.stats = checkup.computeStats(result);
+
 		checkup.orderedResults.push(result); // will sort later, more efficient that way
 
 		if (!checkup.groupedResults[result.timestamp])
@@ -70,12 +73,11 @@ function processNewCheckFile(json, filename) {
 		var chart = checkup.charts[result.endpoint] || checkup.makeChart(result.title);
 		chart.results.push(result);
 
-		var stats = checkup.computeStats(result);
-		var ts = new Date(result.timestamp * 1e-6);
-		chart.series.min.push({ timestamp: ts, rtt: Math.round(stats.min) });
-		chart.series.med.push({ timestamp: ts, rtt: Math.round(stats.median) });
-		chart.series.max.push({ timestamp: ts, rtt: Math.round(stats.max) });
-		chart.series.threshold.push({ timestamp: ts, rtt: result.threshold });
+		var ts = checkup.unixNanoToD3Timestamp(result.timestamp);
+		chart.series.min.push({ timestamp: ts, rtt: Math.round(result.stats.min) });
+		chart.series.med.push({ timestamp: ts, rtt: Math.round(result.stats.median) });
+		chart.series.max.push({ timestamp: ts, rtt: Math.round(result.stats.max) });
+		chart.series.threshold.push({ timestamp: ts, rtt: result.threshold }); // TODO: Does this line render?
 
 		checkup.charts[result.endpoint] = chart;
 
@@ -156,22 +158,34 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	}
 
 	// Render events
-	// TODO: replace class color names with status names so we don't have to map like this?
-	var color = {healthy: "green", degraded: "yellow", down: "red"};
 	for (var i = 0; i < newEvents.length; i++) {
 		var e = newEvents[i];
 
 		var evtElem = document.createElement("div");
 		if (e.message) {
-			evtElem.className = "message "+color[e.status];
+			evtElem.className = "message "+checkup.color[e.status];
 			evtElem.innerHTML = '<div class="message-head">'+checkup.makeTimeTag(e.result.timestamp*1e-6)+' ago</div>';
 			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>'; // TODO: Sanitize?
 		} else {
-			evtElem.className = "event "+color[e.status];
+			evtElem.className = "event "+checkup.color[e.status];
 			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
 		}
 
 		checkup.dom.timeline.insertBefore(evtElem, checkup.dom.timeline.childNodes[0]);
+
+		// Show event on the chart in context with when it happened
+		var chart = checkup.charts[e.result.endpoint];
+		var ts = checkup.unixNanoToD3Timestamp(e.result.timestamp);
+		var xloc = chart.xScale(ts);
+		var imgFile = "ok.png", imgWidth = 15, imgHeight = 15; // the different icons look smaller/larger because of their shape
+		if (e.status == "down") { imgFile = "incident.png"; imgWidth = 20; imgHeight = 20; }
+		else if (e.status == "degraded") { imgFile = "degraded.png"; imgWidth = 25; imgHeight = 25; }
+		chart.svg
+		  .append("svg:image")
+			.attr("width", imgWidth)
+			.attr("height", imgHeight)
+			.attr("xlink:href","images/"+imgFile)
+			.attr("transform", "translate(" + (xloc-(imgWidth/2)) + "," + (chart.yScale(e.result.stats.median)-(imgHeight/2)) + ")");
 	}
 
 	// Update DOM now that we have the whole picture
@@ -192,23 +206,24 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	if (overall == "healthy") {
 		checkup.dom.favicon.href = "images/status-green.png";
 		checkup.dom.status.className = "green";
-		checkup.dom.statustext.innerHTML = config.status_text.healthy || "System Nominal"; // Healthy
+		checkup.dom.statustext.innerHTML = config.status_text.healthy || "System Nominal";
 	} else if (overall == "degraded") {
 		checkup.dom.favicon.href = "images/status-yellow.png";
 		checkup.dom.status.className = "yellow";
-		checkup.dom.statustext.innerHTML = config.status_text.degraded || "Sub-Optimal"; // Degraded
+		checkup.dom.statustext.innerHTML = config.status_text.degraded || "Sub-Optimal";
 	} else if (overall == "down") {
 		checkup.dom.favicon.href = "images/status-red.png";
 		checkup.dom.status.className = "red";
-		checkup.dom.statustext.innerHTML = config.status_text.down || "Outage"; // Down
+		checkup.dom.statustext.innerHTML = config.status_text.down || "Outage";
 	} else {
 		checkup.dom.favicon.href = "images/status-gray.png";
 		checkup.dom.status.className = "gray";
-		checkup.dom.statustext.innerHTML = config.status_text.unknown || "Status Unknown"; // Unknown?
+		checkup.dom.statustext.innerHTML = config.status_text.unknown || "Status Unknown";
 	}
 
 
 	// Detect big gaps in any of the charts, and if there is one, show an explanation.
+	// TODO: This appears intermittently even when it should not. Are we traversing in order?
 	var bigGap = false;
 	var lastTimeDiff;
 	for (var key in checkup.charts) {
