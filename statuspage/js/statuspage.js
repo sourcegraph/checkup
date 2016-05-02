@@ -161,6 +161,20 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	for (var i = 0; i < newEvents.length; i++) {
 		var e = newEvents[i];
 
+		// Save this event to the chart's event series so it will render on the line
+		var imgFile = "ok.png", imgWidth = 15, imgHeight = 15; // the different icons look smaller/larger because of their shape
+		if (e.status == "down") { imgFile = "incident.png"; imgWidth = 20; imgHeight = 20; }
+		else if (e.status == "degraded") { imgFile = "degraded.png"; imgWidth = 25; imgHeight = 25; }
+		var chart = checkup.charts[e.result.endpoint];
+		chart.series.events.push({
+			timestamp: checkup.unixNanoToD3Timestamp(e.result.timestamp),
+			rtt: e.result.stats.median,
+			imgFile: imgFile,
+			imgWidth: imgWidth,
+			imgHeight: imgHeight
+		});
+
+		// Render event to timeline
 		var evtElem = document.createElement("div");
 		if (e.message) {
 			evtElem.className = "message "+checkup.color[e.status];
@@ -170,22 +184,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 			evtElem.className = "event "+checkup.color[e.status];
 			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
 		}
-
 		checkup.dom.timeline.insertBefore(evtElem, checkup.dom.timeline.childNodes[0]);
-
-		// Show event on the chart in context with when it happened
-		var chart = checkup.charts[e.result.endpoint];
-		var ts = checkup.unixNanoToD3Timestamp(e.result.timestamp);
-		var xloc = chart.xScale(ts);
-		var imgFile = "ok.png", imgWidth = 15, imgHeight = 15; // the different icons look smaller/larger because of their shape
-		if (e.status == "down") { imgFile = "incident.png"; imgWidth = 20; imgHeight = 20; }
-		else if (e.status == "degraded") { imgFile = "degraded.png"; imgWidth = 25; imgHeight = 25; }
-		chart.svg
-		  .append("svg:image")
-			.attr("width", imgWidth)
-			.attr("height", imgHeight)
-			.attr("xlink:href","images/"+imgFile)
-			.attr("transform", "translate(" + (xloc-(imgWidth/2)) + "," + (chart.yScale(e.result.stats.median)-(imgHeight/2)) + ")");
 	}
 
 	// Update DOM now that we have the whole picture
@@ -231,8 +230,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 			var timeDiff = Math.abs(checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp);
 			bigGap = lastTimeDiff && timeDiff > lastTimeDiff * 10;
 			lastTimeDiff = timeDiff;
-			if (bigGap)
-			{
+			if (bigGap) {
 				document.getElementById("big-gap").style.display = 'block';
 				break;
 			}
@@ -242,6 +240,8 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	if (!bigGap) {
 		document.getElementById("big-gap").style.display = 'none';
 	}
+
+	makeGraphs(); // must render graphs again after we've filled in the event series
 }
 
 function makeGraphs() {
@@ -315,13 +315,22 @@ function makeGraph(chart) {
 	chart.lines = chart.lineGroup.selectAll(".line")
 		.data(chart.data);
 
+	chart.eventGroup = chart.svg
+	  .append("g")
+		.attr("class", "events");
+	chart.events = chart.eventGroup.selectAll("image")
+		.data(chart.series.events);
+
 	// transition from old paths to new paths
 	chart.lines
 		.transition()
 		.duration(checkup.animDuration)
 		.attr("d", chart.line);
+	chart.events
+		.transition()
+		.duration(checkup.animDuration);
 
-	// enter any new data
+	// enter any new data (lines)
 	chart.lines.enter()
 	  .append("path")
 		.attr("class", function(d) {
@@ -332,6 +341,14 @@ function makeGraph(chart) {
 			else return "line";
 		})
 		.attr("d", chart.line);
+
+	// enter any new data (events)
+	chart.events.enter().append('svg:image')
+		.attr("width", function(d, i) { return d.imgWidth || 0; })
+		.attr("height", function(d, i) { return d.imgHeight || 0; })
+		.attr("xlink:href", function(d, i) { return "images/"+d.imgFile; })
+		.attr("x", function(d, i) { return chart.xScale(d.timestamp) - (d.imgWidth/2); })
+		.attr("y", function(d, i) { return chart.yScale(d.rtt) - (d.imgHeight/2); });
 
 	// exit any old data
 	chart.lines

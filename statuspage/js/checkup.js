@@ -158,6 +158,7 @@ checkup.makeChart = function(title) {
 			med: [],
 			max: [],
 			threshold: [],
+			events: [],
 		}
 	};
 
