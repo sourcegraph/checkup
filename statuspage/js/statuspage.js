@@ -128,6 +128,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		if (status != statuses[result.endpoint]) {
 			// New event because status changed
 			newEvents.push({
+				id: checkup.eventCounter++,
 				result: result,
 				status: status
 			});
@@ -135,6 +136,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		if (result.message) {
 			// New event because message posted
 			newEvents.push({
+				id: checkup.eventCounter++,
 				result: result,
 				status: status,
 				message: result.message
@@ -161,7 +163,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	for (var i = 0; i < newEvents.length; i++) {
 		var e = newEvents[i];
 
-		// Save this event to the chart's event series so it will render on the line
+		// Save this event to the chart's event series so it will render on the graph
 		var imgFile = "ok.png", imgWidth = 15, imgHeight = 15; // the different icons look smaller/larger because of their shape
 		if (e.status == "down") { imgFile = "incident.png"; imgWidth = 20; imgHeight = 20; }
 		else if (e.status == "degraded") { imgFile = "degraded.png"; imgWidth = 25; imgHeight = 25; }
@@ -169,6 +171,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		chart.series.events.push({
 			timestamp: checkup.unixNanoToD3Timestamp(e.result.timestamp),
 			rtt: e.result.stats.median,
+			eventid: e.id,
 			imgFile: imgFile,
 			imgWidth: imgWidth,
 			imgHeight: imgHeight
@@ -176,12 +179,18 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 
 		// Render event to timeline
 		var evtElem = document.createElement("div");
+		evtElem.setAttribute("data-eventid", e.id);
+		evtElem.classList.add("event-item");
+		evtElem.classList.add("event-id-"+e.id);
+		evtElem.classList.add(checkup.color[e.status]);
+		evtElem.onmouseover = highlightSameEvent;
+		evtElem.onmouseout = unhighlightSameEvent;
 		if (e.message) {
-			evtElem.className = "message "+checkup.color[e.status];
+			evtElem.classList.add("message");
 			evtElem.innerHTML = '<div class="message-head">'+checkup.makeTimeTag(e.result.timestamp*1e-6)+' ago</div>';
 			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>'; // TODO: Sanitize?
 		} else {
-			evtElem.className = "event "+checkup.color[e.status];
+			evtElem.classList.add("event");
 			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
 		}
 		checkup.dom.timeline.insertBefore(evtElem, checkup.dom.timeline.childNodes[0]);
@@ -314,10 +323,6 @@ function makeGraph(chart) {
 
 	chart.lines = chart.lineGroup.selectAll(".line")
 		.data(chart.data);
-
-	chart.eventGroup = chart.svg
-	  .append("g")
-		.attr("class", "events");
 	chart.events = chart.eventGroup.selectAll("image")
 		.data(chart.series.events);
 
@@ -343,12 +348,16 @@ function makeGraph(chart) {
 		.attr("d", chart.line);
 
 	// enter any new data (events)
-	chart.events.enter().append('svg:image')
+	chart.events.enter().append("svg:image")
 		.attr("width", function(d, i) { return d.imgWidth || 0; })
 		.attr("height", function(d, i) { return d.imgHeight || 0; })
 		.attr("xlink:href", function(d, i) { return "images/"+d.imgFile; })
 		.attr("x", function(d, i) { return chart.xScale(d.timestamp) - (d.imgWidth/2); })
-		.attr("y", function(d, i) { return chart.yScale(d.rtt) - (d.imgHeight/2); });
+		.attr("y", function(d, i) { return chart.yScale(d.rtt) - (d.imgHeight/2); })
+		.attr("data-eventid", function(d, i) { return d.eventid; })
+		.attr("class", function(d, i) { return "event-item event-id-"+d.eventid; })
+		.on("mouseover", highlightSameEvent)
+		.on("mouseout", unhighlightSameEvent);
 
 	// exit any old data
 	chart.lines
@@ -464,4 +473,23 @@ function renderChart(chart) {
 		.on("mouseout", function() { focus.style("display", "none"); })
 		.on("mousemove", mousemove);
 	overlay = document.querySelector("#"+chart.id+" .overlay");
+
+	chart.eventGroup = chart.svg
+	  .append("g")
+		.attr("class", "events");
+}
+
+
+function highlightSameEvent() {
+	var elems = document.querySelectorAll(".event-item:not(.event-id-"+this.getAttribute("data-eventid")+")");
+	for (var i = 0; i < elems.length; i++) {
+		elems[i].style.opacity = ".25";
+	}
+}
+
+function unhighlightSameEvent() {
+	var elems = document.querySelectorAll(".event-item:not(.event-id-"+this.getAttribute("data-eventid")+")");
+	for (var i = 0; i < elems.length; i++) {
+		elems[i].style.opacity = "";
+	}
 }
