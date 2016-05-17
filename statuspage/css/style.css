@@ -15,6 +15,23 @@ header {
 	border-bottom: 1px solid #FFF;
 }
 
+main {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	padding: 0 15px;
+}
+
+#chart-grid {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	width: 75%;
+}
+
+.chart-50  { width: 50%; }
+.chart-100 { width: 100%; }
+
 #overall-status-text {
 	padding: 50px 10px 10px 10px;
 	color: #FFF;
@@ -45,6 +62,7 @@ header {
 }
 
 #timeline {
+	width: 25%;
 	position: relative;
 	z-index: 1;
 }
@@ -107,7 +125,7 @@ header {
 	position: absolute;
 	height: 100%;
 	border-left: 3px solid #EEE;
-	left: 24px;
+	left: 16px;
 	top: 0;
 	margin: 0;
 	z-index: 0;
@@ -231,10 +249,22 @@ footer {
 	.focus text {
 		font-size: 22px;
 	}
+
+	#chart-grid { width: 70%; }
+	#timeline   { width: 30%; }
+}
+
+@media (max-width: 1050px) {
+	#chart-grid { width: 70%; }
+	#timeline   { width: 30%; }
 }
 
 
 @media (max-width: 899px) {
+	#chart-grid { width: 60%; }
+	#timeline   { width: 40%; }
+	.chart-50   { width: 100%; }
+
 	#overall-status-text {
 		font-size: 34px;
 		padding: 15px;
@@ -285,4 +315,9 @@ footer {
 	.focus text {
 		font-size: 20px;
 	}
+}
+
+@media (max-width: 600px) {
+	#chart-grid { width: 100%; }
+	#timeline   { width: 100%; }
 }

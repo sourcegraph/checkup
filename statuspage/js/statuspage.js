@@ -183,8 +183,6 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		evtElem.classList.add("event-item");
 		evtElem.classList.add("event-id-"+e.id);
 		evtElem.classList.add(checkup.color[e.status]);
-		evtElem.onmouseover = highlightSameEvent;
-		evtElem.onmouseout = unhighlightSameEvent;
 		if (e.message) {
 			evtElem.classList.add("message");
 			evtElem.innerHTML = '<div class="message-head">'+checkup.makeTimeTag(e.result.timestamp*1e-6)+' ago</div>';
@@ -369,16 +367,16 @@ function makeGraph(chart) {
 function renderChart(chart) {
 	// Outer div is a wrapper that we use for layout
 	var el = document.createElement('div');
-	var containerSize = "grid-50";
+	var containerSize = "chart-50";
 	if (document.getElementsByClassName('chart-container').length == 0) {
-		containerSize = "grid-100";
+		containerSize = "chart-100";
 	} else {
 		// It's possible that a chart was created that, at the time,
 		// was the only one, but now it is too wide, since there are
 		// at least two charts. Resize the wide one to be smaller.
-		var tooWide = document.querySelector('.chart-container.grid-100');
+		var tooWide = document.querySelector('.chart-container.chart-100');
 		if (tooWide)
-			tooWide.className = "chart-container grid-50";
+			tooWide.className = "chart-container chart-50";
 	}
 	el.className = "chart-container "+containerSize;
 

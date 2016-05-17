@@ -10,7 +10,6 @@
 		<script src="js/statuspage.js"></script>
 		<link rel="icon" href="images/favicon.png" id="favicon">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,700">
-		<link rel="stylesheet" href="css/unsemantic-custom.css">
 		<link rel="stylesheet" href="css/style.css">
 	</head>
 	<body>
@@ -28,19 +27,19 @@
 			</div>
 		</header>
 
-		<div class="grid-container">
-			<div class="grid-75 grid-parent" id="chart-grid">
+		<main>
+			<div id="chart-grid">
 				<!-- Populated by JavaScript -->
 				<span id="chart-placeholder">&nbsp;</span>
 			</div>
-			<div class="grid-25" id="timeline">
+			<div id="timeline">
 				<div id="big-gap">
 					<!-- TODO: Polish this notice -->
 					Why does this graph look weird? There is a big gap of time in this window where no checkups were performed.
 				</div>
 				<div id="bg-line"></div>
 			</div>
-		</div>
+		</main>
 
 		<footer>
 			Powered by <img src="images/checkup.png" id="checkup-logo">
