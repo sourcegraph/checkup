@@ -343,3 +343,37 @@ func (e Errors) Empty() bool {
 	}
 	return true
 }
+
+// Provisioner is a type of storage mechanism that can
+// provision itself for use with checkup. Provisioning
+// need only happen once and is merely a convenience
+// so that the user can get up and running with their
+// status page more quickly. Presumably, the info
+// returned from Provision should be used on the status
+// page side of things ot access the check files (like
+// a key pair that is used for read-only access).
+type Provisioner interface {
+	Provision() (ProvisionInfo, error)
+}
+
+// ProvisionInfo contains the results of provisioning a new
+// storage facility for check files. Its values should be
+// used by the status page in order to obtain read-only
+// access to the check files.
+type ProvisionInfo struct {
+	// The ID of a user that was created for accessing checks.
+	UserID string `json:"user_id"`
+
+	// The username of a user that was created for accessing checks.
+	Username string `json:"username"`
+
+	// The ID or name of the ID/key used to access checks. Expect
+	// this value to be made public. (It should have read-only
+	// access to the checks.)
+	PublicAccessKeyID string `json:"public_access_key_id"`
+
+	// The "secret" associated with the PublicAccessKeyID, but
+	// expect this value to be made public. (It should provide
+	// read-only access to the checks.)
+	PublicAccessKey string `json:"public_access_key"`
+}

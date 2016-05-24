@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -99,6 +100,115 @@ func (s S3) Maintain() error {
 	}
 
 	return nil
+}
+
+// Provision creates a new IAM user in the account specified
+// by s, and configures a bucket according to the values in
+// s. The credentials in s must have the IAMFullAccess and
+// AmazonS3FullAccess permissions in order to succeed.
+//
+// The name of the created IAM user is "checkup-monitor-s3-public".
+// It will have read-only permission to S3.
+//
+// Provision need only be called once per status page (bucket),
+// not once per endpoint.
+func (s S3) Provision() (ProvisionInfo, error) {
+	const iamUser = "checkup-monitor-s3-public"
+	var info ProvisionInfo
+
+	// default region (required, but regions don't apply to S3, kinda weird)
+	if s.Region == "" {
+		s.Region = "us-east-1"
+	}
+
+	svcIam := iam.New(session.New(), &aws.Config{
+		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
+		Region:      &s.Region,
+	})
+
+	// Create a new user, just for reading the check files
+	resp, err := svcIam.CreateUser(&iam.CreateUserInput{
+		UserName: aws.String(iamUser),
+	})
+	if err != nil {
+		return info, err
+	}
+	info.Username = *resp.User.UserName
+	info.UserID = *resp.User.UserId
+
+	// Restrict the user to only reading S3 buckets
+	_, err = svcIam.AttachUserPolicy(&iam.AttachUserPolicyInput{
+		PolicyArn: aws.String("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"),
+		UserName:  aws.String(iamUser),
+	})
+	if err != nil {
+		return info, err
+	}
+
+	// Give the user a key (this will become public as it is read-only)
+	resp3, err := svcIam.CreateAccessKey(&iam.CreateAccessKeyInput{
+		UserName: aws.String(iamUser),
+	})
+	if err != nil {
+		return info, err
+	}
+	info.PublicAccessKeyID = *resp3.AccessKey.AccessKeyId
+	info.PublicAccessKey = *resp3.AccessKey.SecretAccessKey
+
+	// Prepare to talk to S3
+	svcS3 := s3.New(session.New(), &aws.Config{
+		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
+		Region:      &s.Region,
+	})
+
+	// Create a bucket to hold all the checks
+	_, err = svcS3.CreateBucket(&s3.CreateBucketInput{
+		Bucket: &s.Bucket,
+	})
+	if err != nil {
+		return info, err
+	}
+
+	// Configure its CORS policy to allow reading from status pages
+	_, err = svcS3.PutBucketCors(&s3.PutBucketCorsInput{
+		Bucket: &s.Bucket,
+		CORSConfiguration: &s3.CORSConfiguration{
+			CORSRules: []*s3.CORSRule{
+				{
+					AllowedOrigins: []*string{aws.String("*")},
+					AllowedMethods: []*string{aws.String("GET"), aws.String("HEAD")},
+					ExposeHeaders:  []*string{aws.String("ETag")},
+					AllowedHeaders: []*string{aws.String("*")},
+					MaxAgeSeconds:  aws.Int64(3000),
+				},
+			},
+		},
+	})
+	if err != nil {
+		return info, err
+	}
+
+	// Set its policy to allow getting objects
+	_, err = svcS3.PutBucketPolicy(&s3.PutBucketPolicyInput{
+		Bucket: &s.Bucket,
+		Policy: aws.String(`{
+			"Version": "2012-10-17",
+			"Statement": [
+				{
+					"Sid": "PublicReadGetObject",
+					"Effect": "Allow",
+					"Principal": "*",
+					"Action": "s3:GetObject",
+					"Resource": "arn:aws:s3:::` + s.Bucket + `/*"
+				}
+			]
+		}`),
+	})
+	if err != nil {
+		return info, err
+	}
+
+	return info, nil
 }
 
 // newS3 calls s3.New(), but may be replaced for mocking in tests.
