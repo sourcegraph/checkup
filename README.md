@@ -1,9 +1,8 @@
-Checkup
-========
+<img src="https://i.imgur.com/UWhSoQj.png" width="450" alt="Checkup">
 
 Checkup is distributed, lock-free, self-hosted health checks and status pages, written in Go.
 
-**Note: This is a _work in progress_ and is still in the prototype phase. Don't use it for anything too  important, but _do_ still use it, and report any bugzies!**
+**Note: This is a _work in progress_ and is still in the prototype phase. Don't use it for anything too important, but _do_ still use it, and report any bugzies!**
 
 
 ## Intro
@@ -14,6 +13,7 @@ Out of the box, Checkup currently supports:
 
 - Checking HTTP endpoints
 - Storing results on S3
+- Viewing results on a status page
 
 
 ## How it Works
@@ -22,54 +22,43 @@ There are 3 components:
 
 1. **Storage** You set up storage space for the results of the checks.
 
-2. **Checks** You run checks whenever you want (usually on a regular basis).
+2. **Checks** You run checks whenever you want (usually on a regular basis), to whatever endpoints you want.
 
 3. **Status Page** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
 
 
 ## Quick Start
 
-*TODO(mholt): Make setting up an S3 bucket easier (Provisioner interface?)*
-
 Follow these instructions to get started quickly with Checkup.
 
 
 ### Setting up storage on S3
 
-1. Create two IAM users and groups. One user and group has `AmazonS3FullAccess`. The other user and group has `AmazonS3ReadOnlyAccess`. (The credentials for the ReadOnlyAccess will be made public...)
+The easiest way to do this is with a few lines of Go code. (If you'd rather do it manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually).)
 
-2. Create an S3 bucket with the following CORS configuration:
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-    <CORSRule>
-        <AllowedOrigin>*</AllowedOrigin>
-        <AllowedMethod>GET</AllowedMethod>
-        <AllowedMethod>HEAD</AllowedMethod>
-        <MaxAgeSeconds>3000</MaxAgeSeconds>
-        <ExposeHeader>ETag</ExposeHeader>
-        <AllowedHeader>*</AllowedHeader>
-    </CORSRule>
-</CORSConfiguration>
-```
+First you'll need an IAM user with at least two permissions:
 
-3. Give the bucket this policy (replace BUCKET_NAME):
-```json
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Sid": "PublicReadGetObject",
-			"Effect": "Allow",
-			"Principal": "*",
-			"Action": "s3:GetObject",
-			"Resource": "arn:aws:s3:::BUCKET_NAME/*"
-		}
-	]
+- arn:aws:iam::aws:policy/**IAMFullAccess**
+- arn:aws:iam::aws:policy/**AmazonS3FullAccess**
+
+Then replace `ACCESS_KEY_ID` and `SECRET_ACCESS_KEY` below with the actual values for that user. You'll also replace `BUCKET_NAME` with the unique bucket name to store your check files:
+
+```go
+storage := checkup.S3{
+	AccessKeyID:     "ACCESS_KEY_ID",
+	SecretAccessKey: "SECRET_ACCESS_KEY",
+	Bucket:          "BUCKET_NAME",
 }
+info, err := storage.Provision()
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("%+v\n", info)
 ```
 
-This bucket must be used exclusively for checks for this status page.
+This method creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files.
+
+**Take note of the output, since you won't see it again!** Especially important are the `PublicAccessKeyID` and the `PublicAccessKey`. They will be used by the status page to load check files.
 
 
 ### Setting up checks
@@ -150,6 +139,3 @@ if err != nil {
 ```
 
 Of course, real status messages should be as descriptive as possible. You can use HTML in them.
-
-*TODO(mholt): Status messages should be allowed to be long (for post-mortems) and the status page should handle that gracefully by collapsing long messages.*
-
