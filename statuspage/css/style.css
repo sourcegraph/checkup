@@ -133,10 +133,11 @@ main {
 
 
 
-/* TODO */
 #big-gap {
 	display: none;
 	color: #CC0000;
+	padding-left: 3em;
+	font-size: 14px;
 }
 
 

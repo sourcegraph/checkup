@@ -233,6 +233,12 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	var bigGap = false;
 	var lastTimeDiff;
 	for (var key in checkup.charts) {
+		// We expect results to be chronologically ordered, but since they are downloaded
+		// in an arbitrary order due to network conditions, we have to sort to be sure.
+		checkup.charts[key].results.sort(function(a, b) {
+			return a.timestamp - b.timestamp;
+		});
+
 		for (var k = 1; k < checkup.charts[key].results.length; k++) {
 			var timeDiff = Math.abs(checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp);
 			bigGap = lastTimeDiff && timeDiff > lastTimeDiff * 10;
