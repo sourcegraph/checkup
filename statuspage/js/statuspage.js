@@ -1,20 +1,7 @@
-// TODO: Put into an external JSON file?
-var config = {
-	"timeframe": 1 * time.Day,
-	"refresh_interval": 60, // in seconds
-	"storage": {
-		"AccessKeyID": "AKIAIQKTZO465CR5YMTQ",
-		"SecretAccessKey": "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",
-		"BucketName": "srcgraph-monitor-test"
-	},
-	"status_text": {
-		"healthy": "Situation Normal",
-		"degraded": "Minor Hiccup",
-		"down": "Service Disruption"
-	}
-};
+// config.js must be included BEFORE this file!
 
-checkup.storage.setup(config.storage);
+// Configure access to storage
+checkup.storage.setup(checkup.config.storage);
 
 // Once the DOM is loaded, go ahead and render the graphs
 // (if it hasn't been done already).
@@ -33,10 +20,10 @@ document.addEventListener('DOMContentLoaded', function() {
 }, false);
 
 // Immediately begin downloading check files, and keep page updated 
-checkup.storage.getChecksWithin(config.timeframe, processNewCheckFile, allCheckFilesLoaded);
+checkup.storage.getChecksWithin(checkup.config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 setInterval(function() {
-	checkup.storage.getChecksWithin(config.refresh_interval * time.Second, processNewCheckFile, allCheckFilesLoaded);
-}, config.refresh_interval * 1000);
+	checkup.storage.getChecksWithin(checkup.config.refresh_interval * time.Second, processNewCheckFile, allCheckFilesLoaded);
+}, checkup.config.refresh_interval * 1000);
 
 // Update "time ago" tags every so often
 setInterval(function() {
@@ -212,24 +199,23 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	if (overall == "healthy") {
 		checkup.dom.favicon.href = "images/status-green.png";
 		checkup.dom.status.className = "green";
-		checkup.dom.statustext.innerHTML = config.status_text.healthy || "System Nominal";
+		checkup.dom.statustext.innerHTML = checkup.config.status_text.healthy || "System Nominal";
 	} else if (overall == "degraded") {
 		checkup.dom.favicon.href = "images/status-yellow.png";
 		checkup.dom.status.className = "yellow";
-		checkup.dom.statustext.innerHTML = config.status_text.degraded || "Sub-Optimal";
+		checkup.dom.statustext.innerHTML = checkup.config.status_text.degraded || "Sub-Optimal";
 	} else if (overall == "down") {
 		checkup.dom.favicon.href = "images/status-red.png";
 		checkup.dom.status.className = "red";
-		checkup.dom.statustext.innerHTML = config.status_text.down || "Outage";
+		checkup.dom.statustext.innerHTML = checkup.config.status_text.down || "Outage";
 	} else {
 		checkup.dom.favicon.href = "images/status-gray.png";
 		checkup.dom.status.className = "gray";
-		checkup.dom.statustext.innerHTML = config.status_text.unknown || "Status Unknown";
+		checkup.dom.statustext.innerHTML = checkup.config.status_text.unknown || "Status Unknown";
 	}
 
 
 	// Detect big gaps in any of the charts, and if there is one, show an explanation.
-	// TODO: This appears intermittently even when it should not. Are we traversing in order?
 	var bigGap = false;
 	var lastTimeDiff;
 	for (var key in checkup.charts) {
@@ -238,7 +224,6 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		checkup.charts[key].results.sort(function(a, b) {
 			return a.timestamp - b.timestamp;
 		});
-
 		for (var k = 1; k < checkup.charts[key].results.length; k++) {
 			var timeDiff = Math.abs(checkup.charts[key].results[k].timestamp - checkup.charts[key].results[k-1].timestamp);
 			bigGap = lastTimeDiff && timeDiff > lastTimeDiff * 10;
@@ -258,7 +243,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 }
 
 function makeGraphs() {
-	checkup.dom.timeframe.innerHTML = checkup.formatDuration(config.timeframe);
+	checkup.dom.timeframe.innerHTML = checkup.formatDuration(checkup.config.timeframe);
 	checkup.dom.checkcount.innerHTML = checkup.checks.length;
 
 	if (!checkup.placeholdersRemoved && checkup.checks.length > 0) {
@@ -412,9 +397,8 @@ function renderChart(chart) {
 	chart.width = checkup.CHART_WIDTH - chart.margin.left - chart.margin.right;
 	chart.height = checkup.CHART_HEIGHT - chart.margin.top - chart.margin.bottom;
 
-	// chart.svgTag is the actual svg tag, but
-	// chart.svg is the group where we actually
-	// put the lines.
+	// chart.svgTag is the svg tag, but chart.svg
+	// is the group where we actually put the lines.
 	chart.svg = chart.svgTag
 	  .append("g")
 	  	.attr("class", "chart-data")

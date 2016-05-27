@@ -1,0 +1,1 @@
+checkup.config = {}; // You MUST fill this out! Use config_template.js as a starting point.
