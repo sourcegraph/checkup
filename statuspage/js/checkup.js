@@ -162,11 +162,13 @@ checkup.makeChart = function(title) {
 			max: [],
 			threshold: [],
 			events: [],
-		}
+		},
+		data: []
 	};
 
-	// layered in order they appear here (last series appears on top)
-	chart.data = [chart.series.min, chart.series.med];
+	// add series here to add more lines to a single chart; layered
+	// in order that they appear here (last series appears on top)
+	chart.data = [chart.series.threshold, chart.series.med];
 
 	return chart;
 }

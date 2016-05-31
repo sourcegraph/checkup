@@ -64,7 +64,8 @@ function processNewCheckFile(json, filename) {
 		chart.series.min.push({ timestamp: ts, rtt: Math.round(result.stats.min) });
 		chart.series.med.push({ timestamp: ts, rtt: Math.round(result.stats.median) });
 		chart.series.max.push({ timestamp: ts, rtt: Math.round(result.stats.max) });
-		chart.series.threshold.push({ timestamp: ts, rtt: result.threshold }); // TODO: Does this line render?
+		if (result.threshold)
+			chart.series.threshold.push({ timestamp: ts, rtt: result.threshold });
 
 		checkup.charts[result.endpoint] = chart;
 
