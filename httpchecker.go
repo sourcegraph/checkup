@@ -12,14 +12,14 @@ import (
 // HTTPChecker implements a Checker for HTTP endpoints.
 type HTTPChecker struct {
 	// Name is the name of the endpoint.
-	Name string
+	Name string `json:"endpoint_name"`
 
 	// URL is the URL of the endpoint.
-	URL string
+	URL string `json:"endpoint_url"`
 
 	// UpStatus is the HTTP status code expected by
 	// a healthy endpoint. Default is http.StatusOK.
-	UpStatus int
+	UpStatus int `json:"up_status,omitempty"`
 
 	// ThresholdRTT is the maximum round trip time to
 	// allow for a healthy endpoint. If non-zero and a
@@ -27,7 +27,7 @@ type HTTPChecker struct {
 	// endpoint will be considered unhealthy. Note that
 	// this duration includes any in-between network
 	// latency.
-	ThresholdRTT time.Duration
+	ThresholdRTT time.Duration `json:"threshold_rtt,omitempty"`
 
 	// MustContain is a string that the response body
 	// must contain in order to be considered up.
@@ -35,7 +35,7 @@ type HTTPChecker struct {
 	// be consumed, which has the potential of using
 	// lots of memory and slowing down checks if the
 	// response body is large.
-	MustContain string
+	MustContain string `json:"must_contain,omitempty"`
 
 	// MustNotContain is a string that the response
 	// body must NOT contain in order to be considered
@@ -44,11 +44,11 @@ type HTTPChecker struct {
 	// the entire response body will be consumed, which
 	// has the potential of using lots of memory and
 	// slowing down checks if the response body is large.
-	MustNotContain string
+	MustNotContain string `json:"must_not_contain,omitempty"`
 
 	// Attempts is how many requests the client will
 	// make to the endpoint in a single check.
-	Attempts int
+	Attempts int `json:"attempts,omitempty"`
 
 	// Client is the http.Client with which to make
 	// requests. If not set, DefaultHTTPClient is

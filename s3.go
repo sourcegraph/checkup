@@ -15,16 +15,16 @@ import (
 
 // S3 is a way to store checkup results in an S3 bucket.
 type S3 struct {
-	AccessKeyID     string
-	SecretAccessKey string
-	Region          string
-	Bucket          string
+	AccessKeyID     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
+	Region          string `json:"region,omitempty"`
+	Bucket          string `json:"bucket"`
 
 	// Check files older than CheckExpiry will be
 	// deleted on calls to Maintain(). If this is
 	// the zero value, no old check files will be
 	// deleted.
-	CheckExpiry time.Duration
+	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 }
 
 // Store stores results on S3 according to the configuration in s.

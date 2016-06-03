@@ -4,6 +4,8 @@
 package checkup
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"sort"
@@ -17,30 +19,30 @@ import (
 type Checkup struct {
 	// Checkers is the list of Checkers to use with
 	// which to perform checks.
-	Checkers []Checker
+	Checkers []Checker `json:"checkers,omitempty"`
 
 	// ConcurrentChecks is how many checks, at most, to
 	// perform concurrently. Default is
 	// DefaultConcurrentChecks.
-	ConcurrentChecks int
+	ConcurrentChecks int `json:"concurrent_checks,omitempty"`
 
 	// Timestamp is the timestamp to force for all checks.
 	// Useful if wanting to perform distributed check
 	// "at the same time" even if they might actually
 	// be a few milliseconds or seconds apart.
-	Timestamp time.Time
+	Timestamp time.Time `json:"timestamp,omitempty"`
 
 	// Storage is the storage mechanism for saving the
 	// results of checks. Required if calling Store().
 	// If Storage is also a Maintainer, its Maintain()
 	// method will be called by c.CheckAndStore().
-	Storage Storage
+	Storage Storage `json:"storage,omitempty"`
 
 	// Notifier is a notifier that will be passed the
 	// results after checks from all checkers have
 	// completed. Notifier may evaluate and choose to
 	// send a notification of potential problems.
-	Notifier Notifier
+	Notifier Notifier `json:"notifier,omitempty"`
 }
 
 // Check performs the health checks. An error is only
@@ -133,6 +135,171 @@ func (c Checkup) CheckAndStoreEvery(interval time.Duration) *time.Ticker {
 		}
 	}()
 	return ticker
+}
+
+// MarshalJSON marshals c into JSON with type information
+// included on the interface values.
+func (c Checkup) MarshalJSON() ([]byte, error) {
+	// Start with the fields of c that don't require special
+	// handling; unfortunately this has to mimic c's definition.
+	easy := struct {
+		ConcurrentChecks int       `json:"concurrent_checks,omitempty"`
+		Timestamp        time.Time `json:"timestamp,omitempty"`
+	}{
+		ConcurrentChecks: c.ConcurrentChecks,
+		Timestamp:        c.Timestamp,
+	}
+	result, err := json.Marshal(easy)
+	if err != nil {
+		return result, err
+	}
+
+	wrap := func(key string, value []byte) {
+		b := append([]byte{result[0]}, []byte(`"`+key+`":`)...)
+		b = append(b, value...)
+		if len(result) > 2 {
+			b = append(b, ',')
+		}
+		result = append(b, result[1:]...)
+	}
+
+	// Checkers
+	if len(c.Checkers) > 0 {
+		var checkers [][]byte
+		for _, ch := range c.Checkers {
+			chb, err := json.Marshal(ch)
+			if err != nil {
+				return result, err
+			}
+			var typeName string
+			switch ch.(type) {
+			case HTTPChecker:
+				typeName = "http"
+			default:
+				return result, fmt.Errorf("unknown Checker type")
+			}
+			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, typeName, string(chb[1:])))
+			checkers = append(checkers, chb)
+		}
+
+		allCheckers := []byte{'['}
+		allCheckers = append([]byte{'['}, bytes.Join(checkers, []byte(","))...)
+		allCheckers = append(allCheckers, ']')
+		wrap("checkers", allCheckers)
+	}
+
+	// Storage
+	if c.Storage != nil {
+		sb, err := json.Marshal(c.Storage)
+		if err != nil {
+			return result, err
+		}
+		var providerName string
+		switch c.Storage.(type) {
+		case S3:
+			providerName = "s3"
+		default:
+			return result, fmt.Errorf("unknown Storage type")
+		}
+		sb = []byte(fmt.Sprintf(`{"provider":"%s",%s`, providerName, string(sb[1:])))
+		wrap("storage", sb)
+	}
+
+	// Notifier
+	if c.Notifier != nil {
+		nb, err := json.Marshal(c.Notifier)
+		if err != nil {
+			return result, err
+		}
+		var notifierName string
+		switch c.Notifier.(type) {
+		default:
+			return result, fmt.Errorf("unknown Notifier type")
+		}
+		nb = []byte(fmt.Sprintf(`{"name":"%s",%s`, notifierName, string(nb[1:])))
+		wrap("notifier", nb)
+	}
+
+	return result, nil
+}
+
+// UnmarshalJSON unmarshales b into c. To succeed, it
+// requires type information for the interface values.
+func (c *Checkup) UnmarshalJSON(b []byte) error {
+	// Unmarshal as much of b as we can; this requires
+	// a type that doesn't implement json.Unmarshaler,
+	// hence the conversion. We also know that the
+	// interface types will ultimately cause an error,
+	// but we can ignore it because we handle it below.
+	type checkup2 *Checkup
+	json.Unmarshal(b, checkup2(c))
+	c.Checkers = []Checker{} // clean the slate
+
+	// Begin unmarshaling interface values by
+	// collecting the raw JSON
+	raw := struct {
+		Checkers []json.RawMessage `json:"checkers"`
+		Storage  json.RawMessage   `json:"storage"`
+		Notifier json.RawMessage   `json:"notifier"`
+	}{}
+	err := json.Unmarshal([]byte(b), &raw)
+	if err != nil {
+		return err
+	}
+
+	// Then collect the concrete type information
+	types := struct {
+		Checkers []struct {
+			Type string `json:"type"`
+		}
+		Storage struct {
+			Provider string `json:"provider"`
+		}
+		Notifier struct {
+			Name string `json:"name"`
+		}
+	}{}
+	err = json.Unmarshal([]byte(b), &types)
+	if err != nil {
+		return err
+	}
+
+	// Finally, we unmarshal the remaining values using type
+	// assertions with the help of the type information
+	for i, t := range types.Checkers {
+		switch t.Type {
+		case "http":
+			var checker HTTPChecker
+			err = json.Unmarshal(raw.Checkers[i], &checker)
+			if err != nil {
+				return err
+			}
+			c.Checkers = append(c.Checkers, checker)
+		default:
+			return fmt.Errorf("%s: unknown Checker type", t.Type)
+		}
+	}
+	if raw.Storage != nil {
+		switch types.Storage.Provider {
+		case "s3":
+			var storage S3
+			err = json.Unmarshal(raw.Storage, &storage)
+			if err != nil {
+				return err
+			}
+			c.Storage = storage
+		default:
+			return fmt.Errorf("%s: unknown Storage type", types.Storage.Provider)
+		}
+	}
+	if raw.Notifier != nil {
+		switch types.Notifier.Name {
+		default:
+			return fmt.Errorf("%s: unknown Notifier type", types.Notifier.Name)
+		}
+	}
+
+	return nil
 }
 
 // Checker can create a Result.
