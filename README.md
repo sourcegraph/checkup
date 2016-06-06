@@ -120,6 +120,8 @@ $ checkup every 10m
 
 And replace the duration with your own preference. In addition to the regular `time.ParseDuration()` formats, you can use shortcuts like `second`, `minute`, `hour`, `day`, or `week`.
 
+You can also get some help using the `-h` option for any command or subcommand.
+
 
 ### Posting status messages
 
@@ -192,12 +194,11 @@ This sample checks 2 endpoints (HTTP and HTTPS). Each check consists of 5 attemp
 Then, to run checks every 10 minutes:
 
 ```go
-wait := make(chan struct{})
 c.CheckAndStoreEvery(10 * time.Minute)
-<-wait
+select {}
 ```
 
-The channel is only used to block forever, but your actual use case may be different. `CheckAndStoreEvery()` returns a `time.Ticker` that you can stop, but in this case we just want it to run forever.
+`CheckAndStoreEvery()` returns a `time.Ticker` that you can stop, but in this case we just want it to run forever, so we block forever using an empty `select`.
 
 
 ### Using Go to post status messages
@@ -228,7 +229,7 @@ Of course, real status messages should be as descriptive as possible. You can us
 
 Uh oh, having some fires? 🔥 You can create a type that implements `checkup.Notifier`. Checkup will invoke `Notify()` after every check, where you can evaluate the results and decide if and how you want to send a notification or trigger some event.
 
-### Other kinds of checks or storage providers
+#### Other kinds of checks or storage providers
 
 Need to check more than HTTP? S3 too Amazony for you? You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
 
