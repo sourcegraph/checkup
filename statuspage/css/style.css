@@ -147,6 +147,10 @@ main {
 	padding-bottom: 20px;
 }
 
+.chart-title {
+	font-weight: bold;
+}
+
 svg {
   font: 10px sans-serif;
   max-width: 100%; /* thanks for nothin, Safari */
