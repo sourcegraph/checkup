@@ -70,6 +70,11 @@ func (s S3) Maintain() error {
 
 		var objsToDelete []*s3.ObjectIdentifier
 		for _, o := range listResp.Contents {
+			if o == nil || o.LastModified == nil {
+				continue
+			}
+			// TODO: This next line panicked once with nil ptr deref. Why?
+			// (at the time we did not have the if statement above checking for nils)
 			if time.Since(*o.LastModified) > s.CheckExpiry {
 				objsToDelete = append(objsToDelete, &s3.ObjectIdentifier{Key: o.Key})
 			}

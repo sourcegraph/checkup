@@ -64,12 +64,27 @@ Save this file as `config.json` in your working directory.
 
 ### Setting up storage on S3
 
-The easiest way to do this is to create an IAM user that has these two privileges:
+The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
 
 - arn:aws:iam::aws:policy/**IAMFullAccess**
 - arn:aws:iam::aws:policy/**AmazonS3FullAccess**
 
-Keep its credentials secret, but export the following information to environment variables and run the provisioning command:
+##### Implicit Provisioning
+
+If you give these permissions to the same user as with the credentials in your JSON config above, then you can simply run:
+
+```bash
+$ checkup provision
+```
+
+and checkup will read the config file and provision S3 for you. If the user is different, you may want to use explicit provisioning instead.
+
+This command creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files. The credentials of the new user are printed to your screen. **Make note of the Public Access Key ID and Public Access Key!** You won't be able to see them again.
+
+
+##### Explicit Provisioning
+
+If you do not prefer implicit provisioning using your checkup.json file, do this instead. Export the information to environment variables and run the provisioning command:
 
 ```bash
 $ export AWS_ACCESS_KEY_ID=...
@@ -77,8 +92,6 @@ $ export AWS_SECRET_ACCESS_KEY=...
 $ export AWS_BUCKET_NAME=...
 $ checkup provision s3
 ```
-
-This command creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files. The credentials of the new user are printed to your screen. **Make note of the Public Access Key ID and Public Access Key!** You won't be able to see them again.
 
 
 ### Setting up the status page
