@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Immediately begin downloading check files, and keep page updated 
 checkup.storage.getChecksWithin(checkup.config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 setInterval(function() {
-	checkup.storage.getChecksWithin(checkup.config.refresh_interval * time.Second, processNewCheckFile, allCheckFilesLoaded);
+	checkup.storage.getNewChecks(processNewCheckFile, allCheckFilesLoaded);
 }, checkup.config.refresh_interval * 1000);
 
 // Update "time ago" tags every so often
@@ -39,6 +39,16 @@ setInterval(function() {
 function processNewCheckFile(json, filename) {
 	checkup.checks.push(json);
 
+	// update the timestamp of the last check file's timestamp
+	var dashLoc = filename.indexOf("-");
+	if (dashLoc > 0) {
+		var checkTs = Number(filename.substr(0, dashLoc));
+		if (checkTs > checkup.lastCheckTs) {
+			checkup.lastCheckTs = checkTs;
+		}
+	}
+
+	// iterate each result and store/process it
 	for (var j = 0; j < json.length; j++) {
 		var result = json[j];
 
@@ -75,9 +85,9 @@ function processNewCheckFile(json, filename) {
 			});
 		}
 
-		if (!checkup.lastCheck || ts > checkup.lastCheck) {
-			checkup.lastCheck = ts;
-			checkup.dom.lastcheck.innerHTML = checkup.makeTimeTag(checkup.lastCheck)+" ago";
+		if (!checkup.lastResultTs || ts > checkup.lastResultTs) {
+			checkup.lastResultTs = ts;
+			checkup.dom.lastcheck.innerHTML = checkup.makeTimeTag(checkup.lastResultTs)+" ago";
 		}
 	}
 

@@ -148,8 +148,13 @@ checkup.animDuration = 150;
 // Quick, reusable access to DOM elements; populated after DOM loads
 checkup.dom = {};
 
-// Timestamp of the last check, as a Date() object.
-checkup.lastCheck = null;
+// Timestamp of the last result, (taken from the 'timestamp' field
+// of JSON) as a Date() object.
+checkup.lastResultTs = null;
+
+// Timestamp of the last check (taken from the first part of the
+// check file name).
+checkup.lastCheckTs = null;
 
 checkup.makeChart = function(title) {
 	var chart = {

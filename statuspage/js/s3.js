@@ -69,17 +69,29 @@ checkup.storage = (function() {
 				doneCallback(checksLoaded);
 			} else {
 				for (var i = 0; i < list.length; i++) {
-					checkup.getJSON("https://s3.amazonaws.com/"+bucketName+"/"+list[i], function(json, url) {
-						checksLoaded++;
-						resultsLoaded += json.length;
-						if (typeof fileCallback === 'function')
-							fileCallback(json, list[i]);
-						if (checksLoaded >= list.length && (typeof doneCallback === 'function'))
-							doneCallback(checksLoaded, resultsLoaded);
-					});
+					checkup.getJSON("https://s3.amazonaws.com/"+bucketName+"/"+list[i], function(filename) {
+						return function(json, url) {
+							checksLoaded++;
+							resultsLoaded += json.length;
+							if (typeof fileCallback === 'function')
+								fileCallback(json, filename);
+							if (checksLoaded >= list.length && (typeof doneCallback === 'function'))
+								doneCallback(checksLoaded, resultsLoaded);
+						};
+					}(list[i]));
 				}
 			}
 		});
+	};
+
+	// getNewChecks gets any checks since the timestamp on the file name
+	// of the youngest check file that has been downloaded. If no check
+	// files have been downloaded, no new check files will be loaded.
+	this.getNewChecks = function(fileCallback, doneCallback) {
+		if (!checkup.lastCheckTs == null)
+			return;
+		var timeframe = time.Now() - checkup.lastCheckTs;
+		return this.getChecksWithin(timeframe, fileCallback, doneCallback);
 	};
 
 	return this;
