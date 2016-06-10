@@ -69,7 +69,7 @@ The easiest way to do this is to give an IAM user these two privileges (keep the
 - arn:aws:iam::aws:policy/**IAMFullAccess**
 - arn:aws:iam::aws:policy/**AmazonS3FullAccess**
 
-##### Implicit Provisioning
+#### Implicit Provisioning
 
 If you give these permissions to the same user as with the credentials in your JSON config above, then you can simply run:
 
@@ -82,7 +82,7 @@ and checkup will read the config file and provision S3 for you. If the user is d
 This command creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files. The credentials of the new user are printed to your screen. **Make note of the Public Access Key ID and Public Access Key!** You won't be able to see them again.
 
 
-##### Explicit Provisioning
+#### Explicit Provisioning
 
 If you do not prefer implicit provisioning using your checkup.json file, do this instead. Export the information to environment variables and run the provisioning command:
 
@@ -175,7 +175,7 @@ info, err := storage.Provision()
 if err != nil {
 	log.Fatal(err)
 }
-fmt.Printf("%+v\n", info) // don't lose this output!
+fmt.Println(info) // don't lose this output!
 ```
 
 This method creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files. The credentials of the new user are printed to your screen. **Make note of the PublicAccessKeyID and PublicAccessKey!** You won't be able to see them again.

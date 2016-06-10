@@ -354,6 +354,7 @@ func GenerateFilename() *string {
 // Result is the result of a health check.
 type Result struct {
 	// Title is the title (or name) of the thing that was checked.
+	// It should be unique, as it acts like an identifier to users.
 	Title string `json:"title,omitempty"`
 
 	// Endpoint is the URL/address/path/identifier/locator/whatever
@@ -413,6 +414,20 @@ func (r Result) ComputeStats() Stats {
 
 	s.Mean = time.Duration(int64(s.Total) / int64(len(r.Times)))
 
+	return s
+}
+
+// String returns a human-readable rendering of r.
+func (r Result) String() string {
+	stats := r.ComputeStats()
+	s := fmt.Sprintf("== %s - %s\n", r.Title, r.Endpoint)
+	s += fmt.Sprintf("  Threshold: %s\n", r.ThresholdRTT)
+	s += fmt.Sprintf("        Max: %s\n", stats.Max)
+	s += fmt.Sprintf("        Min: %s\n", stats.Min)
+	s += fmt.Sprintf("     Median: %s\n", stats.Median)
+	s += fmt.Sprintf("       Mean: %s\n", stats.Mean)
+	s += fmt.Sprintf("        All: %v\n", r.Times)
+	s += fmt.Sprintf(" Assessment: %v\n", r.Status())
 	return s
 }
 
@@ -543,4 +558,18 @@ type ProvisionInfo struct {
 	// expect this value to be made public. (It should provide
 	// read-only access to the checks.)
 	PublicAccessKey string `json:"public_access_key"`
+}
+
+// String returns the information in i in a human-readable format
+// along with an important notice.
+func (i ProvisionInfo) String() string {
+	s := "Provision successful\n\n"
+	s += fmt.Sprintf("             User ID: %s\n", i.UserID)
+	s += fmt.Sprintf("            Username: %s\n", i.Username)
+	s += fmt.Sprintf("Public Access Key ID: %s\n", i.PublicAccessKeyID)
+	s += fmt.Sprintf("   Public Access Key: %s\n\n", i.PublicAccessKey)
+	s += `IMPORTANT: Copy the Public Access Key ID and Public Access
+Key into the config.js file for your status page. You will
+not be shown these credentials again.`
+	return s
 }

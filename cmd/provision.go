@@ -65,14 +65,7 @@ s3
 			log.Fatal(err)
 		}
 
-		fmt.Printf("Provision successful\n\n")
-		fmt.Printf("             User ID: %s\n", info.UserID)
-		fmt.Printf("            Username: %s\n", info.Username)
-		fmt.Printf("Public Access Key ID: %s\n", info.PublicAccessKeyID)
-		fmt.Printf("   Public Access Key: %s\n\n", info.PublicAccessKey)
-		fmt.Println(`IMPORTANT: Copy the Public Access Key ID and Public Access
-Key into the config.js file for your status page. You will
-not be shown these credentials again.`)
+		fmt.Println(info)
 	},
 }
 

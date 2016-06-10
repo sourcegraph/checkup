@@ -53,15 +53,7 @@ store the results of the check, use --store.`,
 		}
 
 		for _, result := range results {
-			stats := result.ComputeStats()
-			fmt.Printf("== %s - %s\n", result.Title, result.Endpoint)
-			fmt.Printf("  Threshold: %s\n", result.ThresholdRTT)
-			fmt.Printf("        Max: %s\n", stats.Max)
-			fmt.Printf("        Min: %s\n", stats.Min)
-			fmt.Printf("     Median: %s\n", stats.Median)
-			fmt.Printf("       Mean: %s\n", stats.Mean)
-			fmt.Printf("        All: %v\n", result.Times)
-			fmt.Printf(" Assessment: %v\n\n", result.Status())
+			fmt.Println(result)
 		}
 	},
 }
