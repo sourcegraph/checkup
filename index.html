@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Checkup</title>
+		<meta charset="utf-8">
+		<link rel="icon" type="image/png" href="/resources/images/favicon.png">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:300,400,700">
+		<link rel="stylesheet" href="/resources/css/style.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="theme-color" content="#2D6F96">
+	</head>
+	<body>
+		<header>
+			<img src="/resources/images/checkup-white.png" alt="Checkup" class="logo">
+		</header>
+
+		<section>
+			<h1>
+				Distributed, lock-free, self-hosted <b>health checks</b> and <b>status pages</b>
+			</h1>
+		</section>
+
+		<img src="/resources/images/checkup-screenshot.png" alt="Checkup Status Page Screenshot" class="screenshot">
+
+		<section class="blue screenshot-area">
+			<div class="buttons">
+				<a href="https://github.com/sourcegraph/checkup/releases/latest">Download</a>
+				<a href="https://github.com/sourcegraph/checkup">GitHub</a>
+			</div>
+		</section>
+
+		<section>
+			<h2>Features</h2>
+			<div class="features">
+				<div class="feature">
+					<h3>Cross-platform</h3>
+					<p>
+						Checkup runs on Linux, Mac, Linux, BSD, and Solaris without any external dependencies. Also embeddable in any Go programs.
+					</p>
+				</div>
+				<div class="feature">
+					<h3>Highly Configurable</h3>
+					<p>
+						Checkup loads everything it needs from your <b>checkup.json</b> file: endpoints, storage credentials, and health criteria.
+					</p>
+				</div>
+				<div class="feature">
+					<h3>Idiomatic Go Package</h3>
+					<p>
+						Import the <code>checkup</code> package for total control over your health checks, including custom check types, notifications, and storage providers.
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="gray">
+			<h2>How to Use</h2>
+
+			<p class="subheading">
+				Checkup's CLI is beautifully symmetric to its Go API.
+			</p>
+
+			<div class="symmetry">
+				<div class="go"><b>// configure checkup</b>
+c := checkup.Checkup{
+    Checkers: []checkup.Checker{
+        checkup.HTTPChecker{
+            Name:     "Website",
+            URL:      "http://www.example.com",
+            Attempts: 5,
+        },
+    },
+    Storage: checkup.S3{
+        AccessKeyID:     "&lt;yours&gt;",
+        SecretAccessKey: "&lt;yours&gt;",
+        Bucket:          "&lt;yours&gt;",
+    },
+}
+
+
+
+
+<b>// provisioning need only happen once</b>
+info, err := c.Storage.Provision()
+if err != nil {
+	return err
+}
+
+<b>// save this info and put it in the
+// config of your status page</b>
+fmt.Println(info)
+
+
+
+
+
+
+
+<b>// perform a checkup</b>
+results, err := c.Check()
+if err != nil {
+	return err
+}
+for _, result := range results {
+	fmt.Println(result)
+}
+
+
+
+
+
+<b>// post a status update</b>
+results[0].Message = "We're investigating connectivity issues."
+err = c.Storage.Store(results)
+if err != nil {
+	return err
+}
+
+
+
+
+<b>// perform a check and store results</b>
+err = c.CheckAndStore()
+if err != nil {
+	return err
+}
+
+
+
+
+<b>// perform checks every 10 minutes</b>
+c.CheckAndStoreEvery(10 * time.Minute)
+</div>
+			<div class="cli"><b>$ cat checkup.json</b>
+{
+    "checkers": [{
+        "type": "http",
+        "endpoint_name": "Website",
+        "endpoint_url": "http://www.example.com",
+        "attempts": 5
+    }],
+    "storage": {
+        "provider": "s3",
+        "access_key_id": "&lt;yours&gt;",
+        "secret_access_key": "&lt;yours&gt;",
+        "bucket": "&lt;yours&gt;"
+    }
+}
+
+
+
+
+
+<b>$ checkup provision</b>
+One sec...
+Provision successful
+
+             User ID: AKIAJDUI7LNDMABCDZZZZ
+            Username: checkup-monitor-s3-public
+Public Access Key ID: AKIAJDXYIQOXABCDZZZZ
+   Public Access Key: ndGU+iHdgsozx8Qco23Bpf6rFtiYfFXRmRfoob4
+
+IMPORTANT: Copy the Public Access Key ID and Public Access
+Key into the config.js file for your status page. You will
+not be shown these credentials again.
+
+
+
+
+<b>$ checkup</b>
+== Website - http://www.example.com
+  Threshold: 0
+        Max: 136.296933ms
+        Min: 37.716659ms
+     Median: 51.626374ms
+       Mean: 65.212206ms
+        All: [{54.489828ms } {45.93124ms } {51.626374ms } {136.296933ms } {37.716659ms }]
+ Assessment: healthy
+
+
+
+
+<b>$ checkup message --about=Website "We're fixing it."</b>
+Message posted
+
+
+
+
+
+
+
+
+<b>$ checkup --store</b>
+
+
+
+
+
+
+
+
+<b>$ checkup every 10m</b>
+^C
+</div>
+			</div>
+
+			<div class="buttons">
+				<a href="https://github.com/sourcegraph/checkup/releases/latest">Download</a>
+				<a href="https://github.com/sourcegraph/checkup">GitHub</a>
+			</div>
+
+		</section>
+
+		<footer>
+			&copy; 2016 Sourcegraph
+		</footer>
+
+	</body>
+</html>
