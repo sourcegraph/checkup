@@ -65,7 +65,7 @@ section.black {
 .buttons a {
 	text-decoration: none;
 	padding: 15px 40px;
-	margin: 0 20px;
+	margin: 10px 20px;
 	font-size: 125%;
 	display: inline-block;
 	color: #000;
@@ -104,6 +104,7 @@ p.subheading {
 	font-size: 115%;
 	max-width: 600px;
 	margin: 2em auto;
+	padding: 0 2em;
 	text-align: center;
 }
 
@@ -172,4 +173,33 @@ footer {
 	text-align: center;
 	color: #888;
 	padding: 75px;
+}
+
+
+@media (max-width: 900px) {
+	.screenshot {
+		max-width: 100%;
+	}
+}
+
+@media (max-width: 700px) {
+	header {
+		padding-top: 50px;
+	}
+
+	h1 {
+		font-size: 200%;
+	}
+
+	.features {
+		flex-direction: column;
+	}
+
+	.feature {
+		width: auto;
+	}
+
+	.feature:not(:first-child) {
+		margin-top: 2em;
+	}
 }
