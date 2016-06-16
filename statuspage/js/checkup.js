@@ -112,7 +112,6 @@ checkup.unixNanoToD3Timestamp = function(unixNanoTimestamp) {
 	return new Date(unixNanoTimestamp * 1e-6);
 };
 
-// TODO: replace class color names with status names so we don't have to map like this?
 // Maps status names to their associated color class.
 checkup.color = {healthy: "green", degraded: "yellow", down: "red"};
 

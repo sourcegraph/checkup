@@ -117,8 +117,6 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 	for (var i = checkup.orderedResults.length-numResultsLoaded; i < checkup.orderedResults.length; i++) {
 		var result = checkup.orderedResults[i];
 
-		// TODO: Change status to a single field in the results struct?
-		// Could make processing here a bit easier...
 		var status = "healthy";
 		if (result.degraded) status = "degraded";
 		else if (result.down) status = "down";
@@ -184,7 +182,7 @@ function allCheckFilesLoaded(numChecksLoaded, numResultsLoaded) {
 		if (e.message) {
 			evtElem.classList.add("message");
 			evtElem.innerHTML = '<div class="message-head">'+checkup.makeTimeTag(e.result.timestamp*1e-6)+' ago</div>';
-			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>'; // TODO: Sanitize?
+			evtElem.innerHTML += '<div class="message-body">'+e.message+'</div>';
 		} else {
 			evtElem.classList.add("event");
 			evtElem.innerHTML = '<span class="time">'+renderTime(e.result.timestamp)+'</span> '+e.result.title+" "+e.status;
@@ -421,7 +419,6 @@ function renderChart(chart) {
 	chart.yScale = d3.scale.linear()
 		.range([chart.height, 0]);
 
-	// TODO: Do we need closures here to preserve reference to the correct chart?
 	chart.line = d3.svg.line()
 		.x(function(d) { return chart.xScale(d.timestamp); })
 		.y(function(d) { return chart.yScale(d.rtt); })
