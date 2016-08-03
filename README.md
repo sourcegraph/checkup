@@ -6,7 +6,7 @@
 
 **It features an elegant, minimalistic CLI and an idiomatic Go library. They are completely interoperable and their configuration is beautifully symmetric.**
 
-This is a new tool. Please use liberally with discretion and report any bugzies!
+This tool is a WIP. Please use liberally with discretion and report any bugzies!
 
 
 ## Intro
@@ -61,7 +61,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 }
 ```
 
-For the complete structure you may configure, please see [the godoc](https://godoc.org/github.com/sourcegraph/checkup).
+**For the complete structure definition, please see [the godoc](https://godoc.org/github.com/sourcegraph/checkup).** There are many elements of checkers and storage you may wish to customize!
 
 Save this file as `config.json` in your working directory.
 

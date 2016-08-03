@@ -119,7 +119,7 @@ func (s *s3Mock) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error
 func (s *s3Mock) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput, error) {
 	return &s3.ListObjectsOutput{
 		Contents: []*s3.Object{
-			&s3.Object{
+			{
 				Key:          aws.String("foobar"),
 				LastModified: new(time.Time),
 			},
