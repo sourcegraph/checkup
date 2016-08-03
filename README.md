@@ -1,10 +1,12 @@
 <img src="https://i.imgur.com/UWhSoQj.png" width="450" alt="Checkup">
 
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/sourcegraph/checkup)
+
 **Checkup is distributed, lock-free, self-hosted health checks and status pages, written in Go.**
 
 **It features an elegant, minimalistic CLI and an idiomatic Go library. They are completely interoperable and their configuration is beautifully symmetric.**
 
-This is a _new, cool tool_. Please use liberally with discretion and report any bugzies!
+This is a new tool. Please use liberally with discretion and report any bugzies!
 
 
 ## Intro
@@ -30,6 +32,10 @@ There are 3 components:
 
 
 ## Quick Start
+
+```bash
+$ checkup --help
+```
 
 Follow these instructions to get started quickly with Checkup.
 
@@ -100,7 +106,7 @@ In statuspage/js, use the contents of [config_template.js](https://github.com/so
 
 Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
 
-As you perform checks, the status page will update every so often with the latest results.
+As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
 
 
 ### Performing checks
