@@ -69,6 +69,18 @@ section.black {
 	font-size: 125%;
 	display: inline-block;
 	color: #000;
+	background-color: white;
+}
+
+.buttons a.primary,
+.buttons a.primary,
+section.black .buttons a.primary,
+section.blue .buttons a.primary {
+	background-color: #36D443;
+	color: white;
+	padding: 30px 100px;
+	font-size: 150%;
+	font-weight: bold;
 }
 
 section.black .buttons a,
@@ -79,6 +91,7 @@ section.blue .buttons a {
 section.black .buttons a:hover,
 section.blue .buttons a:hover {
 	background-color: rgba(255, 255, 255, .8);
+	color: black;
 }
 
 section.gray .buttons a {
