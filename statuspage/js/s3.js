@@ -18,7 +18,7 @@ requestUri:"/{Bucket}?versioning"},input:{type:"structure",required:["Bucket","V
 var checkup = checkup || {};
 
 checkup.storage = (function() {
-	var bucket, bucketName;
+	var bucket, bucketName, region;
 
 	// getCheckFileList gets the list of check files within
 	// the given timeframe (as a unit of nanoseconds) to
@@ -58,6 +58,7 @@ checkup.storage = (function() {
 			}
 		});
 		bucketName = cfg.BucketName;
+		region = cfg.Region;
 	};
 
 	// getChecksWithin gets all the checks within timeframe as a unit
@@ -69,7 +70,13 @@ checkup.storage = (function() {
 				doneCallback(checksLoaded);
 			} else {
 				for (var i = 0; i < list.length; i++) {
-					checkup.getJSON("https://s3.amazonaws.com/"+bucketName+"/"+list[i], function(filename) {
+					let url;
+					if (region && region !== "" && region !== "us-east-1") {
+						url = "https://s3-"+region+".amazonaws.com/"+bucketName+"/"+list[i];
+					} else {
+						url = "https://s3.amazonaws.com/"+bucketName+"/"+list[i];
+					}
+					checkup.getJSON(url, function(filename) {
 						return function(json, url) {
 							checksLoaded++;
 							resultsLoaded += json.length;
