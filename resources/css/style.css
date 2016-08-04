@@ -57,6 +57,11 @@ section.black {
 	background-color: #2E2E2E;
 }
 
+.social {
+	padding: 20px 0;
+	text-align: center;
+}
+
 .buttons {
 	text-align: center;
 	padding-top: 40px;
