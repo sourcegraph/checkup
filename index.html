@@ -14,14 +14,18 @@
 	</head>
 	<body>
 		<header>
-			<img src="resources/images/checkup-white.png" alt="Checkup" class="logo">
+			<img src="resources/images/checkup-white.png" alt="Checkup" class="logo"><br>
+			by <a href="https://sourcegraph.com"><img src="resources/images/sourcegraph-logo.svg" alt="Sourcegraph" class="logo-sg"></a>
 		</header>
 
 		<section>
 			<h1>
-				<b>Simple</b><br>
-				distributed, lock-free, self-hosted <b>health checks</b> and <b>status pages</b>
+				Simple uptime monitoring
 			</h1>
+			<h2 class="header">
+				distributed, self-hosted<br>
+				health checks and status pages
+			</h2>
 		</section>
 
 		<img src="resources/images/checkup-screenshot.png" alt="Checkup Status Page Screenshot" class="screenshot">
@@ -50,7 +54,7 @@
 				<div class="feature">
 					<h3>Easily Configurable</h3>
 					<p>
-						No more fiddling with slow, complex UIs. Checkup loads everything it needs from your <b>checkup.json</b> file: endpoints, storage credentials, and health criteria.
+						No more fiddling with slow, complex UIs. Checkup loads everything it needs from your <code>checkup.json</code> file: endpoints, storage credentials, and health criteria.
 					</p>
 				</div>
 				<div class="feature">
@@ -63,10 +67,10 @@
 		</section>
 
 		<section class="gray">
-			<h2>How to Use</h2>
+			<h2>How to use</h2>
 
 			<p class="subheading">
-				Checkup's CLI is beautifully symmetric to its Go API.
+				Define checks in <code>checkup.json</code> or Go code. Checkup's CLI is beautifully symmetric to its Go API.
 			</p>
 
 			<div class="symmetry">

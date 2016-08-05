@@ -21,6 +21,12 @@ header {
 	margin: 0 auto;
 }
 
+.logo-sg {
+	height: 1em;
+	display: inline-block;
+	vertical-align: text-bottom;
+}
+
 section {
 	padding: 75px 20px;
 	position: relative;
@@ -28,11 +34,21 @@ section {
 }
 
 h1 {
-	font-size: 250%;
+	font-size: 350%;
 	text-align: center;
 	color: #2D6F96;
 	font-weight: 300;
-	max-width: 600px;
+	max-width: 700px;
+	margin: 0 auto;
+	line-height: 1.5em;
+}
+
+h2.header {
+	font-size: 200%;
+	text-align: center;
+	color: #2D6F96;
+	font-weight: 300;
+	max-width: 700px;
 	margin: 0 auto;
 	line-height: 1.5em;
 }
@@ -83,7 +99,7 @@ section.black .buttons a.primary,
 section.blue .buttons a.primary {
 	background-color: #36D443;
 	color: white;
-	padding: 30px 100px;
+	padding: 30px 120px;
 	font-size: 150%;
 	font-weight: bold;
 }
@@ -208,6 +224,10 @@ footer {
 	h1 {
 		font-size: 200%;
 	}
+
+        h2.header {
+            font-size: 150%;
+        }
 
 	.features {
 		flex-direction: column;
