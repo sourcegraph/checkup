@@ -1,9 +1,10 @@
 # How to Contribute
 
-Sourcegraph projects are [MIT licensed](LICENSE) and accept contributions
-via GitHub pull requests. This document outlines some of the conventions on
-development workflow, commit message formatting, contact points and other
-resources to make it easier to get your contribution accepted.
+This Sourcegraph project is [MIT licensed](LICENSE) and accepts
+contributions via GitHub pull requests. This document outlines some of
+the conventions on development workflow, commit message formatting,
+contact points and other resources to make it easier to get your
+contribution accepted.
 
 # Certificate of Origin
 
