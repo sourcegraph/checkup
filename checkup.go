@@ -279,8 +279,6 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			c.Checkers = append(c.Checkers, checker)
 		case "tcp":
 			var checker TCPChecker
-			// Default timeout
-			checker.Timeout = 1 * time.Second
 			err = json.Unmarshal(raw.Checkers[i], &checker)
 			if err != nil {
 				return err

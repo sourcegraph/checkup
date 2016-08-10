@@ -64,6 +64,11 @@ func (c TCPChecker) doChecks() Attempts {
 	var err error
 	var conn net.Conn
 
+	timeout := c.Timeout
+	if timeout == 0 {
+		timeout = 1 * time.Second
+	}
+
 	checks := make(Attempts, c.Attempts)
 	for i := 0; i < c.Attempts; i++ {
 		start := time.Now()
@@ -71,7 +76,7 @@ func (c TCPChecker) doChecks() Attempts {
 		if c.TLSEnabled {
 			// Dialer with timeout
 			dialer := &net.Dialer{
-				Timeout: c.Timeout,
+				Timeout: timeout,
 			}
 
 			// TLS config based on configuration
