@@ -166,7 +166,7 @@ func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
 	testName := "TestWithTLSNoVerify"
-	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, Attempts: 2}
+	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSSkipVerify: true, Attempts: 2}
 
 	// Try an up server
 	result, err := hc.Check()
@@ -270,7 +270,7 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
 	testName := "TestWithTLSNoVerify"
-	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSVerify: true, TLSCAfile: "certs/ca.pem", Attempts: 2}
+	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSCAfile: "certs/ca.pem", Attempts: 2}
 
 	// Try an up server
 	result, err := hc.Check()
@@ -374,7 +374,7 @@ func TestTCPCheckerWithTLSVerifyError(t *testing.T) {
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
 	testName := "TestWithTLSVerifyError"
-	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSVerify: true, Attempts: 2}
+	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, Attempts: 2}
 
 	// Try an up server
 	result, err := hc.Check()

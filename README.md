@@ -73,7 +73,6 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"attempts": 5,
 		"timeout": "2s",
 		"tls": true,
-		"tls_verify": true,
 		"tls_cafile": "certs/ca.pem"
 	},
 	{
@@ -83,7 +82,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"attempts": 5,
 		"timeout": "2s",
 		"tls": true,
-		"tls_verify": false
+		"tls_skip_verify": true
 	}],
 	"storage": {
 		"provider": "s3",
@@ -232,7 +231,7 @@ c := checkup.Checkup{
 		checkup.HTTPChecker{Name: "Example (HTTPS)", URL: "https://www.example.com", Attempts: 5},
 		checkup.TCPChecker{Name:  "Example (TCP)", URL:  "www.example.com:80", Attempts: 5},
 		checkup.TCPChecker{Name:  "Example (TCP SSL)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true},
-		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSVerify: false},
+		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSSkipVerify: true},
 	},
 	Storage: checkup.S3{
 		AccessKeyID:     "<yours>",

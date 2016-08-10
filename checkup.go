@@ -281,8 +281,6 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			var checker TCPChecker
 			// Default timeout
 			checker.Timeout = 1 * time.Second
-			// Default TLS verification policy
-			checker.TLSVerify = true
 			err = json.Unmarshal(raw.Checkers[i], &checker)
 			if err != nil {
 				return err

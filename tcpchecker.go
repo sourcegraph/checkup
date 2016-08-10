@@ -21,9 +21,9 @@ type TCPChecker struct {
 	// If set, TLS is enabled.
 	TLSEnabled bool `json:"tls,omitempty"`
 
-	// TLSVerify controls whether to validate server
-	// TLS certificate or not.
-	TLSVerify bool `json:"tls_verify,omitempty"`
+	// TLSSkipVerify controls whether to skip server TLS
+	// certificat validation or not.
+	TLSSkipVerify bool `json:"tls_skip_verify,omitempty"`
 
 	// TLSCAfile is the Certificate Authority used
 	// to validate the server TLS certificate.
@@ -74,7 +74,7 @@ func (c TCPChecker) doChecks() Attempts {
 
 			// TLS config based on configuration
 			var tlsConfig tls.Config
-			tlsConfig.InsecureSkipVerify = !c.TLSVerify
+			tlsConfig.InsecureSkipVerify = c.TLSSkipVerify
 			if c.TLSCAfile != "" {
 				rootPEM, err := ioutil.ReadFile(c.TLSCAfile)
 				if err != nil || rootPEM == nil {
