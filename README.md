@@ -16,6 +16,7 @@ Checkup can be customized to check up on any of your sites or services at any ti
 Out of the box, Checkup currently supports:
 
 - Checking HTTP endpoints
+- Checking TCP endpoints (TLS supported)
 - Storing results on S3
 - Viewing results on a status page that is mobile-responsive and 100% static
 
@@ -48,9 +49,41 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 {
 	"checkers": [{
 		"type": "http",
-		"endpoint_name": "Example",
+		"endpoint_name": "Example HTTP",
 		"endpoint_url": "http://www.example.com",
 		"attempts": 5
+	},
+	{
+		"type": "tcp",
+		"endpoint_name": "Example TCP",
+		"endpoint_url": "example.com:80",
+		"attempts": 5
+	},
+	{
+		"type": "tcp",
+		"endpoint_name": "Example TCP with TLS enabled and a valid certificate chain",
+		"endpoint_url": "example.com:443",
+		"attempts": 5,
+		"tls": true
+	},
+	{
+		"type": "tcp",
+		"endpoint_name": "Example TCP with TLS enabled and a self-signed certificate chain",
+		"endpoint_url": "example.com:8443",
+		"attempts": 5,
+		"timeout": "2s",
+		"tls": true,
+		"tls_verify": true,
+		"tls_cafile": "certs/ca.pem"
+	},
+	{
+		"type": "tcp",
+		"endpoint_name": "Example TCP with TLS enabled and verification disabled",
+		"endpoint_url": "example.com:8443",
+		"attempts": 5,
+		"timeout": "2s",
+		"tls": true,
+		"tls_verify": false
 	}],
 	"storage": {
 		"provider": "s3",
@@ -197,6 +230,9 @@ c := checkup.Checkup{
 	Checkers: []checkup.Checker{
 		checkup.HTTPChecker{Name: "Example (HTTP)", URL: "http://www.example.com", Attempts: 5},
 		checkup.HTTPChecker{Name: "Example (HTTPS)", URL: "https://www.example.com", Attempts: 5},
+		checkup.TCPChecker{Name:  "Example (TCP)", URL:  "www.example.com:80", Attempts: 5},
+		checkup.TCPChecker{Name:  "Example (TCP SSL)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true},
+		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSVerify: false},
 	},
 	Storage: checkup.S3{
 		AccessKeyID:     "<yours>",
