@@ -136,7 +136,7 @@ func TestTCPCheckerWithAgressiveTimeout(t *testing.T) {
 
 func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("certs/server.pem", "certs/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}
@@ -240,7 +240,7 @@ func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 
 func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("certs/server.pem", "certs/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}
@@ -270,7 +270,7 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
 	testName := "TestWithTLSNoVerify"
-	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSCAFile: "certs/ca.pem", Attempts: 2}
+	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSCAFile: "testdata/ca.pem", Attempts: 2}
 
 	// Try an up server
 	result, err := hc.Check()
@@ -344,7 +344,7 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 
 func TestTCPCheckerWithTLSVerifyError(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("certs/server.pem", "certs/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}
