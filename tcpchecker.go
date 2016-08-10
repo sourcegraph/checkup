@@ -25,9 +25,9 @@ type TCPChecker struct {
 	// certificat validation or not.
 	TLSSkipVerify bool `json:"tls_skip_verify,omitempty"`
 
-	// TLSCAfile is the Certificate Authority used
+	// TLSCAFile is the Certificate Authority used
 	// to validate the server TLS certificate.
-	TLSCAfile string `json:"tls_cafile,omitempty"`
+	TLSCAFile string `json:"tls_ca_file,omitempty"`
 
 	// Timeout is the maximum time to wait for a
 	// TCP connection to be established.
@@ -77,8 +77,8 @@ func (c TCPChecker) doChecks() Attempts {
 			// TLS config based on configuration
 			var tlsConfig tls.Config
 			tlsConfig.InsecureSkipVerify = c.TLSSkipVerify
-			if c.TLSCAfile != "" {
-				rootPEM, err := ioutil.ReadFile(c.TLSCAfile)
+			if c.TLSCAFile != "" {
+				rootPEM, err := ioutil.ReadFile(c.TLSCAFile)
 				if err != nil || rootPEM == nil {
 					checks[i].Error = "failed to read root certificate"
 				}
