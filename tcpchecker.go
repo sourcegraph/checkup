@@ -62,6 +62,8 @@ func (c TCPChecker) Check() (Result, error) {
 // doChecks executes and returns each attempt.
 func (c TCPChecker) doChecks() Attempts {
 	var err error
+	var conn net.Conn
+
 	checks := make(Attempts, c.Attempts)
 	for i := 0; i < c.Attempts; i++ {
 		start := time.Now()
@@ -87,9 +89,13 @@ func (c TCPChecker) doChecks() Attempts {
 				}
 				tlsConfig.RootCAs = pool
 			}
-			_, err = tls.DialWithDialer(dialer, "tcp", c.URL, &tlsConfig)
+			if conn, err = tls.DialWithDialer(dialer, "tcp", c.URL, &tlsConfig); err == nil {
+				conn.Close()
+			}
 		} else {
-			_, err = net.DialTimeout("tcp", c.URL, c.Timeout)
+			if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err == nil {
+				conn.Close()
+			}
 		}
 
 		checks[i].RTT = time.Since(start)
