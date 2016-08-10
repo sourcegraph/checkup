@@ -25,6 +25,8 @@ type TCPChecker struct {
 	// TLS certificate or not.
 	TLSVerify bool `json:"tls_verify,omitempty"`
 
+	// TLSCAfile is the Certificate Authority used
+	// to validate the server TLS certificate.
 	TLSCAfile string `json:"tls_cafile,omitempty"`
 
 	// Timeout is the maximum time to wait for a
