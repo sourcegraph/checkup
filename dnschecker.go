@@ -1,5 +1,5 @@
 package checkup
-
+//
 {
     "checkers": [{
     "type": "dns",
@@ -16,7 +16,7 @@ package checkup
     "bucket": "<yours>"
     }
 }
-
+//
 
 
 import (
