@@ -89,8 +89,8 @@ func (fs FS) Maintain() error {
 	}
 
 	for _, f := range files {
-		name, _ := filepath.Rel(fs.Dir, f.Name())
-		if name == indexName {
+		name, err := filepath.Rel(fs.Dir, f.Name())
+		if err != nil || name == indexName {
 			continue
 		}
 
