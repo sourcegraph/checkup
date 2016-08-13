@@ -95,7 +95,11 @@ func (fs FS) Maintain() error {
 		}
 
 		nsec, ok := index[name]
-		if !ok || time.Since(time.Unix(0, nsec)) > fs.CheckExpiry {
+		if !ok {
+			continue
+		}
+
+		if time.Since(time.Unix(0, nsec)) > fs.CheckExpiry {
 			if err := os.Remove(f.Name()); err != nil {
 				return err
 			}
