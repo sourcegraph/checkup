@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/gogosphere/checkup"
+	"github.com/miekg/dns"
 	"github.com/spf13/cobra"
 )
 

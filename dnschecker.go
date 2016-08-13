@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/miekg/dns"
 )
 
 // DNSChecker implements a Checker for TCP endpoints.
