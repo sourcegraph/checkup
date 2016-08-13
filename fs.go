@@ -26,6 +26,11 @@ type FS struct {
 
 func (fs FS) readIndex() (index map[string]int64, err error) {
 	f, err := os.Open(filepath.Join(fs.Dir, indexName))
+	if os.IsNotExist(err) {
+		index = map[string]int64{}
+		err = nil
+		return
+	}
 	if err != nil {
 		return
 	}
