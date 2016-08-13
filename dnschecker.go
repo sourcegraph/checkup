@@ -1,22 +1,4 @@
 package checkup
-//
-{
-    "checkers": [{
-    "type": "dns",
-    "endpoint_name": "Testing www.homeaway.com@8.8.8.8",
-    "endpoint_url": "8.8.8.8:53",
-    "hostname_fqdn": "www.homeaway.com.",
-    "attempts": 5
-    }],
-    "storage": {
-    "provider": "s3",
-    "access_key_id": "<yours>",
-    "secret_access_key": "<yours>",
-    "region": "us-east-1",
-    "bucket": "<yours>"
-    }
-}
-//
 
 
 import (
@@ -39,17 +21,6 @@ type DNSChecker struct {
 	// This is the fqdn of the target server to query the DNS server for.
 	DNSTarget string `json:"hostname_fqdn,omitempty"`
 
-	// TLSEnabled controls whether to enable TLS or not.
-	// If set, TLS is enabled.
-	TLSEnabled bool `json:"tls,omitempty"`
-
-	// TLSSkipVerify controls whether to skip server TLS
-	// certificat validation or not.
-	TLSSkipVerify bool `json:"tls_skip_verify,omitempty"`
-
-	// TLSCAFile is the Certificate Authority used
-	// to validate the server TLS certificate.
-	TLSCAFile string `json:"tls_ca_file,omitempty"`
 
 	// Timeout is the maximum time to wait for a
 	// TCP connection to be established.
