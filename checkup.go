@@ -177,11 +177,8 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 				typeName = "http"
 			case TCPChecker:
 				typeName = "tcp"
-<<<<<<< HEAD
-=======
 			case DNSChecker:
 				typeName = "dns"
->>>>>>> 19aa0ed624dceb99ac8ba47415e803224940af96
 			default:
 				return result, fmt.Errorf("unknown Checker type")
 			}
@@ -289,8 +286,6 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			c.Checkers = append(c.Checkers, checker)
-<<<<<<< HEAD
-=======
 		case "dns":
 			var checker DNSChecker
 			err = json.Unmarshal(raw.Checkers[i], &checker)
@@ -298,7 +293,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			c.Checkers = append(c.Checkers, checker)
->>>>>>> 19aa0ed624dceb99ac8ba47415e803224940af96
+
 		default:
 			return fmt.Errorf("%s: unknown Checker type", t.Type)
 		}
