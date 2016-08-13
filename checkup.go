@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/miekg/dns"
 )
 
 // Checkup performs a routine checkup on endpoints or

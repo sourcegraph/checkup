@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"time"
+	"github.com/miekg/dns"
 
 )
 
