@@ -15,7 +15,7 @@ type FS struct {
 	// The path to the directory where check files will be stored.
 	Dir string `json:"dir"`
 	// The URL corresponding to fs.Dir.
-	Url string `json:"url"`
+	URL string `json:"url"`
 
 	// Check files older than CheckExpiry will be
 	// deleted on calls to Maintain(). If this is
