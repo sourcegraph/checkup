@@ -9,27 +9,19 @@ import (
 	"time"
 )
 
-func newTempFS() (specimen FS, err error) {
-	dir, err := ioutil.TempDir("", "checkup")
-	if err != nil {
-		return
-	}
-
-	specimen = FS{
-		Dir: dir,
-	}
-	return
-}
-
-func TestFS_Store(t *testing.T) {
+func TestFS(t *testing.T) {
 	results := []Result{{Title: "Testing"}}
 	resultsBytes := []byte(`[{"title":"Testing"}]`+"\n")
 
-	specimen, err := newTempFS()
+	dir, err := ioutil.TempDir("", "checkup")
 	if err != nil {
 		t.Fatalf("Cannot create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(specimen.Dir)
+	defer os.RemoveAll(dir)
+
+	specimen := FS{
+		Dir: dir,
+	}
 
 	if err := specimen.Store(results); err != nil {
 		t.Fatalf("Expected no error from Store(), got: %v", err)
@@ -58,11 +50,29 @@ func TestFS_Store(t *testing.T) {
 	}
 
 	// Make sure check file bytes are correct
-	b, err := ioutil.ReadFile(filepath.Join(specimen.Dir, name))
+	checkfile := filepath.Join(specimen.Dir, name)
+	b, err := ioutil.ReadFile(checkfile)
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}
 	if bytes.Compare(b, resultsBytes) != 0 {
 		t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
+	}
+
+	// Make sure check file is not deleted after maintain with CheckExpiry == 0
+	if err := specimen.Maintain(); err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if _, err := os.Stat(checkfile); err != nil {
+		t.Fatalf("Expected not error calling Stat() on checkfile, got: %v", err)
+	}
+
+	// Make sure checkfile is deleted after maintain with CheckExpiry > 0
+	specimen.CheckExpiry = 1 * time.Nanosecond
+	if err := specimen.Maintain(); err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if _, err := os.Stat(checkfile); !os.IsNotExist(err) {
+		t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
 	}
 }

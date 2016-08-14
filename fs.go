@@ -94,21 +94,20 @@ func (fs FS) Maintain() error {
 	}
 
 	for _, f := range files {
-		name, err := filepath.Rel(fs.Dir, f.Name())
-		if err != nil || name == indexName {
+		if f.Name() == indexName {
 			continue
 		}
 
-		nsec, ok := index[name]
+		nsec, ok := index[f.Name()]
 		if !ok {
 			continue
 		}
 
 		if time.Since(time.Unix(0, nsec)) > fs.CheckExpiry {
-			if err := os.Remove(f.Name()); err != nil {
+			if err := os.Remove(filepath.Join(fs.Dir, f.Name())); err != nil {
 				return err
 			}
-			delete(index, name)
+			delete(index, f.Name())
 		}
 	}
 
