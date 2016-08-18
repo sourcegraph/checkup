@@ -24,20 +24,19 @@ type FS struct {
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 }
 
-func (fs FS) readIndex() (index map[string]int64, err error) {
+func (fs FS) readIndex() (map[string]int64, error) {
+	index := map[string]int64{}
+
 	f, err := os.Open(filepath.Join(fs.Dir, indexName))
 	if os.IsNotExist(err) {
-		index = map[string]int64{}
-		err = nil
-		return
-	}
-	if err != nil {
-		return
+		return index, nil
+	} else if err != nil {
+		return nil, err
 	}
 	defer f.Close()
 
 	err = json.NewDecoder(f).Decode(&index)
-	return
+	return index, err
 }
 
 func (fs FS) writeIndex(index map[string]int64) error {
