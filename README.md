@@ -17,7 +17,7 @@ Out of the box, Checkup currently supports:
 
 - Checking HTTP endpoints
 - Checking TCP endpoints (TLS supported)
-- Storing results on S3
+- Storing results on S3 or on the local filesystem
 - Viewing results on a status page that is mobile-responsive and 100% static
 
 
@@ -143,7 +143,7 @@ As you perform checks, the status page will update every so often with the lates
 
 ### Performing checks
 
-You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page. 
+You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page.
 
 For example, if you run checks every 10 minutes, showing the last 24 hours on the status page will require 144 check files to be downloaded on each page load. You can distribute your checks to help avoid localized network problems, but this multiplies the number of files by the number of nodes you run checks on, so keep that in mind.
 
@@ -287,4 +287,3 @@ Uh oh, having some fires? 🔥 You can create a type that implements `checkup.No
 #### Other kinds of checks or storage providers
 
 Need to check more than HTTP? S3 too Amazony for you? You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
-
