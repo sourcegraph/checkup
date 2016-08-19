@@ -53,7 +53,6 @@ func (c DNSChecker) doChecks() Attempts {
 	if timeout == 0 {
 		timeout = 1 * time.Second
 	}
-	_ = timeout
 
 	checks := make(Attempts, c.Attempts)
 	for i := 0; i < c.Attempts; i++ {
