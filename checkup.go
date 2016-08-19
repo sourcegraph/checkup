@@ -12,7 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 )
 
 // Checkup performs a routine checkup on endpoints or
