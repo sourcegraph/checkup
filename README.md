@@ -17,7 +17,8 @@ Out of the box, Checkup currently supports:
 
 - Checking HTTP endpoints
 - Checking TCP endpoints (TLS supported)
-- Storing results on S3 or on the local filesystem
+- Checking of DNS services & record existence  
+- Storing results on S3
 - Viewing results on a status page that is mobile-responsive and 100% static
 
 
@@ -83,6 +84,13 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"timeout": "2s",
 		"tls": true,
 		"tls_skip_verify": true
+	},
+	{
+		"type": "dns",
+		"endpoint_name": "Example DNS test of endpoint_url looking up host.example.com",
+		"endpoint_url": "ns.example.com:53",
+		"hostname_fqdn": "host.example.com",
+		"timeout": "2s",
 	}],
 	"storage": {
 		"provider": "s3",
@@ -143,7 +151,7 @@ As you perform checks, the status page will update every so often with the lates
 
 ### Performing checks
 
-You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page.
+You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page. 
 
 For example, if you run checks every 10 minutes, showing the last 24 hours on the status page will require 144 check files to be downloaded on each page load. You can distribute your checks to help avoid localized network problems, but this multiplies the number of files by the number of nodes you run checks on, so keep that in mind.
 
@@ -233,6 +241,7 @@ c := checkup.Checkup{
 		checkup.TCPChecker{Name:  "Example (TCP SSL)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true},
 		checkup.TCPChecker{Name:  "Example (TCP SSL, self-signed certificate)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true, TLSCAFile: "testdata/ca.pem"},
 		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSSkipVerify: true},
+		checkup.DNSChecker{Name:  "Example DNS test of ns.example.com:53 looking up host.example.com", URL:  "ns.example.com:53", Host: "host.example.com", Attempts: 5},
 	},
 	Storage: checkup.S3{
 		AccessKeyID:     "<yours>",
@@ -287,3 +296,4 @@ Uh oh, having some fires? 🔥 You can create a type that implements `checkup.No
 #### Other kinds of checks or storage providers
 
 Need to check more than HTTP? S3 too Amazony for you? You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
+
