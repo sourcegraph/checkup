@@ -1,2 +1,7 @@
 _gitignore/
 .DS_Store
+checkup.json
+src/
+pkg/
+bin/
+.envrc
