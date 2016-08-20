@@ -309,4 +309,4 @@ docker run --rm \
 -c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
 ```
 
-This will create a checkup binary in the root project folder
+This will create a checkup binary in the root project folder.
