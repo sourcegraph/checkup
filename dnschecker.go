@@ -10,12 +10,12 @@ import (
 
 // DNSChecker implements a Checker for TCP endpoints.
 type DNSChecker struct {
-	// EndpointName is the name of the endpoint.
-	EndpointName string `json:"endpointname"`
+	// Name is the name of the endpoint.
+	Name string `json:"endpoint_name"`
 	// This is the name of the DNS server you are testing.
-	EndpointURL string `json:"endpoint_url"`
+	URL string `json:"endpoint_url"`
 	// This is the fqdn of the target server to query the DNS server for.
-	HostnameFQDN string `json:"hostname_fqdn,omitempty"`
+	Host string `json:"hostname_fqdn,omitempty"`
 	// Timeout is the maximum time to wait for a
 	// TCP connection to be established.
 	Timeout time.Duration `json:"timeout,omitempty"`
@@ -38,7 +38,7 @@ func (c DNSChecker) Check() (Result, error) {
 		c.Attempts = 1
 	}
 
-	result := Result{Title: c.EndpointName, Endpoint: c.EndpointURL, Timestamp: Timestamp()}
+	result := Result{Title: c.Name, Endpoint: c.URL, Timestamp: Timestamp()}
 	result.Times = c.doChecks()
 
 	return c.conclude(result), nil
@@ -58,8 +58,8 @@ func (c DNSChecker) doChecks() Attempts {
 	for i := 0; i < c.Attempts; i++ {
 		start := time.Now()
 
-		if c.HostnameFQDN != "" {
-			hostname := c.HostnameFQDN
+		if c.Host != "" {
+			hostname := c.Host
 			m1 := new(dns.Msg)
 			m1.Id = dns.Id()
 			m1.RecursionDesired = true
@@ -70,13 +70,13 @@ func (c DNSChecker) doChecks() Attempts {
 				checks[i].Error = err.Error()
 				continue
 			}
-			_, _, err := d.Exchange(m1, c.EndpointURL)
+			_, _, err := d.Exchange(m1, c.URL)
 			if err != nil {
 				checks[i].Error = err.Error()
 				continue
 			}
 		}
-		if conn, err = net.DialTimeout("tcp", c.EndpointURL, c.Timeout); err == nil {
+		if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err == nil {
 			conn.Close()
 		}
 
