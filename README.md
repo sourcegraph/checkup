@@ -288,7 +288,6 @@ Of course, real status messages should be as descriptive as possible. You can us
 
 ## Other topics
 
-
 #### Getting notified when there are problems
 
 Uh oh, having some fires? 🔥 You can create a type that implements `checkup.Notifier`. Checkup will invoke `Notify()` after every check, where you can evaluate the results and decide if and how you want to send a notification or trigger some event.
@@ -297,3 +296,12 @@ Uh oh, having some fires? 🔥 You can create a type that implements `checkup.No
 
 Need to check more than HTTP? S3 too Amazony for you? You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
 
+#### Building with Docker
+
+Linux binary:
+
+```bash
+docker run --rm -v `pwd`:/project -w /project golang bash -c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
+```
+
+This will create a checkup binary in the root project folder
