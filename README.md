@@ -6,7 +6,14 @@
 
 **It features an elegant, minimalistic CLI and an idiomatic Go library. They are completely interoperable and their configuration is beautifully symmetric.**
 
-This tool is a WIP. Please use liberally with discretion and report any bugzies!
+Checkup was created by Matt Holt, author of the popular Caddy web
+server. It is maintained and sponsored by
+[Sourcegraph](https://sourcegraph.com). If you'd like to dive into the
+source, you can
+[start here](https://sourcegraph.com/github.com/sourcegraph/checkup/-/def/GoPackage/github.com/sourcegraph/checkup/-/Checkup).
+
+This tool is a work-in-progress. Please use liberally with discretion
+and report any bugs!
 
 
 ## Intro
