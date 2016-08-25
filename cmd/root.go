@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/sourcegraph/checkup"
+	"github.com/serussell/checkup"
 	"github.com/spf13/cobra"
 )
 

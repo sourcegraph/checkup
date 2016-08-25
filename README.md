@@ -1,6 +1,6 @@
 <img src="https://i.imgur.com/UWhSoQj.png" width="450" alt="Checkup">
 
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/sourcegraph/checkup)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/serussell/checkup)
 
 **Checkup is distributed, lock-free, self-hosted health checks and status pages, written in Go.**
 
@@ -10,7 +10,7 @@ Checkup was created by Matt Holt, author of the popular Caddy web
 server. It is maintained and sponsored by
 [Sourcegraph](https://sourcegraph.com). If you'd like to dive into the
 source, you can
-[start here](https://sourcegraph.com/github.com/sourcegraph/checkup/-/def/GoPackage/github.com/sourcegraph/checkup/-/Checkup).
+[start here](https://sourcegraph.com/github.com/serussell/checkup/-/def/GoPackage/github.com/serussell/checkup/-/Checkup).
 
 This tool is a work-in-progress. Please use liberally with discretion
 and report any bugs!
@@ -108,7 +108,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 }
 ```
 
-**For the complete structure definition, please see [the godoc](https://godoc.org/github.com/sourcegraph/checkup).** There are many elements of checkers and storage you may wish to customize!
+**For the complete structure definition, please see [the godoc](https://godoc.org/github.com/serussell/checkup).** There are many elements of checkers and storage you may wish to customize!
 
 Save this file as `config.json` in your working directory.
 
@@ -149,7 +149,7 @@ $ checkup provision s3
 
 ### Setting up the status page
 
-In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you put the *read-only* S3 credentials you just generated.
+In statuspage/js, use the contents of [config_template.js](https://github.com/serussell/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/serussell/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you put the *read-only* S3 credentials you just generated.
 
 Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
 
@@ -210,11 +210,11 @@ Checkup is as easy to use in a Go program as it is on the command line.
 ### Using Go to set up storage on S3
 
 
-(If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually).
+(If you'd rather do this manually, see the [instructions on the wiki](https://github.com/serussell/checkup/wiki/Provisioning-S3-Manually).
 
 First, create an IAM user with credentials as described in the section above.
 
-Then `go get github.com/sourcegraph/checkup` and import it.
+Then `go get github.com/serussell/checkup` and import it.
 
 Then replace `ACCESS_KEY_ID` and `SECRET_ACCESS_KEY` below with the actual values for that user. Keep those secret. You'll also replace `BUCKET_NAME` with the unique bucket name to store your check files:
 
@@ -237,7 +237,7 @@ This method creates a new IAM user with read-only permission to S3 and also crea
 
 ### Using Go to perform checks
 
-First, `go get github.com/sourcegraph/checkup` and import it. Then configure it:
+First, `go get github.com/serussell/checkup` and import it. Then configure it:
 
 ```go
 c := checkup.Checkup{
@@ -308,7 +308,7 @@ Need to check more than HTTP? S3 too Amazony for you? You can implement your own
 Linux binary:
 
 ```bash
-git clone git@github.com:sourcegraph/checkup.git
+git clone git@github.com:serussell/checkup.git
 cd checkup
 docker run --rm \ 
 -v `pwd`:/project \ 

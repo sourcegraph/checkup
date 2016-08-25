@@ -3,7 +3,6 @@ package checkup
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -54,6 +53,9 @@ type HTTPChecker struct {
 	// requests. If not set, DefaultHTTPClient is
 	// used.
 	Client *http.Client `json:"-"`
+
+	// HTTP headers to set on requests for, e.g., authentication
+	Headers map[string]string `json:"headers"`
 }
 
 // Check performs checks using c according to its configuration.
@@ -61,9 +63,6 @@ type HTTPChecker struct {
 func (c HTTPChecker) Check() (Result, error) {
 	if c.Attempts < 1 {
 		c.Attempts = 1
-	}
-	if c.Client == nil {
-		c.Client = DefaultHTTPClient
 	}
 	if c.UpStatus == 0 {
 		c.UpStatus = http.StatusOK
@@ -73,6 +72,9 @@ func (c HTTPChecker) Check() (Result, error) {
 	req, err := http.NewRequest("GET", c.URL, nil)
 	if err != nil {
 		return result, err
+	}
+	for k, v := range c.Headers {
+		req.Header.Add(k, v)
 	}
 
 	result.Times = c.doChecks(req)
@@ -155,26 +157,4 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 	}
 
 	return nil
-}
-
-// DefaultHTTPClient is used when no other http.Client
-// is specified on a HTTPChecker.
-var DefaultHTTPClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   10 * time.Second,
-			KeepAlive: 0,
-		}).Dial,
-		TLSHandshakeTimeout:   5 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConnsPerHost:   1,
-		DisableCompression:    true,
-		DisableKeepAlives:     true,
-		ResponseHeaderTimeout: 5 * time.Second,
-	},
-	CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		return fmt.Errorf("no redirects allowed")
-	},
-	Timeout: 10 * time.Second,
 }

@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
+	"net/http"
 	"sort"
 	"strings"
 	"sync"
@@ -280,6 +282,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			if err != nil {
 				return err
 			}
+			checker.Client = mkClient(checker)
 			c.Checkers = append(c.Checkers, checker)
 		case "tcp":
 			var checker TCPChecker
@@ -600,4 +603,28 @@ func (i ProvisionInfo) String() string {
 Key into the config.js file for your status page. You will
 not be shown these credentials again.`
 	return s
+}
+
+func mkClient(checker HTTPChecker) *http.Client {
+	// DefaultHTTPClient is used when no other http.Client
+	// is specified on a HTTPChecker.
+	return &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 0,
+			}).Dial,
+			TLSHandshakeTimeout:   checker.ThresholdRTT,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConnsPerHost:   1,
+			DisableCompression:    true,
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: checker.ThresholdRTT,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return fmt.Errorf("no redirects allowed")
+		},
+		Timeout: 10 * time.Second,
+	}
 }
