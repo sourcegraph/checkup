@@ -25,7 +25,7 @@ Out of the box, Checkup currently supports:
 - Checking HTTP endpoints
 - Checking TCP endpoints (TLS supported)
 - Checking of DNS services & record existence  
-- Storing results on S3
+- Storing results on S3 or on the local filesystem
 - Viewing results on a status page that is mobile-responsive and 100% static
 
 
