@@ -97,7 +97,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"endpoint_name": "Example DNS test of endpoint_url looking up host.example.com",
 		"endpoint_url": "ns.example.com:53",
 		"hostname_fqdn": "host.example.com",
-		"timeout": "2s",
+		"timeout": "2s"
 	}],
 	"storage": {
 		"provider": "s3",
