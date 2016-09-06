@@ -174,7 +174,7 @@ var DefaultHTTPClient = &http.Client{
 		ResponseHeaderTimeout: 5 * time.Second,
 	},
 	CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		return fmt.Errorf("no redirects allowed")
+		return http.ErrUseLastResponse
 	},
 	Timeout: 10 * time.Second,
 }
