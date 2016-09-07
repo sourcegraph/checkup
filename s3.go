@@ -3,6 +3,7 @@ package checkup
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -134,7 +135,7 @@ func (s S3) Provision() (ProvisionInfo, error) {
 		UserName: aws.String(iamUser),
 	})
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("Error creating user: %s\n\nTry deleting the user in the AWS control panel and try again.", err)
 	}
 	info.Username = *resp.User.UserName
 	info.UserID = *resp.User.UserId
