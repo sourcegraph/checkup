@@ -31,6 +31,7 @@ a single checkup and print results to stdout. To
 store the results of the check, use --store.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+		allHealthy := true
 		c := loadCheckup()
 
 		if storeResults {
@@ -54,6 +55,13 @@ store the results of the check, use --store.`,
 
 		for _, result := range results {
 			fmt.Println(result)
+			if !result.Healthy {
+				allHealthy = false
+			}
+		}
+
+		if !allHealthy {
+			os.Exit(1)
 		}
 	},
 }
