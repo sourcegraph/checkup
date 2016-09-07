@@ -110,7 +110,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 
 **For the complete structure definition, please see [the godoc](https://godoc.org/github.com/sourcegraph/checkup).** There are many elements of checkers and storage you may wish to customize!
 
-Save this file as `config.json` in your working directory.
+Save this file as `checkup.json` in your working directory.
 
 
 
@@ -137,7 +137,7 @@ This command creates a new IAM user with read-only permission to S3 and also cre
 
 #### Explicit Provisioning
 
-If you do not prefer implicit provisioning using your checkup.json file, do this instead. Export the information to environment variables and run the provisioning command:
+If you do not prefer implicit provisioning using your `checkup.json` file, do this instead. Export the information to environment variables and run the provisioning command:
 
 ```bash
 $ export AWS_ACCESS_KEY_ID=...
@@ -164,7 +164,7 @@ For example, if you run checks every 10 minutes, showing the last 24 hours on th
 
 Performing checks with the `checkup` command is very easy.
 
-Just `cd` to the folder with your `config.json` from earlier, and checkup will automatically use it:
+Just `cd` to the folder with your `checkup.json` from earlier, and checkup will automatically use it:
 
 ```bash
 $ checkup
@@ -197,7 +197,7 @@ Site reliability engineers should post messages when there are incidents or othe
 $ checkup message --about=Example "Oops. We're trying to fix the problem. Stay tuned."
 ```
 
-This stores a check file with your message attached to the result for "Example" which you configured in config.json earlier.
+This stores a check file with your message attached to the result for "Example" which you configured in `checkup.json` earlier.
 
 
 
