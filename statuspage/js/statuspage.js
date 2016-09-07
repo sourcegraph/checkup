@@ -422,7 +422,7 @@ function renderChart(chart) {
 	chart.line = d3.svg.line()
 		.x(function(d) { return chart.xScale(d.timestamp); })
 		.y(function(d) { return chart.yScale(d.rtt); })
-		.interpolate("monotone"); // linear, monotone, or basis
+		.interpolate("step-after"); // linear, monotone, or basis
 
 
 	chart.lineGroup = chart.svg
