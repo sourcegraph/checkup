@@ -149,6 +149,16 @@ main {
 
 .chart-title {
 	font-weight: bold;
+	text-align: center;
+}
+
+.chart-title a {
+	color: #2D6F96;
+	text-decoration: none;
+}
+
+.chart-title a:hover {
+	text-decoration: underline;
 }
 
 svg {

@@ -78,6 +78,7 @@ function processNewCheckFile(json, filename) {
 			chart.series.threshold.push({ timestamp: ts, rtt: result.threshold });
 
 		checkup.charts[result.endpoint] = chart;
+		checkup.charts[result.endpoint].endpoint = result.endpoint;
 
 		for (var s in chart.series) {
 			chart.series[s].sort(function(a, b) {
@@ -263,13 +264,14 @@ function makeGraphs() {
 		checkup.placeholdersRemoved = true;
 	}
 
-	for (var endpoint in checkup.charts)
-		makeGraph(checkup.charts[endpoint]);
+	for (var endpoint in checkup.charts) {
+		makeGraph(checkup.charts[endpoint], endpoint);
+  }
 
 	checkup.graphsMade = true;
 }
 
-function makeGraph(chart) {
+function makeGraph(chart, endpoint) {
 	// Render chart to page if first time seeing this endpoint
 	if (!chart.elem) {
 		renderChart(chart);
@@ -383,7 +385,9 @@ function renderChart(chart) {
 	// Div to contain the endpoint / title
 	var el2 = document.createElement('div');
 	el2.className = "chart-title";
-	el2.appendChild(document.createTextNode(chart.title));
+	var el2b = document.createElement('a'); el2b.setAttribute("href", chart.endpoint);
+	el2b.appendChild(document.createTextNode(chart.title));
+	el2.appendChild(el2b);
 	el.appendChild(el2);
 
 	// Inner div is used to contain the actual svg tag
