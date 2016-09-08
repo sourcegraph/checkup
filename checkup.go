@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // Checkup performs a routine checkup on endpoints or
@@ -455,7 +457,16 @@ func (r Result) String() string {
 	s += fmt.Sprintf("     Median: %s\n", stats.Median)
 	s += fmt.Sprintf("       Mean: %s\n", stats.Mean)
 	s += fmt.Sprintf("        All: %v\n", r.Times)
-	s += fmt.Sprintf(" Assessment: %v\n", r.Status())
+	statusLine := fmt.Sprintf(" Assessment: %v\n", r.Status())
+	switch r.Status() {
+	case Healthy:
+		statusLine = color.GreenString(statusLine)
+	case Degraded:
+		statusLine = color.YellowString(statusLine)
+	case Down:
+		statusLine = color.RedString(statusLine)
+	}
+	s += statusLine
 	return s
 }
 
