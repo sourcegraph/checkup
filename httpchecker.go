@@ -54,6 +54,10 @@ type HTTPChecker struct {
 	// requests. If not set, DefaultHTTPClient is
 	// used.
 	Client *http.Client `json:"-"`
+
+	// Headers contains headers to added to the request
+	// that is sent for the check
+	Headers http.Header `json:"headers,omitempty"`
 }
 
 // Check performs checks using c according to its configuration.
@@ -73,6 +77,12 @@ func (c HTTPChecker) Check() (Result, error) {
 	req, err := http.NewRequest("GET", c.URL, nil)
 	if err != nil {
 		return result, err
+	}
+
+	if c.Headers != nil {
+		for key, header := range c.Headers {
+			req.Header.Add(key, strings.Join(header, ", "))
+		}
 	}
 
 	result.Times = c.doChecks(req)
