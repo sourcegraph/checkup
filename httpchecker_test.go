@@ -104,8 +104,8 @@ func TestHTTPChecker(t *testing.T) {
 	}
 
 	// Test with a Header
-	hc.Headers = []Header{
-		{Name: "X-Checkup", Value: "Echo"},
+	hc.Headers = http.Header{
+		"X-Checkup": []string{"Echo"},
 	}
 	hc.MustContain = "Echo"
 	hc.ThresholdRTT = 0
