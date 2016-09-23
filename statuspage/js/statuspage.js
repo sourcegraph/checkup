@@ -48,13 +48,7 @@ function processNewCheckFile(json, filename) {
 		}
 	}
 
-	// iterate each result and store/process it
-	for (var j = 0; j < json.length; j++) {
-		var result = json[j];
-
-		// Save stats with the result so we don't have to recompute them later
-		result.stats = checkup.computeStats(result);
-
+	var process = function(result) {
 		checkup.orderedResults.push(result); // will sort later, more efficient that way
 
 		if (!checkup.groupedResults[result.timestamp])
@@ -77,20 +71,36 @@ function processNewCheckFile(json, filename) {
 		if (result.threshold)
 			chart.series.threshold.push({ timestamp: ts, rtt: result.threshold });
 
-		checkup.charts[result.endpoint] = chart;
-		checkup.charts[result.endpoint].endpoint = result.endpoint;
-
-		for (var s in chart.series) {
-			chart.series[s].sort(function(a, b) {
-			  return a.timestamp - b.timestamp;
-			});
-		}
-
 		if (!checkup.lastResultTs || ts > checkup.lastResultTs) {
 			checkup.lastResultTs = ts;
 			checkup.dom.lastcheck.innerHTML = checkup.makeTimeTag(checkup.lastResultTs)+" ago";
 		}
-	}
+		return chart;
+	};
+
+	// iterate each result and store/process it
+	json.forEach(function(result) {
+		// Save stats with the result so we don't have to recompute them later
+		result.stats = checkup.computeStats(result);
+
+		var chart = process(result);
+		checkup.charts[result.endpoint] = chart;
+		checkup.charts[result.endpoint].endpoint = result.endpoint;
+	});
+
+	var byTimestamp = function(a, b) {
+		return a.timestamp - b.timestamp;
+	};
+	var values = function(obj) {
+		return Object.keys(obj)
+			.map(function(key) { return obj[key]; });
+	};
+
+	values(checkup.charts)
+		.forEach(function(chart) {
+			values(chart.series)
+				.forEach(function(series) { series.sort(byTimestamp); })
+		});
 
 	if (checkup.domReady)
 		makeGraphs();
