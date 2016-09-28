@@ -103,7 +103,8 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"provider": "s3",
 		"access_key_id": "<yours>",
 		"secret_access_key": "<yours>",
-		"bucket": "<yours>"
+		"bucket": "<yours>",
+		"region": "us-east-1"
 	}
 }
 ```
@@ -148,6 +149,9 @@ $ export AWS_BUCKET_NAME=...
 $ checkup provision s3
 ```
 
+#### Manual Provisioning
+
+If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
 ### Setting up the status page
 
@@ -210,9 +214,6 @@ Checkup is as easy to use in a Go program as it is on the command line.
 
 
 ### Using Go to set up storage on S3
-
-
-(If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually).
 
 First, create an IAM user with credentials as described in the section above.
 
