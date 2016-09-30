@@ -313,7 +313,7 @@ Linux binary:
 ```bash
 git clone git@github.com:sourcegraph/checkup.git
 cd checkup
-docker run --rm \ 
+docker run --net=host --rm \ 
 -v `pwd`:/project \ 
 -w /project golang bash \ 
 -c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
