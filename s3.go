@@ -34,10 +34,14 @@ func (s S3) Store(results []Result) error {
 	if err != nil {
 		return err
 	}
-	svc := newS3(session.New(), &aws.Config{
-		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
-		Region:      &s.Region,
-	})
+	config := &aws.Config{
+		Region: &s.Region,
+	}
+	if s.AccessKeyID != "" && s.SecretAccessKey != "" {
+		config.Credentials = credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, "")
+	}
+
+	svc := newS3(session.New(), config)
 	params := &s3.PutObjectInput{
 		Bucket: &s.Bucket,
 		Key:    GenerateFilename(),
@@ -53,10 +57,14 @@ func (s S3) Maintain() error {
 		return nil
 	}
 
-	svc := newS3(session.New(), &aws.Config{
-		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
-		Region:      &s.Region,
-	})
+	config := &aws.Config{
+		Region: &s.Region,
+	}
+	if s.AccessKeyID != "" && s.SecretAccessKey != "" {
+		config.Credentials = credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, "")
+	}
+
+	svc := newS3(session.New(), config)
 
 	var marker *string
 	for {
