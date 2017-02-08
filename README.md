@@ -1,6 +1,7 @@
 <img src="https://i.imgur.com/UWhSoQj.png" width="450" alt="Checkup">
 
-[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/sourcegraph/checkup)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/sourcegraph/checkup) [![Sourcegraph](https://sourcegraph.com/github.com/sourcegraph/checkup/-/badge.svg)](https://sourcegraph.com/github.com/sourcegraph/checkup?badge)
+
 
 **Checkup is distributed, lock-free, self-hosted health checks and status pages, written in Go.**
 
