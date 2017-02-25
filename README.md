@@ -194,11 +194,7 @@ checkup.config = {
 	// How often, in seconds, to pull new checks and update the page.
 	"refresh_interval": 60,
 
-	// Configure read-only access to stored checks. Currently, S3 is
-	// supported. These credentials will be visible to everyone, so
-	// use keys with ONLY read access!
 	"storage": {
-		"provider": "fs",
 		"url": "http://127.0.0.1/logs" // The url corresponding to the local dir specified in checkup.json
 	}
 
