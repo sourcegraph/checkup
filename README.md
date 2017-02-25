@@ -107,6 +107,7 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"bucket": "<yours>",
 		"region": "us-east-1"
 	}
+	// See below for FS support
 }
 ```
 
@@ -116,6 +117,25 @@ Save this file as `checkup.json` in your working directory.
 
 
 
+### Setting up FS storage 
+
+Basically you need to set the storage provider to fs in checkup.json
+
+* Example of fs storage checkup.json 
+```json
+{
+	"checkers": [{
+		"type": "http",
+		"endpoint_name": "Example HTTP",
+		"endpoint_url": "http://www.example.com",
+		"attempts": 5
+	}],
+	"storage": {
+		"provider": "fs",
+		"dir": "/var/www/html/logs/" // Must be absolute path
+	}
+}
+```
 
 ### Setting up storage on S3
 
@@ -157,6 +177,54 @@ If you'd rather do this manually, see the [instructions on the wiki](https://git
 ### Setting up the status page
 
 In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you put the *read-only* S3 credentials you just generated.
+
+Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
+
+As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
+
+### Setting up the status page (Local Filesystem / FS)
+
+In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. Change the storage config in config.js to your storage config in checkup.json
+
+```
+checkup.config = {
+	// How much history to show on the status page. Long durations and
+	// frequent checks make for slow loading, so be conservative.
+	"timeframe": 1 * time.Day,
+
+	// How often, in seconds, to pull new checks and update the page.
+	"refresh_interval": 60,
+
+	// Configure read-only access to stored checks. Currently, S3 is
+	// supported. These credentials will be visible to everyone, so
+	// use keys with ONLY read access!
+	"storage": {
+		"provider": "fs",
+		"url": "http://127.0.0.1/logs" // The url corresponding to the local dir specified in checkup.json
+	}
+
+	// The text to display along the top bar depending on overall status.
+	"status_text": {
+		"healthy": "Situation Normal",
+		"degraded": "Degraded Service",
+		"down": "Service Disruption"
+	}
+};
+```
+
+After that, change the s3.js to fs.js in [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspage/index.html)
+
+```
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Status Page</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<script src="js/d3.v3.min.js" charset="utf-8"></script>
+		- <script src="js/s3.js"></script>
+		+ <script src="js/fs.js"></script>
+```
 
 Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
 
