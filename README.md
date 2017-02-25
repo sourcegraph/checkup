@@ -107,7 +107,6 @@ You can configure Checkup entirely with a simple JSON document. We recommend you
 		"bucket": "<yours>",
 		"region": "us-east-1"
 	}
-	// See below for FS support
 }
 ```
 
@@ -119,7 +118,7 @@ Save this file as `checkup.json` in your working directory.
 
 ### Setting up FS storage 
 
-Basically you need to set the storage provider to fs in checkup.json
+Basically you need to set the storage provider to fs in checkup.json, you must provide absolute path for the fs storage
 
 * Example of fs storage checkup.json 
 ```json
@@ -132,7 +131,7 @@ Basically you need to set the storage provider to fs in checkup.json
 	}],
 	"storage": {
 		"provider": "fs",
-		"dir": "/var/www/html/logs/" // Must be absolute path
+		"dir": "/var/www/html/logs/"
 	}
 }
 ```
