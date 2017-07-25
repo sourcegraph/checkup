@@ -1,5 +1,13 @@
 // config.js must be included BEFORE this file!
 
+// IE 11 Polyfill for .remove()
+if (!('remove' in Element.prototype)) {
+    Element.prototype.remove = function() {
+        if (this.parentNode) {
+            this.parentNode.removeChild(this);
+        }
+    };
+}
 // Configure access to storage
 checkup.storage.setup(checkup.config.storage);
 
@@ -15,12 +23,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	checkup.dom.checkcount = document.getElementById("info-checkcount");
 	checkup.dom.lastcheck = document.getElementById("info-lastcheck");
 	checkup.dom.timeline = document.getElementById("timeline");
+	// Immediately begin downloading check files, and keep page updated
+	checkup.storage.getChecksWithin(checkup.config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 
 	if (!checkup.graphsMade) makeGraphs();
 }, false);
 
-// Immediately begin downloading check files, and keep page updated 
-checkup.storage.getChecksWithin(checkup.config.timeframe, processNewCheckFile, allCheckFilesLoaded);
 setInterval(function() {
 	checkup.storage.getNewChecks(processNewCheckFile, allCheckFilesLoaded);
 }, checkup.config.refresh_interval * 1000);
