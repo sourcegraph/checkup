@@ -4,4 +4,6 @@ checkup.json
 src/
 pkg/
 bin/
+builds/
+dist/
 .envrc
