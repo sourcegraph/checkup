@@ -7,143 +7,180 @@
 
 **It features an elegant, minimalistic CLI and an idiomatic Go library. They are completely interoperable and their configuration is beautifully symmetric.**
 
-Checkup was created by Matt Holt, author of the popular Caddy web
-server. It is maintained and sponsored by
-[Sourcegraph](https://sourcegraph.com). If you'd like to dive into the
-source, you can
-[start here](https://sourcegraph.com/github.com/sourcegraph/checkup/-/def/GoPackage/github.com/sourcegraph/checkup/-/Checkup).
+Checkup was created by Matt Holt, author of the [Caddy web server](https://caddyserver.com). It is maintained and sponsored by [Sourcegraph](https://sourcegraph.com). If you'd like to dive into the source, you can [start here](https://sourcegraph.com/github.com/sourcegraph/checkup/-/def/GoPackage/github.com/sourcegraph/checkup/-/Checkup).
 
-This tool is a work-in-progress. Please use liberally with discretion
-and report any bugs!
+This tool is a work-in-progress. Please use liberally (with discretion) and report any bugs!
+
 
 
 ## Intro
 
-Checkup can be customized to check up on any of your sites or services at any time, from any infrastructure, using any storage provider of your choice. The status page can be customized to your liking since you can do your checks however you want.
+Checkup can be customized to check up on any of your sites or services at any time, from any infrastructure, using any storage provider of your choice (assuming an integration exists for your storage provider). The status page can be customized to your liking since you can do your checks however you want. The status page is also mobile-responsive.
 
-Out of the box, Checkup currently supports:
+Checkup currently supports these checkers:
 
-- Checking HTTP endpoints
-- Checking TCP endpoints (TLS supported)
-- Checking of DNS services & record existence  
-- Storing results on S3
-- Viewing results on a status page that is mobile-responsive and 100% static
+- HTTP
+- TCP (+TLS)
+- DNS
+- TLS
+
+Checkup implements these storage providers:
+
+- Amazon S3
+- Local file system
+
+Checkup can even send notifications through your service of choice (if an integration exists).
 
 
 ## How it Works
 
 There are 3 components:
 
-1. **Storage** You set up storage space for the results of the checks.
+1. **Storage.** You set up storage space for the results of the checks.
 
-2. **Checks** You run checks on whatever endpoints you have as often as you want.
+2. **Checks.** You run checks on whatever endpoints you have as often as you want.
 
-3. **Status Page** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
+3. **Status Page.** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
 
 
 ## Quick Start
+
+[Download Checkup](https://github.com/sourcegraph/checkup/releases/latest) for your platform and put it in your PATH, or install from source:
+
+```bash
+$ go get -u github.com/sourcegraph/checkup/cmd/checkup
+```
+
+You'll need Go 1.7 or newer. Verify it's installed properly:
 
 ```bash
 $ checkup --help
 ```
 
-Follow these instructions to get started quickly with Checkup.
+Then follow these instructions to get started quickly with Checkup.
 
 
 ### Create your Checkup config
 
-You can configure Checkup entirely with a simple JSON document. We recommend you configure storage and at least one checker:
+You can configure Checkup entirely with a simple JSON document. You should configure storage and at least one checker. Here's the basic outline:
 
 ```json
 {
-	"checkers": [{
-		"type": "http",
-		"endpoint_name": "Example HTTP",
-		"endpoint_url": "http://www.example.com",
-		"attempts": 5
-	},
-	{
-		"type": "tcp",
-		"endpoint_name": "Example TCP",
-		"endpoint_url": "example.com:80",
-		"attempts": 5
-	},
-	{
-		"type": "tcp",
-		"endpoint_name": "Example TCP with TLS enabled and a valid certificate chain",
-		"endpoint_url": "example.com:443",
-		"attempts": 5,
-		"tls": true
-	},
-	{
-		"type": "tcp",
-		"endpoint_name": "Example TCP with TLS enabled and a self-signed certificate chain",
-		"endpoint_url": "example.com:8443",
-		"attempts": 5,
-		"timeout": "2s",
-		"tls": true,
-		"tls_ca_file": "testdata/ca.pem"
-	},
-	{
-		"type": "tcp",
-		"endpoint_name": "Example TCP with TLS enabled and verification disabled",
-		"endpoint_url": "example.com:8443",
-		"attempts": 5,
-		"timeout": "2s",
-		"tls": true,
-		"tls_skip_verify": true
-	},
-	{
-		"type": "dns",
-		"endpoint_name": "Example DNS test of endpoint_url looking up host.example.com",
-		"endpoint_url": "ns.example.com:53",
-		"hostname_fqdn": "host.example.com",
-		"timeout": "2s"
-	}],
+	"checkers": [
+		// checker configurations go here
+	],
+
 	"storage": {
-		"provider": "s3",
-		"access_key_id": "<yours>",
-		"secret_access_key": "<yours>",
-		"bucket": "<yours>",
-		"region": "us-east-1"
+		// storage configuration goes here
 	}
 }
 ```
 
-**For the complete structure definition, please see [the godoc](https://godoc.org/github.com/sourcegraph/checkup).** There are many elements of checkers and storage you may wish to customize!
+Save the checkup configuration file as `checkup.json` in your working directory.
 
-Save this file as `checkup.json` in your working directory.
+We will show JSON samples below, to get you started. **But please [refer to the godoc](https://godoc.org/github.com/sourcegraph/checkup) for a comprehensive description of each type of checker, storage, and notifier you can configure!** 
 
+Here are the configuration structures you can use, which are explained fully [in the godoc](https://godoc.org/github.com/sourcegraph/checkup). **Only the required fields are shown, so consult the godoc for more.**
 
+#### HTTP Checkers
 
-### Setting up FS storage 
+**[godoc: HTTPChecker](https://godoc.org/github.com/sourcegraph/checkup#HTTPChecker)**
 
-Basically you need to set the storage provider to fs in checkup.json, you must provide absolute path for the fs storage
-
-* Example of fs storage checkup.json 
 ```json
 {
-	"checkers": [{
-		"type": "http",
-		"endpoint_name": "Example HTTP",
-		"endpoint_url": "http://www.example.com",
-		"attempts": 5
-	}],
-	"storage": {
-		"provider": "fs",
-		"dir": "/var/www/html/logs/"
-	}
+	"type": "http",
+	"endpoint_name": "Example HTTP",
+	"endpoint_url": "http://www.example.com"
+	// for more fields, see the godoc
 }
 ```
 
-### Setting up storage on S3
+
+#### TCP Checkers
+
+**[godoc: TCPChecker](https://godoc.org/github.com/sourcegraph/checkup#TCPChecker)**
+
+```json
+{
+	"type": "tcp",
+	"endpoint_name": "Example TCP",
+	"endpoint_url": "example.com:80"
+}
+```
+
+#### DNS Checkers
+
+**[godoc: DNSChecker](https://godoc.org/github.com/sourcegraph/checkup#DNSChecker)**
+
+```json
+{
+	"type": "dns",
+	"endpoint_name": "Example of endpoint_url looking up host.example.com",
+	"endpoint_url": "ns.example.com:53",
+	"hostname_fqdn": "host.example.com"
+}
+```
+
+#### TLS Checkers
+
+**[godoc: TLSChecker](https://godoc.org/github.com/sourcegraph/checkup#TLSChecker)**
+
+```json
+{
+	"type": "tls",
+	"endpoint_name": "Example TLS Protocol Check",
+	"endpoint_url": "www.example.com:443"
+}
+```
+
+
+#### Amazon S3 Storage
+
+**[godoc: S3](https://godoc.org/github.com/sourcegraph/checkup#S3)**
+
+```json
+{
+	"provider": "s3",
+	"access_key_id": "<yours>",
+	"secret_access_key": "<yours>",
+	"bucket": "<yours>",
+	"region": "us-east-1"
+}
+```
+
+S3 is the default storage provider assumed by the status page, so the only change needed for the status page is in the [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) file, with your public, read-only credentials.
+
+
+#### File System Storage
+
+**[godoc: FS](https://godoc.org/github.com/sourcegraph/checkup#FS)**
+
+```json
+{
+	"provider": "fs",
+	"dir": "/path/to/your/check_files",
+	"url": "http://127.0.0.1:2015/check_files"
+}
+```
+
+Change [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspage/index.html) to load fs.js instead of s3.js:
+
+```diff
+- <script src="js/s3.js"></script>
++ <script src="js/fs.js"></script>
+```
+
+Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) so the status page knows how to load your check files.
+
+
+## Setting up storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
 
 - arn:aws:iam::aws:policy/**IAMFullAccess**
 - arn:aws:iam::aws:policy/**AmazonS3FullAccess**
 
-#### Implicit Provisioning
+### Implicit Provisioning
 
 If you give these permissions to the same user as with the credentials in your JSON config above, then you can simply run:
 
@@ -158,7 +195,7 @@ This command creates a new IAM user with read-only permission to S3 and also cre
 **IMPORTANT SECURITY NOTE:** This new IAM user will have read-only permission to all S3 buckets in your AWS account, and its credentials will be visible to any visitor to your status page. If you do not want to grant visitors to your status page read access to all your S3 buckets, you need to modify this IAM user's permissions to scope its access to the Checkup bucket. If in doubt, restrict access to your status page to trusted visitors. It is recommended that you do NOT include ANY sensitive credentials on the machine running Checkup.
 
 
-#### Explicit Provisioning
+### Explicit Provisioning
 
 If you do not prefer implicit provisioning using your `checkup.json` file, do this instead. Export the information to environment variables and run the provisioning command:
 
@@ -169,64 +206,21 @@ $ export AWS_BUCKET_NAME=...
 $ checkup provision s3
 ```
 
-#### Manual Provisioning
+### Manual Provisioning
 
 If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
-### Setting up the status page
 
-In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you put the *read-only* S3 credentials you just generated.
+## Setting up the status page
 
-Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
+In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you specify how to access the storage system you just provisioned for check files.
 
-As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
-
-### Setting up the status page (Local Filesystem / FS)
-
-In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. Change the storage config in config.js to your storage config in checkup.json
-
-```
-checkup.config = {
-	// How much history to show on the status page. Long durations and
-	// frequent checks make for slow loading, so be conservative.
-	"timeframe": 1 * time.Day,
-
-	// How often, in seconds, to pull new checks and update the page.
-	"refresh_interval": 60,
-
-	"storage": {
-		"url": "http://127.0.0.1/logs" // The url corresponding to the local dir specified in checkup.json
-	}
-
-	// The text to display along the top bar depending on overall status.
-	"status_text": {
-		"healthy": "Situation Normal",
-		"degraded": "Degraded Service",
-		"down": "Service Disruption"
-	}
-};
-```
-
-After that, change the s3.js to fs.js in [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspage/index.html)
-
-```
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Status Page</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<script src="js/d3.v3.min.js" charset="utf-8"></script>
-		- <script src="js/s3.js"></script>
-		+ <script src="js/fs.js"></script>
-```
-
-Then, the status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
+The status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
 
 As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
 
 
-### Performing checks
+## Performing checks
 
 You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page. 
 
@@ -259,7 +253,7 @@ And replace the duration with your own preference. In addition to the regular `t
 You can also get some help using the `-h` option for any command or subcommand.
 
 
-### Posting status messages
+## Posting status messages
 
 Site reliability engineers should post messages when there are incidents or other news relevant for a status page. This is also very easy:
 
@@ -267,7 +261,7 @@ Site reliability engineers should post messages when there are incidents or othe
 $ checkup message --about=Example "Oops. We're trying to fix the problem. Stay tuned."
 ```
 
-This stores a check file with your message attached to the result for "Example" which you configured in `checkup.json` earlier.
+This stores a check file with your message attached to the result for a check named "Example" which you configured in `checkup.json` earlier.
 
 
 
@@ -368,7 +362,7 @@ Uh oh, having some fires? 🔥 You can create a type that implements `checkup.No
 
 ### Other kinds of checks or storage providers
 
-Need to check more than HTTP? S3 too Amazony for you? You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
+You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
 
 ### Building with Docker
 
