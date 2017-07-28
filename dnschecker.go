@@ -64,7 +64,7 @@ func (c DNSChecker) doChecks() Attempts {
 			m1.Id = dns.Id()
 			m1.RecursionDesired = true
 			m1.Question = make([]dns.Question, 1)
-			m1.Question[0] = dns.Question{hostname, dns.TypeA, dns.ClassINET}
+			m1.Question[0] = dns.Question{Name: hostname, Qtype: dns.TypeA, Qclass: dns.ClassINET}
 			d := new(dns.Client)
 			if err != nil {
 				checks[i].Error = err.Error()

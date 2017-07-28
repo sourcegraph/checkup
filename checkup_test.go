@@ -186,7 +186,7 @@ func TestJSON(t *testing.T) {
 	}
 
 	if !bytes.Equal(result, jsonBytes) {
-		t.Errorf(" Got: %s\nWant: %s", string(result), string(jsonBytes))
+		t.Errorf("\nGot:  %s\nWant: %s", string(result), string(jsonBytes))
 	}
 }
 

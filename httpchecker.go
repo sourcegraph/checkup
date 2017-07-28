@@ -54,7 +54,7 @@ type HTTPChecker struct {
 	// by this duration to avoid hitting a remote too
 	// quickly in succession. By default, no waiting
 	// occurs between attempts.
-	AttemptSpacing time.Duration `json:"attempt_spacing", omitempty"`
+	AttemptSpacing time.Duration `json:"attempt_spacing,omitempty"`
 
 	// Client is the http.Client with which to make
 	// requests. If not set, DefaultHTTPClient is

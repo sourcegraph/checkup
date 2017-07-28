@@ -18,7 +18,11 @@ func TestTCPChecker(t *testing.T) {
 	// Accept a future connection
 	go func() {
 		for {
-			srv.Accept()
+			conn, err := srv.Accept()
+			if err != nil {
+				break
+			}
+			conn.Close()
 		}
 	}()
 
@@ -110,7 +114,11 @@ func TestTCPCheckerWithAgressiveTimeout(t *testing.T) {
 	// Accept a future connection
 	go func() {
 		for {
-			srv.Accept()
+			conn, err := srv.Accept()
+			if err != nil {
+				break
+			}
+			conn.Close()
 		}
 	}()
 
@@ -160,6 +168,7 @@ func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
 			conn.Read(tmp)
+			conn.Close()
 		}
 	}()
 
@@ -264,6 +273,7 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
 			conn.Read(tmp)
+			conn.Close()
 		}
 	}()
 
@@ -368,6 +378,7 @@ func TestTCPCheckerWithTLSVerifyError(t *testing.T) {
 			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
 			conn.Read(tmp)
+			conn.Close()
 		}
 	}(t)
 
