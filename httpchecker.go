@@ -50,6 +50,12 @@ type HTTPChecker struct {
 	// make to the endpoint in a single check.
 	Attempts int `json:"attempts,omitempty"`
 
+	// AttemptSpacing spaces out each attempt in a check
+	// by this duration to avoid hitting a remote too
+	// quickly in succession. By default, no waiting
+	// occurs between attempts.
+	AttemptSpacing time.Duration `json:"attempt_spacing", omitempty"`
+
 	// Client is the http.Client with which to make
 	// requests. If not set, DefaultHTTPClient is
 	// used.
@@ -106,6 +112,9 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 			checks[i].Error = err.Error()
 		}
 		resp.Body.Close()
+		if c.AttemptSpacing > 0 {
+			time.Sleep(c.AttemptSpacing)
+		}
 	}
 	return checks
 }
