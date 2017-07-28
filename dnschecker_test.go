@@ -27,7 +27,7 @@ func TestDNSChecker(t *testing.T) {
 
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
-	testName := "TestTCP"
+	testName := "TestDNS"
 	hc := DNSChecker{Name: testName, URL: endpt, Attempts: 2}
 
 	// Try an up server
