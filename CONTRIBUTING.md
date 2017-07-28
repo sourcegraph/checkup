@@ -15,9 +15,17 @@ contribution. See the [DCO](DCO) file for details.
 
 ## Getting Started
 
-- Fork the repository on GitHub
-- Read the [README](README.md) for build and test instructions
-- Play with the project, submit bugs, submit patches!
+You'll need Go 1.7 or newer installed.
+
+1. [Fork this repo](https://github.com/sourcegraph/checkup). This makes a copy of the code you can write to.
+2. If you don't already have this repo (sourcegraph/checkup.git) repo on your computer, get it with `go get github.com/sourcegraph/checkup/cmd/checkup`.
+3. Tell git that it can push the sourcegraph/checkup.git repo to your fork by adding a remote: `git remote add myfork https://github.com/you/checkup.git`
+4. Make your changes in the sourcegraph/checkup.git repo on your computer.
+5. Push your changes to your fork: `git push myfork`
+6. [Create a pull request](https://github.com/sourcegraph/checkup/pull/new/master) to merge your changes into sourcegraph/checkup @ master. (Click "compare across forks" and change the head fork.)
+
+You can test your changes with `go run main.go` or `go build` if you want a binary plopped on disk. Use `go test -race ./...` from the root of the repo to run tests and make sure they pass!
+
 
 ## Contribution Flow
 
