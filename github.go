@@ -142,7 +142,7 @@ func (gh GitHub) deleteFile(filename string, sha string) (string, error) {
 		gh.RepositoryName,
 		gh.fullPathName(filename),
 		&github.RepositoryContentFileOptions{
-			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", filename)),
+			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", filepath.Base(filename))),
 			SHA:     github.String(sha),
 			Committer: &github.CommitAuthor{
 				Name:  &gh.CommitterName,
@@ -197,6 +197,8 @@ func (gh GitHub) Store(results []Result) error {
 		return err
 	}
 
+	fmt.Printf("Store(): indexSHA=%s\n", indexSHA)
+
 	// Add new file to index
 	index[name] = time.Now().UnixNano()
 
@@ -214,6 +216,13 @@ func (gh GitHub) Maintain() error {
 		return err
 	}
 
+	fmt.Println("Beginning Maintain()")
+
+	index, _, err := gh.readIndex()
+	if err != nil {
+		return err
+	}
+
 	ref, _, err := gh.client.Git.GetRef(context.Background(), gh.RepositoryOwner, gh.RepositoryName, "heads/"+gh.Branch)
 	if err != nil {
 		return err
@@ -222,28 +231,28 @@ func (gh GitHub) Maintain() error {
 	if err != nil {
 		return err
 	}
-	var files []string
+
+	sha := *ref.Object.SHA
+
 	for _, treeEntry := range tree.Entries {
-		files = append(files, *treeEntry.Path)
-	}
+		fileName := treeEntry.GetPath()
 
-	index, sha, err := gh.readIndex()
-	if err != nil {
-		return err
-	}
-
-	for _, fileName := range files {
-		if fileName == indexName {
+		if fileName == filepath.Join(gh.Dir, indexName) {
+			fmt.Printf("Maintain(): skipping %s because it's the index\n", fileName)
 			continue
 		}
 		if gh.Dir != "" && !strings.HasPrefix(fileName, gh.Dir) {
+			fmt.Printf("Maintain(): skipping %s because it isn't in our dir\n", fileName)
 			continue
 		}
 
-		nsec, ok := index[fileName]
+		nsec, ok := index[filepath.Base(fileName)]
 		if !ok {
+			fmt.Printf("Maintain(): skipping %s because it's not in the index\n", fileName)
 			continue
 		}
+
+		fmt.Printf("Maintain(): processing %s\n", fileName)
 
 		if time.Since(time.Unix(0, nsec)) > gh.CheckExpiry {
 			sha, err = gh.deleteFile(fileName, sha)
