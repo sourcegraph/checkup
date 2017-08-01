@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
+
+var errFileNotFound = fmt.Errorf("file not found on github")
 
 // GitHub is a way to store checkup results in a GitHub repository.
 type GitHub struct {
@@ -30,6 +33,25 @@ type GitHub struct {
 	client *github.Client
 }
 
+func (gh *GitHub) ensureClient() error {
+	if gh.client != nil {
+		return nil
+	}
+
+	if gh.AccessToken == "" {
+		return fmt.Errorf("Please specify access_token in storage configuration")
+	}
+
+	gh.client = github.NewClient(oauth2.NewClient(
+		oauth2.NoContext,
+		oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: gh.AccessToken},
+		),
+	))
+
+	return nil
+}
+
 func (gh GitHub) fullPathName(filename string) string {
 	if strings.HasPrefix(filename, gh.Dir) {
 		return filename
@@ -39,7 +61,11 @@ func (gh GitHub) fullPathName(filename string) string {
 }
 
 func (gh GitHub) readFile(filename string) ([]byte, string, error) {
-	contents, _, _, err := gh.client.Repositories.GetContents(
+	if err := gh.ensureClient(); err != nil {
+		return nil, "", err
+	}
+
+	contents, _, resp, err := gh.client.Repositories.GetContents(
 		context.Background(),
 		gh.RepositoryOwner,
 		gh.RepositoryName,
@@ -47,6 +73,9 @@ func (gh GitHub) readFile(filename string) ([]byte, string, error) {
 		&github.RepositoryContentGetOptions{Ref: "heads/" + gh.Branch},
 	)
 	if err != nil {
+		if resp.StatusCode == 404 {
+			return nil, "", errFileNotFound
+		}
 		return nil, "", err
 	}
 
@@ -55,6 +84,10 @@ func (gh GitHub) readFile(filename string) ([]byte, string, error) {
 }
 
 func (gh GitHub) writeFile(filename string, sha string, contents []byte) error {
+	if err := gh.ensureClient(); err != nil {
+		return err
+	}
+
 	var err error
 	var writeFunc func(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	opts := &github.RepositoryContentFileOptions{
@@ -66,14 +99,19 @@ func (gh GitHub) writeFile(filename string, sha string, contents []byte) error {
 		},
 	}
 
+	if gh.Branch != "" {
+		opts.Branch = &gh.Branch
+	}
+
 	// If no SHA specified, then create the file.
 	// Otherwise, update the file at the specified SHA.
 	if sha == "" {
-		opts.Branch = &gh.Branch
 		writeFunc = gh.client.Repositories.CreateFile
+		fmt.Printf("creating %s on branch=%s\n", gh.fullPathName(filename), gh.Branch)
 	} else {
 		opts.SHA = github.String(sha)
 		writeFunc = gh.client.Repositories.UpdateFile
+		fmt.Printf("updating %s on branch=%s\n", gh.fullPathName(filename), gh.Branch)
 	}
 
 	_, _, err = writeFunc(
@@ -90,6 +128,14 @@ func (gh GitHub) writeFile(filename string, sha string, contents []byte) error {
 // and any applicable errors. If an error occurs, the input SHA is returned along
 // with the error.
 func (gh GitHub) deleteFile(filename string, sha string) (string, error) {
+	if err := gh.ensureClient(); err != nil {
+		return "", err
+	}
+
+	if sha == "" {
+		return "", errFileNotFound
+	}
+
 	commit, _, err := gh.client.Repositories.DeleteFile(
 		context.Background(),
 		gh.RepositoryOwner,
@@ -115,8 +161,11 @@ func (gh GitHub) readIndex() (map[string]int64, string, error) {
 	index := map[string]int64{}
 
 	contents, sha, err := gh.readFile(indexName)
-	if err != nil {
+	if err != nil && err != errFileNotFound {
 		return nil, "", err
+	}
+	if err == errFileNotFound {
+		return index, "", nil
 	}
 
 	err = json.Unmarshal(contents, &index)
@@ -159,6 +208,10 @@ func (gh GitHub) Store(results []Result) error {
 func (gh GitHub) Maintain() error {
 	if gh.CheckExpiry == 0 {
 		return nil
+	}
+
+	if err := gh.ensureClient(); err != nil {
+		return err
 	}
 
 	ref, _, err := gh.client.Git.GetRef(context.Background(), gh.RepositoryOwner, gh.RepositoryName, "heads/"+gh.Branch)
