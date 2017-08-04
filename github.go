@@ -52,7 +52,7 @@ func (gh *GitHub) ensureClient() error {
 	return nil
 }
 
-func (gh GitHub) fullPathName(filename string) string {
+func (gh *GitHub) fullPathName(filename string) string {
 	if strings.HasPrefix(filename, gh.Dir) {
 		return filename
 	} else {
@@ -60,7 +60,7 @@ func (gh GitHub) fullPathName(filename string) string {
 	}
 }
 
-func (gh GitHub) readFile(filename string) ([]byte, string, error) {
+func (gh *GitHub) readFile(filename string) ([]byte, string, error) {
 	if err := gh.ensureClient(); err != nil {
 		return nil, "", err
 	}
@@ -83,7 +83,7 @@ func (gh GitHub) readFile(filename string) ([]byte, string, error) {
 	return []byte(decoded), *contents.SHA, err
 }
 
-func (gh GitHub) writeFile(filename string, sha string, contents []byte) error {
+func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error {
 	if err := gh.ensureClient(); err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (gh GitHub) writeFile(filename string, sha string, contents []byte) error {
 // deleteFile deletes a file from a Git tree and returns the new SHA for the ref
 // and any applicable errors. If an error occurs, the input SHA is returned along
 // with the error.
-func (gh GitHub) deleteFile(filename string, sha string) (string, error) {
+func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
 	if err := gh.ensureClient(); err != nil {
 		return "", err
 	}
@@ -157,7 +157,7 @@ func (gh GitHub) deleteFile(filename string, sha string) (string, error) {
 	return *commit.Commit.SHA, nil
 }
 
-func (gh GitHub) readIndex() (map[string]int64, string, error) {
+func (gh *GitHub) readIndex() (map[string]int64, string, error) {
 	index := map[string]int64{}
 
 	contents, sha, err := gh.readFile(indexName)
@@ -172,7 +172,7 @@ func (gh GitHub) readIndex() (map[string]int64, string, error) {
 	return index, sha, err
 }
 
-func (gh GitHub) writeIndex(index map[string]int64, sha string) error {
+func (gh *GitHub) writeIndex(index map[string]int64, sha string) error {
 	contents, err := json.Marshal(index)
 	if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (gh GitHub) writeIndex(index map[string]int64, sha string) error {
 }
 
 // Store stores results on filesystem according to the configuration in fs.
-func (gh GitHub) Store(results []Result) error {
+func (gh *GitHub) Store(results []Result) error {
 	// Write results to a new file
 	name := *GenerateFilename()
 	contents, err := json.Marshal(results)
@@ -207,7 +207,7 @@ func (gh GitHub) Store(results []Result) error {
 }
 
 // Maintain deletes check files that are older than fs.CheckExpiry.
-func (gh GitHub) Maintain() error {
+func (gh *GitHub) Maintain() error {
 	if gh.CheckExpiry == 0 {
 		return nil
 	}
