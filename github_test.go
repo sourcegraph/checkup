@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -21,9 +20,7 @@ import (
 
 var (
 	results      = []Result{{Title: "Testing"}}
-	resultsBytes = []byte(`[{"title":"Testing"}]` + "\n")
-
-	checkFileRegexp = regexp.MustCompile(`\A\d+-check.json\z`)
+	resultsBytes = []byte(`[{"title":"Testing"}]`)
 )
 
 func mustWriteJSON(w io.Writer, data interface{}) {
@@ -48,6 +45,26 @@ func sha(data []byte) string {
 	return fmt.Sprintf("%x", sha1.Sum(data))
 }
 
+func pathForGitRepo(path string) string {
+	return strings.TrimPrefix(path, "/")
+}
+
+func pathForIndex(path string) string {
+	return filepath.Base(path)
+}
+
+func repositoryContent(path, serverSHAForRepo string, data interface{}) *github.RepositoryContent {
+	return &github.RepositoryContent{
+		Type:     github.String("file"),
+		Encoding: github.String("base64"),
+		Size:     github.Int(len(base64Encoded(toJSON(data)))),
+		Name:     github.String(filepath.Base(path)),
+		Path:     github.String(path),
+		Content:  github.String(base64Encoded(toJSON(data))),
+		SHA:      github.String(serverSHAForRepo),
+	}
+}
+
 func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	// test server
 	mux := http.NewServeMux()
@@ -70,11 +87,12 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 		Files       map[string]bool
 	}{
 		LastUpdated: time.Now().UnixNano(),
-		Files: map[string]bool{
-			"subdir/1501523631505010894-check.json": true,
-			"subdir/1501525202306053005-check.json": true,
-			"subdir/index.json":                     true,
-		},
+		Files:       map[string]bool{},
+	}
+
+	fixtureFiles := []string{"1501523631505010894-check.json", "1501525202306053005-check.json", "index.json"}
+	for _, file := range fixtureFiles {
+		gitRepo.Files[filepath.Join(specimen.Dir, file)] = true
 	}
 
 	serverSHAForRepo := sha(toJSON(gitRepo))
@@ -126,26 +144,18 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 
 	mux.HandleFunc("/repos/o/r/contents/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
-		path := strings.TrimPrefix(r.URL.Path, filepath.Join("/repos/o/r/contents/", specimen.Dir)+"/")
+		path := strings.TrimPrefix(r.URL.Path, "/repos/o/r/contents")
 		if got := r.Method; !(got == "GET" || got == "PUT" || got == "DELETE") {
 			t.Errorf("Request method: %v, want GET or PUT", got)
 		}
 		if got := r.FormValue("ref"); got != "" && got != "heads/b" {
 			t.Errorf("Expected heads/b, got %v", got)
 		}
-		if r.Method == "GET" && path == "index.json" {
-			mustWriteJSON(w, github.RepositoryContent{
-				Type:     github.String("file"),
-				Encoding: github.String("base64"),
-				Size:     github.Int(len(base64Encoded(toJSON(index)))),
-				Name:     github.String("index.json"),
-				Path:     github.String(filepath.Join(specimen.Dir, "index.json")),
-				Content:  github.String(base64Encoded(toJSON(index))),
-				SHA:      github.String(serverSHAForRepo),
-			})
+		if r.Method == "GET" && strings.HasSuffix(path, "/index.json") {
+			mustWriteJSON(w, repositoryContent(path, serverSHAForRepo, index))
 			return
 		}
-		if r.Method == "PUT" && path == "index.json" {
+		if r.Method == "PUT" && strings.HasSuffix(path, "/index.json") {
 			// 1. Enforce body contains message, committer, content (base64-encoded), sha
 			stuff := struct {
 				Message   string            `json:"message"`
@@ -156,8 +166,8 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if stuff.Message != "[checkup] store index.json [ci skip]" {
-				t.Errorf("Expected a certain commit message, got '%s'", stuff.Message)
+			if expected := fmt.Sprintf("[checkup] store %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
+				t.Errorf("Expected commit message '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != serverSHAForRepo {
 				t.Errorf("Expected SHA to be %s, got '%s'", serverSHAForRepo, stuff.SHA)
@@ -172,42 +182,24 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			gitRepo.LastUpdated = time.Now().UnixNano()
 			serverSHAForRepo = sha(toJSON(gitRepo))
 			mustWriteJSON(w, github.RepositoryContentResponse{
-				Content: &github.RepositoryContent{
-					Type:     github.String("file"),
-					Encoding: github.String("base64"),
-					Size:     github.Int(len(base64Encoded(toJSON(index)))),
-					Name:     github.String("index.json"),
-					Path:     github.String(filepath.Join(specimen.Dir, "index.json")),
-					Content:  github.String(base64Encoded(toJSON(index))),
-					SHA:      github.String(sha(toJSON(index))),
-				},
-				Commit: github.Commit{
-					SHA: github.String(serverSHAForRepo),
-				},
+				Content: repositoryContent(path, serverSHAForRepo, index),
+				Commit:  github.Commit{SHA: github.String(serverSHAForRepo)},
 			})
 			return
 		}
-		if r.Method == "GET" && checkFileRegexp.MatchString(path) {
-			_, ok := index[path]
+		if r.Method == "GET" && strings.HasSuffix(path, "-check.json") {
+			_, ok := index[pathForIndex(path)]
 			if ok {
-				mustWriteJSON(w, github.RepositoryContent{
-					Type:     github.String("file"),
-					Encoding: github.String("base64"),
-					Size:     github.Int(len(base64Encoded(resultsBytes))),
-					Name:     github.String(path),
-					Path:     github.String(filepath.Join(specimen.Dir, path)),
-					Content:  github.String(base64Encoded(resultsBytes)),
-					SHA:      github.String(sha(resultsBytes)),
-				})
+				mustWriteJSON(w, repositoryContent(path, serverSHAForRepo, results))
 			} else {
-				http.Error(w, path+" does not exist", 404)
+				http.Error(w, filepath.Base(path)+" does not exist", 404)
 			}
 			return
 		}
-		if r.Method == "PUT" && checkFileRegexp.MatchString(path) {
-			index[path] = time.Now().UnixNano()
+		if r.Method == "PUT" && strings.HasSuffix(path, "-check.json") {
+			index[pathForIndex(path)] = time.Now().UnixNano()
 
-			gitRepo.Files[filepath.Join(specimen.Dir, path)] = true
+			gitRepo.Files[pathForGitRepo(path)] = true
 			gitRepo.LastUpdated = time.Now().UnixNano()
 			serverSHAForRepo = sha(toJSON(gitRepo))
 
@@ -221,8 +213,8 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if stuff.Message != fmt.Sprintf("[checkup] store %s [ci skip]", path) {
-				t.Errorf("Expected a certain commit message, got '%s'", stuff.Message)
+			if expected := fmt.Sprintf("[checkup] store %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
+				t.Errorf("Expected commit message '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != "" {
 				t.Errorf("Expected SHA to be empty, got '%s'", stuff.SHA)
@@ -236,22 +228,14 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 
 			// Response is the same if updating or creating.
 			mustWriteJSON(w, github.RepositoryContentResponse{
-				Content: &github.RepositoryContent{
-					Type:     github.String("file"),
-					Encoding: github.String("base64"),
-					Size:     github.Int(len(base64Encoded(resultsBytes))),
-					Name:     github.String(path),
-					Path:     github.String(filepath.Join(specimen.Dir, path)),
-					Content:  github.String(base64Encoded(resultsBytes)),
-					SHA:      github.String(sha(resultsBytes)),
-				},
+				Content: repositoryContent(path, serverSHAForRepo, results),
 				Commit: github.Commit{
 					SHA: github.String(serverSHAForRepo),
 				},
 			})
 			return
 		}
-		if r.Method == "DELETE" && checkFileRegexp.MatchString(path) {
+		if r.Method == "DELETE" && strings.HasSuffix(path, "-check.json") {
 			// 1. Enforce body contains message, committer, content (base64-encoded), sha
 			stuff := struct {
 				Message   string            `json:"message"`
@@ -262,7 +246,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if expected := fmt.Sprintf("[checkup] delete %s [ci skip]", path); stuff.Message != expected {
+			if expected := fmt.Sprintf("[checkup] delete %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
 				t.Errorf("Expected commit message to be '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != serverSHAForRepo {
@@ -276,15 +260,17 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			}
 
 			// Ok, start modifying the in-memory state.
-			if _, ok := index[path]; !ok {
-				http.Error(w, "no such file: "+path, 500)
+			if _, ok := index[pathForIndex(path)]; !ok {
+				http.Error(w, "no such file: "+filepath.Base(path), 500)
 			}
-			delete(index, path)
+			delete(index, filepath.Base(path))
 
-			if _, ok := gitRepo.Files[filepath.Join(specimen.Dir, path)]; !ok {
+			if _, ok := gitRepo.Files[pathForGitRepo(path)]; !ok {
+				fmt.Printf("path=%s index=%+v repo: %+v\n", path, index, gitRepo.Files)
 				http.Error(w, "file was deleted", 401)
+				return
 			}
-			gitRepo.Files[filepath.Join(specimen.Dir, path)] = false
+			gitRepo.Files[pathForGitRepo(path)] = false
 			gitRepo.LastUpdated = time.Now().UnixNano()
 			serverSHAForRepo = sha(toJSON(gitRepo))
 
@@ -301,6 +287,79 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	})
 
 	f(client)
+}
+
+func TestGitHubWithoutSubdir(t *testing.T) {
+	// Our subject, our specimen.
+	specimen := &GitHub{
+		RepositoryOwner: "o",
+		RepositoryName:  "r",
+		CommitterName:   "John Appleseed",
+		CommitterEmail:  "appleseed@example.org",
+		Branch:          "b",
+		Dir:             "",
+	}
+
+	withGitHubServer(t, *specimen, func(client *github.Client) {
+		specimen.client = client
+
+		if err := specimen.Store(results); err != nil {
+			t.Fatalf("Expected no error from Store(), got: %v", err)
+		}
+
+		fmt.Println("Done with Store()")
+
+		// Make sure index has been created
+		index, _, err := specimen.readIndex()
+		if err != nil {
+			t.Fatalf("Cannot read index: %v", err)
+		}
+
+		if len(index) != 3 {
+			t.Fatalf("Expected length of index to be 3, but got %v", len(index))
+		}
+
+		var (
+			name string
+			nsec int64
+		)
+		for name, nsec = range index {
+			break
+		}
+
+		// Make sure index has timestamp of check
+		ts := time.Unix(0, nsec)
+		if time.Since(ts) > 1*time.Second {
+			t.Errorf("Timestamp of check is %s but expected something very recent", ts)
+		}
+
+		// Make sure check file bytes are correct
+		fmt.Printf("checking %s\n", name)
+		b, _, err := specimen.readFile(name)
+		if err != nil {
+			t.Fatalf("Expected no error reading body, got: %v", err)
+		}
+		if bytes.Compare(b, resultsBytes) != 0 {
+			t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
+		}
+
+		// Make sure check file is not deleted after maintain with CheckExpiry == 0
+		if err := specimen.Maintain(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if _, _, err := specimen.readFile(name); err != nil {
+			t.Fatalf("Expected not error calling Stat() on checkfile, got: %v", err)
+		}
+
+		// Make sure checkfile is deleted after maintain with CheckExpiry > 0
+		specimen.CheckExpiry = 1 * time.Nanosecond
+		if err := specimen.Maintain(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if _, _, err := specimen.readFile(name); err != nil && err != errFileNotFound {
+			t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
+		}
+	})
 }
 
 func TestGitHubWithSubdir(t *testing.T) {

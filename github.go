@@ -119,7 +119,7 @@ func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error 
 	var err error
 	var writeFunc func(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.String(fmt.Sprintf("[checkup] store %s [ci skip]", filename)),
+		Message: github.String(fmt.Sprintf("[checkup] store %s [ci skip]", gh.fullPathName(filename))),
 		Content: contents,
 		Committer: &github.CommitAuthor{
 			Name:  &gh.CommitterName,
@@ -170,7 +170,7 @@ func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
 		gh.RepositoryName,
 		gh.fullPathName(filename),
 		&github.RepositoryContentFileOptions{
-			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", filepath.Base(filename))),
+			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", gh.fullPathName(filename))),
 			SHA:     github.String(sha),
 			Committer: &github.CommitAuthor{
 				Name:  &gh.CommitterName,
