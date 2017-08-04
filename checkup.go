@@ -329,7 +329,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			}
 			c.Storage = storage
 		case "github":
-			var storage *GitHub
+			storage := &GitHub{}
 			err = json.Unmarshal(raw.Storage, storage)
 			if err != nil {
 				return err
