@@ -19,7 +19,12 @@ import (
 	"github.com/google/go-github/github"
 )
 
-var checkFileRegexp = regexp.MustCompile(`\A\d+-check.json\z`)
+var (
+	results      = []Result{{Title: "Testing"}}
+	resultsBytes = []byte(`[{"title":"Testing"}]` + "\n")
+
+	checkFileRegexp = regexp.MustCompile(`\A\d+-check.json\z`)
+)
 
 func mustWriteJSON(w io.Writer, data interface{}) {
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -43,10 +48,7 @@ func sha(data []byte) string {
 	return fmt.Sprintf("%x", sha1.Sum(data))
 }
 
-func TestGitHub(t *testing.T) {
-	results := []Result{{Title: "Testing"}}
-	resultsBytes := []byte(`[{"title":"Testing"}]` + "\n")
-
+func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	// test server
 	mux := http.NewServeMux()
 	server := httptest.NewServer(mux)
@@ -57,17 +59,6 @@ func TestGitHub(t *testing.T) {
 	client.BaseURL = url
 	client.UploadURL = url
 	defer server.Close()
-
-	// Our subject, our specimen.
-	specimen := GitHub{
-		RepositoryOwner: "o",
-		RepositoryName:  "r",
-		CommitterName:   "John Appleseed",
-		CommitterEmail:  "appleseed@example.org",
-		Branch:          "b",
-		Dir:             "subdir/",
-		client:          client,
-	}
 
 	// files := map[string]string{}
 	index := map[string]int64{
@@ -309,62 +300,79 @@ func TestGitHub(t *testing.T) {
 		t.Errorf("Cannot handle %s %s (path=%s)", r.Method, r.URL.Path, path)
 	})
 
-	// Here goes!
+	f(client)
+}
 
-	if err := specimen.Store(results); err != nil {
-		t.Fatalf("Expected no error from Store(), got: %v", err)
-	}
-
-	fmt.Println("Done with Store()")
-
-	// Make sure index has been created
-	index, _, err := specimen.readIndex()
-	if err != nil {
-		t.Fatalf("Cannot read index: %v", err)
-	}
-
-	if len(index) != 3 {
-		t.Fatalf("Expected length of index to be 3, but got %v", len(index))
+func TestGitHubWithSubdir(t *testing.T) {
+	// Our subject, our specimen.
+	specimen := &GitHub{
+		RepositoryOwner: "o",
+		RepositoryName:  "r",
+		CommitterName:   "John Appleseed",
+		CommitterEmail:  "appleseed@example.org",
+		Branch:          "b",
+		Dir:             "subdir/",
 	}
 
-	var (
-		name string
-		nsec int64
-	)
-	for name, nsec = range index {
-	}
+	withGitHubServer(t, *specimen, func(client *github.Client) {
+		specimen.client = client
 
-	// Make sure index has timestamp of check
-	ts := time.Unix(0, nsec)
-	if time.Since(ts) > 1*time.Second {
-		t.Errorf("Timestamp of check is %s but expected something very recent", ts)
-	}
+		if err := specimen.Store(results); err != nil {
+			t.Fatalf("Expected no error from Store(), got: %v", err)
+		}
 
-	// Make sure check file bytes are correct
-	checkfile := filepath.Join(specimen.Dir, name)
-	fmt.Printf("checking %s\n", checkfile)
-	b, _, err := specimen.readFile(checkfile)
-	if err != nil {
-		t.Fatalf("Expected no error reading body, got: %v", err)
-	}
-	if bytes.Compare(b, resultsBytes) != 0 {
-		t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
-	}
+		fmt.Println("Done with Store()")
 
-	// Make sure check file is not deleted after maintain with CheckExpiry == 0
-	if err := specimen.Maintain(); err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-	if _, _, err := specimen.readFile(checkfile); err != nil {
-		t.Fatalf("Expected not error calling Stat() on checkfile, got: %v", err)
-	}
+		// Make sure index has been created
+		index, _, err := specimen.readIndex()
+		if err != nil {
+			t.Fatalf("Cannot read index: %v", err)
+		}
 
-	// Make sure checkfile is deleted after maintain with CheckExpiry > 0
-	specimen.CheckExpiry = 1 * time.Nanosecond
-	if err := specimen.Maintain(); err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-	if _, _, err := specimen.readFile(checkfile); err != nil && err != errFileNotFound {
-		t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
-	}
+		if len(index) != 3 {
+			t.Fatalf("Expected length of index to be 3, but got %v", len(index))
+		}
+
+		var (
+			name string
+			nsec int64
+		)
+		for name, nsec = range index {
+			break
+		}
+
+		// Make sure index has timestamp of check
+		ts := time.Unix(0, nsec)
+		if time.Since(ts) > 1*time.Second {
+			t.Errorf("Timestamp of check is %s but expected something very recent", ts)
+		}
+
+		// Make sure check file bytes are correct
+		checkfile := filepath.Join(specimen.Dir, name)
+		fmt.Printf("checking %s\n", checkfile)
+		b, _, err := specimen.readFile(checkfile)
+		if err != nil {
+			t.Fatalf("Expected no error reading body, got: %v", err)
+		}
+		if bytes.Compare(b, resultsBytes) != 0 {
+			t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
+		}
+
+		// Make sure check file is not deleted after maintain with CheckExpiry == 0
+		if err := specimen.Maintain(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if _, _, err := specimen.readFile(checkfile); err != nil {
+			t.Fatalf("Expected not error calling Stat() on checkfile, got: %v", err)
+		}
+
+		// Make sure checkfile is deleted after maintain with CheckExpiry > 0
+		specimen.CheckExpiry = 1 * time.Nanosecond
+		if err := specimen.Maintain(); err != nil {
+			t.Fatalf("Expected no error, got %v", err)
+		}
+		if _, _, err := specimen.readFile(checkfile); err != nil && err != errFileNotFound {
+			t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
+		}
+	})
 }
