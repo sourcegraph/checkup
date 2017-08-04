@@ -16,13 +16,31 @@ var errFileNotFound = fmt.Errorf("file not found on github")
 
 // GitHub is a way to store checkup results in a GitHub repository.
 type GitHub struct {
-	AccessToken     string `json:"access_token"`
+	// AccessToken is the API token used to authenticate with GitHub (required).
+	AccessToken string `json:"access_token"`
+
+	// RepositoryOwner is the account which owns the repository on GitHub (required).
+	// For https://github.com/octocat/kit, the owner is "octocat".
 	RepositoryOwner string `json:"repository_owner"`
-	RepositoryName  string `json:"repository_name"`
-	CommitterName   string `json:"committer_name"`
-	CommitterEmail  string `json:"committer_email"`
-	Branch          string `json:"branch"`
-	Dir             string `json:"dir"`
+
+	// RepositoryName is the name of the repository on GitHub (required).
+	// For https://github.com/octocat/kit, the name is "kit".
+	RepositoryName string `json:"repository_name"`
+
+	// CommitterName is the display name of the user corresponding to the AccessToken (required).
+	// If the AccessToken is for user @octocat, then this might be "Mona Lisa," her name.
+	CommitterName string `json:"committer_name"`
+
+	// CommitterEmail is the email address of the user corresponding to the AccessToken (required).
+	// If the AccessToken is for user @octocat, then this might be "mona@github.com".
+	CommitterEmail string `json:"committer_email"`
+
+	// Branch is the git branch to store the files to (required).
+	Branch string `json:"branch"`
+
+	// Dir is the subdirectory in the Git tree in which to store the files (required).
+	// For example, to write to the directory "updates" in the Git repo, this should be "updates".
+	Dir string `json:"dir"`
 
 	// Check files older than CheckExpiry will be
 	// deleted on calls to Maintain(). If this is
