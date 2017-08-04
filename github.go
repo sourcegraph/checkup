@@ -51,6 +51,7 @@ type GitHub struct {
 	client *github.Client `json:"-"`
 }
 
+// ensureClient builds an GitHub API client if none exists and stores it on the struct.
 func (gh *GitHub) ensureClient() error {
 	if gh.client != nil {
 		return nil
@@ -70,6 +71,8 @@ func (gh *GitHub) ensureClient() error {
 	return nil
 }
 
+// fullPathName ensures the configured Dir value is present in the filename and
+// returns a filename with the Dir prefixed before the input filename if necessary.
 func (gh *GitHub) fullPathName(filename string) string {
 	if strings.HasPrefix(filename, gh.Dir) {
 		return filename
@@ -78,6 +81,9 @@ func (gh *GitHub) fullPathName(filename string) string {
 	}
 }
 
+// readFile reads a file from the Git repository at its latest revision.
+// This method returns the plaintext contents, the SHA associated with the contents
+// If an error occurs, the contents and sha will be nil & empty.
 func (gh *GitHub) readFile(filename string) ([]byte, string, error) {
 	if err := gh.ensureClient(); err != nil {
 		return nil, "", err
@@ -101,6 +107,9 @@ func (gh *GitHub) readFile(filename string) ([]byte, string, error) {
 	return []byte(decoded), *contents.SHA, err
 }
 
+// writeFile commits the contents to the Git repo at the given filename & revision.
+// If the Git repo does not yet have a file at this filename, it will create the file.
+// Otherwise, it will simply update the file with the new contents.
 func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error {
 	if err := gh.ensureClient(); err != nil {
 		return err
@@ -175,6 +184,10 @@ func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
 	return *commit.Commit.SHA, nil
 }
 
+// readIndex reads the index JSON from the Git repo into a map.
+// It returns the populated map & the Git SHA associated with the contents.
+// If the index file is not found in the Git repo, an empty index is returned with no error.
+// If any error occurs, a nil index and empty SHA are returned along with the error.
 func (gh *GitHub) readIndex() (map[string]int64, string, error) {
 	index := map[string]int64{}
 
@@ -190,6 +203,8 @@ func (gh *GitHub) readIndex() (map[string]int64, string, error) {
 	return index, sha, err
 }
 
+// writeIndex marshals the index into JSON and writes the file to the Git repo.
+// It returns any errors associated with marshaling the data or writing the file.
 func (gh *GitHub) writeIndex(index map[string]int64, sha string) error {
 	contents, err := json.Marshal(index)
 	if err != nil {
@@ -199,7 +214,7 @@ func (gh *GitHub) writeIndex(index map[string]int64, sha string) error {
 	return gh.writeFile(indexName, sha, contents)
 }
 
-// Store stores results on filesystem according to the configuration in fs.
+// Store stores results in the Git repo & updates the index.
 func (gh *GitHub) Store(results []Result) error {
 	// Write results to a new file
 	name := *GenerateFilename()
@@ -224,7 +239,7 @@ func (gh *GitHub) Store(results []Result) error {
 	return gh.writeIndex(index, indexSHA)
 }
 
-// Maintain deletes check files that are older than fs.CheckExpiry.
+// Maintain deletes check files that are older than gh.CheckExpiry.
 func (gh *GitHub) Maintain() error {
 	if gh.CheckExpiry == 0 {
 		return nil
