@@ -30,7 +30,7 @@ type GitHub struct {
 	// deleted.
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 
-	client *github.Client
+	client *github.Client `json:"-"`
 }
 
 func (gh *GitHub) ensureClient() error {
