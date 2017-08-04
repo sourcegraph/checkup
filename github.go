@@ -73,7 +73,7 @@ func (gh *GitHub) readFile(filename string) ([]byte, string, error) {
 		&github.RepositoryContentGetOptions{Ref: "heads/" + gh.Branch},
 	)
 	if err != nil {
-		if resp.StatusCode == 404 {
+		if resp.StatusCode == http.StatusNotFound {
 			return nil, "", errFileNotFound
 		}
 		return nil, "", err
