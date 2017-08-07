@@ -150,9 +150,8 @@ func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error 
 	return err
 }
 
-// deleteFile deletes a file from a Git tree and returns the new SHA for the ref
-// and any applicable errors. If an error occurs, the input SHA is returned along
-// with the error.
+// deleteFile deletes a file from a Git tree and returns any applicable errors.
+// If an empty SHA is passed as an argument, errFileNotFound is returned.
 func (gh *GitHub) deleteFile(filename string, sha string) error {
 	if err := gh.ensureClient(); err != nil {
 		return err
