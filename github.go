@@ -135,11 +135,9 @@ func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error 
 	// Otherwise, update the file at the specified SHA.
 	if sha == "" {
 		writeFunc = gh.client.Repositories.CreateFile
-		fmt.Printf("creating %s on branch=%s\n", gh.fullPathName(filename), gh.Branch)
 	} else {
 		opts.SHA = github.String(sha)
 		writeFunc = gh.client.Repositories.UpdateFile
-		fmt.Printf("updating %s on branch=%s\n", gh.fullPathName(filename), gh.Branch)
 	}
 
 	_, _, err = writeFunc(
@@ -232,8 +230,6 @@ func (gh *GitHub) Store(results []Result) error {
 		return err
 	}
 
-	fmt.Printf("Store(): indexSHA=%s\n", indexSHA)
-
 	// Add new file to index
 	index[name] = time.Now().UnixNano()
 
@@ -250,8 +246,6 @@ func (gh *GitHub) Maintain() error {
 	if err := gh.ensureClient(); err != nil {
 		return err
 	}
-
-	fmt.Println("Beginning Maintain()")
 
 	index, indexSHA, err := gh.readIndex()
 	if err != nil {
@@ -271,31 +265,22 @@ func (gh *GitHub) Maintain() error {
 		fileName := treeEntry.GetPath()
 
 		if fileName == filepath.Join(gh.Dir, indexName) {
-			fmt.Printf("Maintain(): skipping %s because it's the index\n", fileName)
 			continue
 		}
 		if gh.Dir != "" && !strings.HasPrefix(fileName, gh.Dir) {
-			fmt.Printf("Maintain(): skipping %s because it isn't in our dir\n", fileName)
 			continue
 		}
 
 		nsec, ok := index[filepath.Base(fileName)]
 		if !ok {
-			fmt.Printf("Maintain(): skipping %s because it's not in the index\n", fileName)
 			continue
 		}
 
-		fmt.Printf("Maintain(): processing %s\n", fileName)
-		fmt.Printf("Maintain(): %s is %s old (expires at %s)\n", fileName, time.Since(time.Unix(0, nsec)), gh.CheckExpiry)
-		fmt.Printf("Maintain(): %s is older? %v\n", fileName, time.Since(time.Unix(0, nsec)) > gh.CheckExpiry)
-
 		if time.Since(time.Unix(0, nsec)) > gh.CheckExpiry {
-			fmt.Printf("Maintain(): deleting %s\n", fileName)
 			if err = gh.deleteFile(fileName, treeEntry.GetSHA()); err != nil {
 				return err
 			}
 			delete(index, fileName)
-			fmt.Printf("Maintain(): deleted %s\n", fileName)
 		}
 	}
 
