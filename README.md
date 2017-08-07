@@ -28,6 +28,7 @@ Checkup implements these storage providers:
 
 - Amazon S3
 - Local file system
+- GitHub
 
 Checkup can even send notifications through your service of choice (if an integration exists).
 
@@ -171,6 +172,36 @@ Change [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspag
 ```
 
 Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) so the status page knows how to load your check files.
+
+#### GitHub Storage
+
+**[godoc: GitHub](https://godoc.org/github.com/sourcegraph/checkup#GitHub)**
+
+```json
+{
+	"provider": "github",
+	"access_token": "some_api_access_token_with_repo_scope",
+	"repository_owner": "owner",
+	"repository_name": "repo",
+	"committer_name": "Commiter Name",
+	"committer_email": "you@yours.com",
+	"branch": "gh-pages",
+	"dir": "updates"
+}
+```
+
+Where "dir" is a subdirectory within the repo to push all the check files. Setup instructions:
+
+1. Create a repository.
+2. Copy the contents of `statuspage/` from this repo to the root of your new repo.
+3. Change index.html to pull in js/fs.js instead of js/s3.js:
+```diff
+- <script src="js/s3.js"></script>
++ <script src="js/fs.js"></script>
+```
+4. Create `updates/.gitkeep`.
+5. Enable GitHub Pages in your settings for your desired branch.
+
 
 
 ## Setting up storage on S3
