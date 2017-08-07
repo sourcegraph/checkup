@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -135,9 +136,11 @@ func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error 
 	// Otherwise, update the file at the specified SHA.
 	if sha == "" {
 		writeFunc = gh.client.Repositories.CreateFile
+		log.Printf("github: creating %s on branch '%s'", gh.fullPathName(filename), gh.Branch)
 	} else {
 		opts.SHA = github.String(sha)
 		writeFunc = gh.client.Repositories.UpdateFile
+		log.Printf("github: updating %s on branch '%s'", gh.fullPathName(filename), gh.Branch)
 	}
 
 	_, _, err = writeFunc(
@@ -160,6 +163,8 @@ func (gh *GitHub) deleteFile(filename string, sha string) error {
 	if sha == "" {
 		return errFileNotFound
 	}
+
+	log.Printf("github: deleting %s on branch '%s'", gh.fullPathName(filename), gh.Branch)
 
 	_, _, err := gh.client.Repositories.DeleteFile(
 		context.Background(),
@@ -267,15 +272,18 @@ func (gh *GitHub) Maintain() error {
 			continue
 		}
 		if gh.Dir != "" && !strings.HasPrefix(fileName, gh.Dir) {
+			log.Printf("github: maintain: skipping %s because it isn't in the configured subdirectory", fileName)
 			continue
 		}
 
 		nsec, ok := index[filepath.Base(fileName)]
 		if !ok {
+			log.Printf("github: maintain: skipping %s because it's not in the index", fileName)
 			continue
 		}
 
 		if time.Since(time.Unix(0, nsec)) > gh.CheckExpiry {
+			log.Printf("github: maintain: deleting %s", fileName)
 			if err = gh.deleteFile(fileName, treeEntry.GetSHA()); err != nil {
 				return err
 			}
