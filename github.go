@@ -155,16 +155,16 @@ func (gh *GitHub) writeFile(filename string, sha string, contents []byte) error 
 // deleteFile deletes a file from a Git tree and returns the new SHA for the ref
 // and any applicable errors. If an error occurs, the input SHA is returned along
 // with the error.
-func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
+func (gh *GitHub) deleteFile(filename string, sha string) error {
 	if err := gh.ensureClient(); err != nil {
-		return "", err
+		return err
 	}
 
 	if sha == "" {
-		return "", errFileNotFound
+		return errFileNotFound
 	}
 
-	commit, _, err := gh.client.Repositories.DeleteFile(
+	_, _, err := gh.client.Repositories.DeleteFile(
 		context.Background(),
 		gh.RepositoryOwner,
 		gh.RepositoryName,
@@ -172,6 +172,7 @@ func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
 		&github.RepositoryContentFileOptions{
 			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", gh.fullPathName(filename))),
 			SHA:     github.String(sha),
+			Branch:  &gh.Branch,
 			Committer: &github.CommitAuthor{
 				Name:  &gh.CommitterName,
 				Email: &gh.CommitterEmail,
@@ -179,10 +180,10 @@ func (gh *GitHub) deleteFile(filename string, sha string) (string, error) {
 		},
 	)
 	if err != nil {
-		return sha, err
+		return err
 	}
 
-	return *commit.Commit.SHA, nil
+	return nil
 }
 
 // readIndex reads the index JSON from the Git repo into a map.
@@ -252,7 +253,7 @@ func (gh *GitHub) Maintain() error {
 
 	fmt.Println("Beginning Maintain()")
 
-	index, _, err := gh.readIndex()
+	index, indexSHA, err := gh.readIndex()
 	if err != nil {
 		return err
 	}
@@ -265,8 +266,6 @@ func (gh *GitHub) Maintain() error {
 	if err != nil {
 		return err
 	}
-
-	sha := *ref.Object.SHA
 
 	for _, treeEntry := range tree.Entries {
 		fileName := treeEntry.GetPath()
@@ -287,15 +286,18 @@ func (gh *GitHub) Maintain() error {
 		}
 
 		fmt.Printf("Maintain(): processing %s\n", fileName)
+		fmt.Printf("Maintain(): %s is %s old (expires at %s)\n", fileName, time.Since(time.Unix(0, nsec)), gh.CheckExpiry)
+		fmt.Printf("Maintain(): %s is older? %v\n", fileName, time.Since(time.Unix(0, nsec)) > gh.CheckExpiry)
 
 		if time.Since(time.Unix(0, nsec)) > gh.CheckExpiry {
-			sha, err = gh.deleteFile(fileName, sha)
-			if err != nil {
+			fmt.Printf("Maintain(): deleting %s\n", fileName)
+			if err = gh.deleteFile(fileName, treeEntry.GetSHA()); err != nil {
 				return err
 			}
 			delete(index, fileName)
+			fmt.Printf("Maintain(): deleted %s\n", fileName)
 		}
 	}
 
-	return gh.writeIndex(index, sha)
+	return gh.writeIndex(index, indexSHA)
 }
