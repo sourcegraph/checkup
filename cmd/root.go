@@ -98,5 +98,5 @@ func Execute() {
 func init() {
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "checkup.json", "JSON config file")
 	RootCmd.Flags().BoolVar(&storeResults, "store", false, "Store results")
-	RootCmd.Flags().BoolVar(&printLogs, "v", false, "Print logging")
+	RootCmd.Flags().BoolVar(&printLogs, "v", false, "Enable logging to standard output")
 }
