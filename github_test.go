@@ -98,6 +98,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	serverSHAForRepo := sha(toJSON(gitRepo))
 
 	mux.HandleFunc("/repos/o/r/git/refs/heads/"+specimen.Branch, func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
 		if got := r.Method; got != "GET" {
 			t.Errorf("Request method: %v, want %v", got, "GET")
 		}
@@ -111,6 +112,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	})
 
 	mux.HandleFunc("/repos/o/r/git/trees/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
 		if got := r.FormValue("recursive"); got != "1" {
 			t.Errorf("Expected recursive flag to be 1, got %v", got)
 		}
@@ -141,6 +143,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 	})
 
 	mux.HandleFunc("/repos/o/r/contents/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
 		path := strings.TrimPrefix(r.URL.Path, "/repos/o/r/contents")
 		if got := r.Method; !(got == "GET" || got == "PUT" || got == "DELETE") {
 			t.Errorf("Request method: %v, want GET or PUT", got)
@@ -263,6 +266,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			delete(index, filepath.Base(path))
 
 			if _, ok := gitRepo.Files[pathForGitRepo(path)]; !ok {
+				fmt.Printf("path=%s index=%+v repo: %+v\n", path, index, gitRepo.Files)
 				http.Error(w, "file was deleted", 401)
 				return
 			}
@@ -303,6 +307,8 @@ func TestGitHubWithoutSubdir(t *testing.T) {
 			t.Fatalf("Expected no error from Store(), got: %v", err)
 		}
 
+		fmt.Println("Done with Store()")
+
 		// Make sure index has been created
 		index, _, err := specimen.readIndex()
 		if err != nil {
@@ -328,6 +334,7 @@ func TestGitHubWithoutSubdir(t *testing.T) {
 		}
 
 		// Make sure check file bytes are correct
+		fmt.Printf("checking %s\n", name)
 		b, _, err := specimen.readFile(name)
 		if err != nil {
 			t.Fatalf("Expected no error reading body, got: %v", err)
@@ -373,6 +380,8 @@ func TestGitHubWithSubdir(t *testing.T) {
 			t.Fatalf("Expected no error from Store(), got: %v", err)
 		}
 
+		fmt.Println("Done with Store()")
+
 		// Make sure index has been created
 		index, _, err := specimen.readIndex()
 		if err != nil {
@@ -399,6 +408,7 @@ func TestGitHubWithSubdir(t *testing.T) {
 
 		// Make sure check file bytes are correct
 		checkfile := filepath.Join(specimen.Dir, name)
+		fmt.Printf("checking %s\n", checkfile)
 		b, _, err := specimen.readFile(checkfile)
 		if err != nil {
 			t.Fatalf("Expected no error reading body, got: %v", err)
