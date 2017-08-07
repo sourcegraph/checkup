@@ -249,8 +249,8 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			if expected := fmt.Sprintf("[checkup] delete %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
 				t.Errorf("Expected commit message to be '%s', got '%s'", expected, stuff.Message)
 			}
-			if stuff.SHA != serverSHAForRepo {
-				t.Errorf("Expected SHA to be %s, got '%s'", serverSHAForRepo, stuff.SHA)
+			if stuff.SHA != sha(resultsBytes) {
+				t.Errorf("Expected SHA to be %s, got '%s'", sha(resultsBytes), stuff.SHA)
 			}
 			if stuff.Committer["email"] != specimen.CommitterEmail {
 				t.Errorf("Expected email to be %s, got %s", specimen.CommitterEmail, stuff.Committer["email"])
@@ -272,7 +272,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 			}
 			gitRepo.Files[pathForGitRepo(path)] = false
 			gitRepo.LastUpdated = time.Now().UnixNano()
-			serverSHAForRepo = sha(toJSON(gitRepo))
+			// Don't update the server SHA.
 
 			// Response is the same if updating or creating.
 			mustWriteJSON(w, github.RepositoryContentResponse{
