@@ -13,6 +13,7 @@ import (
 
 var configFile string
 var storeResults bool
+var printLogs bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -31,6 +32,10 @@ a single checkup and print results to stdout. To
 store the results of the check, use --store.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+		if printLogs {
+			log.SetOutput(os.Stdout)
+		}
+
 		allHealthy := true
 		c := loadCheckup()
 
@@ -93,4 +98,5 @@ func Execute() {
 func init() {
 	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "checkup.json", "JSON config file")
 	RootCmd.Flags().BoolVar(&storeResults, "store", false, "Store results")
+	RootCmd.Flags().BoolVar(&printLogs, "v", false, "Print logging")
 }
