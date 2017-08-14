@@ -11,7 +11,7 @@ import (
 
 func TestFS(t *testing.T) {
 	results := []Result{{Title: "Testing"}}
-	resultsBytes := []byte(`[{"title":"Testing"}]`+"\n")
+	resultsBytes := []byte(`[{"title":"Testing"}]` + "\n")
 
 	dir, err := ioutil.TempDir("", "checkup")
 	if err != nil {
@@ -41,7 +41,8 @@ func TestFS(t *testing.T) {
 		name string
 		nsec int64
 	)
-	for name, nsec = range index {}
+	for name, nsec = range index {
+	}
 
 	// Make sure index has timestamp of check
 	ts := time.Unix(0, nsec)
@@ -57,6 +58,33 @@ func TestFS(t *testing.T) {
 	}
 	if bytes.Compare(b, resultsBytes) != 0 {
 		t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
+	}
+
+	// Test the StorageReader interface
+	index, err = specimen.GetIndex()
+	if err != nil {
+		t.Fatalf("StoreReader: cannot read index: %v", err)
+	}
+
+	if len(index) != 1 {
+		t.Fatalf("StoreReader: expected length of index to be 1, but got %v", len(index))
+	}
+
+	var indexKey string
+	for k := range index {
+		indexKey = k // Get first (and unique) key
+		break
+	}
+	testResults, err := specimen.Fetch(indexKey)
+	if err != nil {
+		t.Fatalf("StoreReader: cannot fetch contents for '%s': %v", indexKey, err)
+	}
+	if len(testResults) != 1 {
+		t.Fatalf("StoreReader: expected length of []Result to be 1, but got %v", len(testResults))
+	}
+
+	if testResults[0].Title != results[0].Title {
+		t.Fatalf("StoreReader: expected test result title to be '%s', but got '%s'", results[0].Title, testResults[0].Title)
 	}
 
 	// Make sure check file is not deleted after maintain with CheckExpiry == 0

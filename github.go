@@ -241,6 +241,23 @@ func (gh *GitHub) Store(results []Result) error {
 	return gh.writeIndex(index, indexSHA)
 }
 
+// Fetch returns a checkup record -- Not tested!
+func (gh *GitHub) Fetch(name string) ([]Result, error) {
+	contents, _, err := gh.readFile(name)
+	if err != nil {
+		return nil, err
+	}
+	var r []Result
+	err = json.Unmarshal(contents, &r)
+	return r, err
+}
+
+// GetIndex returns the checkup index
+func (gh *GitHub) GetIndex() (map[string]int64, error) {
+	m, _, e := gh.readIndex()
+	return m, e
+}
+
 // Maintain deletes check files that are older than gh.CheckExpiry.
 func (gh *GitHub) Maintain() error {
 	if gh.CheckExpiry == 0 {

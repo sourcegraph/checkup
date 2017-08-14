@@ -24,6 +24,11 @@ type FS struct {
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 }
 
+// GetIndex returns the index from filesystem.
+func (fs FS) GetIndex() (map[string]int64, error) {
+	return fs.readIndex()
+}
+
 func (fs FS) readIndex() (map[string]int64, error) {
 	index := map[string]int64{}
 
@@ -47,6 +52,22 @@ func (fs FS) writeIndex(index map[string]int64) error {
 	defer f.Close()
 
 	return json.NewEncoder(f).Encode(index)
+}
+
+// Fetch fetches results from filesystem for the specified index.
+func (fs FS) Fetch(name string) ([]Result, error) {
+	f, err := os.Open(filepath.Join(fs.Dir, name))
+	if err != nil {
+		return nil, err
+	}
+	var results []Result
+	err = json.NewDecoder(f).Decode(&results)
+	f.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 // Store stores results on filesystem according to the configuration in fs.
