@@ -500,6 +500,11 @@ func (r Result) Status() StatusText {
 	return Unknown
 }
 
+// DisableColor disables ANSI colors in the Result default string.
+func DisableColor() {
+	color.NoColor = true
+}
+
 // StatusText is the textual representation of the
 // result of a status check.
 type StatusText string
