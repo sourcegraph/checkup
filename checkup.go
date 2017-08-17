@@ -359,6 +359,12 @@ type Storage interface {
 	Store([]Result) error
 }
 
+// StorageReader can read results from the Storage.
+type StorageReader interface {
+	Fetch(string) ([]Result, error)
+	GetIndex() (map[string]int64, error)
+}
+
 // Maintainer can maintain a store of results by
 // deleting old check files that are no longer
 // needed or performing other required tasks.
