@@ -72,7 +72,7 @@ func withGitHubServer(t *testing.T, specimen GitHub, f func(*github.Client)) {
 
 	// github client configured to use test server
 	client := github.NewClient(nil)
-	url, _ := url.Parse(server.URL)
+	url, _ := url.Parse(server.URL + "/")
 	client.BaseURL = url
 	client.UploadURL = url
 	defer server.Close()
