@@ -361,7 +361,10 @@ type Storage interface {
 
 // StorageReader can read results from the Storage.
 type StorageReader interface {
-	Fetch(string) ([]Result, error)
+	// Fetch returns the contents of a check file.
+	Fetch(checkFile string) ([]Result, error)
+	// GetIndex returns the storage index, as a map where keys are check
+	// result filenames and values are the associated check timestamps.
 	GetIndex() (map[string]int64, error)
 }
 
