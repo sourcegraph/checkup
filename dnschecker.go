@@ -46,7 +46,6 @@ func (c DNSChecker) Check() (Result, error) {
 
 // doChecks executes and returns each attempt.
 func (c DNSChecker) doChecks() Attempts {
-	var err error
 	var conn net.Conn
 
 	timeout := c.Timeout
@@ -56,6 +55,7 @@ func (c DNSChecker) doChecks() Attempts {
 
 	checks := make(Attempts, c.Attempts)
 	for i := 0; i < c.Attempts; i++ {
+		var err error
 		start := time.Now()
 
 		if c.Host != "" {
@@ -66,25 +66,18 @@ func (c DNSChecker) doChecks() Attempts {
 			m1.Question = make([]dns.Question, 1)
 			m1.Question[0] = dns.Question{Name: hostname, Qtype: dns.TypeA, Qclass: dns.ClassINET}
 			d := new(dns.Client)
-			if err != nil {
-				checks[i].Error = err.Error()
-				continue
-			}
 			_, _, err := d.Exchange(m1, c.URL)
 			if err != nil {
 				checks[i].Error = err.Error()
 				continue
 			}
 		}
-		if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err == nil {
+		if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err != nil {
+			checks[i].Error = err.Error()
+		} else {
 			conn.Close()
 		}
-
 		checks[i].RTT = time.Since(start)
-		if err != nil {
-			checks[i].Error = err.Error()
-			continue
-		}
 	}
 	return checks
 }
