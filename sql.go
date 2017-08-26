@@ -2,9 +2,12 @@ package checkup
 
 import (
 	"encoding/json"
+	"errors"
+	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"           // Enable postgresql beckend
 	_ "github.com/mattn/go-sqlite3" // Enable sqlite3 backend
 )
 
@@ -20,8 +23,18 @@ CREATE UNIQUE INDEX idx_checks_timestamp ON checks(timestamp);
 
 // SQL is a way to store checkup results in a SQL database.
 type SQL struct {
-	// The sqlite3 DB where check results will be stored.
-	SqliteDBFile string `json:"sqlite_db_file"`
+	// SqliteDBFile is the sqlite3 DB where check results will be stored.
+	SqliteDBFile string `json:"sqlite_db_file,omitempty"`
+
+	// PostgreSQL contains the Postgres connection settings.
+	PostgreSQL *struct {
+		Host     string `json:"host,omitempty"`
+		Port     int    `json:"port,omitempty"`
+		User     string `json:"user"`
+		Password string `json:"password,omitempty"`
+		DBName   string `json:"dbname"`
+		SSLMode  string `json:"sslmode,omitempty"`
+	} `json:"postgresql"`
 
 	// Check files older than CheckExpiry will be
 	// deleted on calls to Maintain(). If this is
@@ -31,8 +44,33 @@ type SQL struct {
 }
 
 func (sql SQL) dbConnect() (*sqlx.DB, error) {
-	// TODO: support other databases
-	return sqlx.Connect("sqlite3", sql.SqliteDBFile)
+	if sql.SqliteDBFile != "" {
+		return sqlx.Connect("sqlite3", sql.SqliteDBFile)
+	}
+	if sql.PostgreSQL != nil && sql.PostgreSQL.DBName != "" {
+		var pgOptions string
+		if sql.PostgreSQL.User == "" {
+			return nil, errors.New("missing PostgreSQL username")
+		}
+		if sql.PostgreSQL.Host != "" {
+			pgOptions += " host=" + sql.PostgreSQL.Host
+		}
+		if sql.PostgreSQL.Port != 0 {
+			pgOptions += " port=" + strconv.Itoa(sql.PostgreSQL.Port)
+		}
+		pgOptions += " user=" + sql.PostgreSQL.User
+		if sql.PostgreSQL.Password != "" {
+			pgOptions += " password=" + sql.PostgreSQL.Password
+		}
+		pgOptions += " dbname=" + sql.PostgreSQL.DBName
+		if sql.PostgreSQL.SSLMode != "" {
+			pgOptions += " sslmode=" + sql.PostgreSQL.SSLMode
+		}
+		return sqlx.Connect("postgres", pgOptions)
+	}
+	// TODO: MySQL backend?
+
+	return nil, errors.New("no configured database backend")
 }
 
 // GetIndex returns the list of check results for the database.
@@ -76,7 +114,7 @@ func (sql SQL) Fetch(name string) ([]Result, error) {
 	var checkResult []byte
 	var results []Result
 
-	err = db.Get(&checkResult, `SELECT results FROM "checks" WHERE name=? LIMIT 1`, name)
+	err = db.Get(&checkResult, `SELECT results FROM "checks" WHERE name=$1 LIMIT 1`, name)
 	if err != nil {
 		return nil, err
 	}
