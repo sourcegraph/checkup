@@ -44,11 +44,22 @@ type SQL struct {
 }
 
 func (sql SQL) dbConnect() (*sqlx.DB, error) {
+	// Only one SQL backend can be present
+	if sql.SqliteDBFile != "" && sql.PostgreSQL != nil {
+		return nil, errors.New("several SQL backends are configured")
+	}
+
+	// SQLite3 configuration
 	if sql.SqliteDBFile != "" {
 		return sqlx.Connect("sqlite3", sql.SqliteDBFile)
 	}
-	if sql.PostgreSQL != nil && sql.PostgreSQL.DBName != "" {
+
+	// PostgreSQL configuration
+	if sql.PostgreSQL != nil {
 		var pgOptions string
+		if sql.PostgreSQL.DBName == "" {
+			return nil, errors.New("missing PostgreSQL database name")
+		}
 		if sql.PostgreSQL.User == "" {
 			return nil, errors.New("missing PostgreSQL username")
 		}
@@ -68,6 +79,7 @@ func (sql SQL) dbConnect() (*sqlx.DB, error) {
 		}
 		return sqlx.Connect("postgres", pgOptions)
 	}
+
 	// TODO: MySQL backend?
 
 	return nil, errors.New("no configured database backend")

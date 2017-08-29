@@ -232,7 +232,7 @@ sqlite database file configuration:
 }
 ```
 
-The SQL engine used depends on which one is configured; if both sqlite and Postgres configurations are present, sqlite is used.
+The SQL engine used depends on which one is configured.
 
 For all database backends, the database must exist and a "checks" table should be created:
 
