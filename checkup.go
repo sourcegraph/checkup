@@ -210,8 +210,10 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			providerName = "s3"
 		case FS:
 			providerName = "fs"
+		case SQL:
+			providerName = "sql"
 		default:
-			return result, fmt.Errorf("unknown Storage type")
+			return result, fmt.Errorf("unknown Storage type: %T", c.Storage)
 		}
 		sb = []byte(fmt.Sprintf(`{"provider":"%s",%s`, providerName, string(sb[1:])))
 		wrap("storage", sb)
@@ -331,6 +333,13 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		case "github":
 			storage := &GitHub{}
 			err = json.Unmarshal(raw.Storage, storage)
+			if err != nil {
+				return err
+			}
+			c.Storage = storage
+		case "sql":
+			var storage SQL
+			err = json.Unmarshal(raw.Storage, &storage)
 			if err != nil {
 				return err
 			}

@@ -29,6 +29,7 @@ Checkup implements these storage providers:
 - Amazon S3
 - Local file system
 - GitHub
+- SQL (sqlite3 or PostgreSQL)
 
 Checkup can even send notifications through your service of choice (if an integration exists).
 
@@ -202,6 +203,44 @@ Where "dir" is a subdirectory within the repo to push all the check files. Setup
 4. Create `updates/.gitkeep`.
 5. Enable GitHub Pages in your settings for your desired branch.
 
+#### SQL Storage (sqlite3/PostgreSQL)
+
+**[godoc: SQL](https://godoc.org/github.com/sourcegraph/checkup#SQL)**
+
+Postgres or sqlite3 databases can be used as storage backends.
+
+sqlite database file configuration:
+```json
+{
+	"provider": "sql",
+	"sqlite_db_file": "/path/to/your/sqlite.db"
+}
+```
+
+sqlite database file configuration:
+```json
+{
+	"provider": "sql",
+	"postgresql": {
+		"user": "postgres",
+		"dbname": "dbname",
+		"host": "localhost",
+		"port": 5432,
+		"password": "password",
+		"sslmode": "disable"
+	}
+}
+```
+
+The SQL engine used depends on which one is configured.
+
+For all database backends, the database must exist and a "checks" table should be created:
+
+```
+CREATE TABLE checks (name TEXT NOT NULL PRIMARY KEY, timestamp INT8, results TEXT);
+```
+
+Currently the status page does not support SQL storage.
 
 
 ## Setting up storage on S3
