@@ -15,7 +15,7 @@ checkup.config = {
 		"AccessKeyID": "<key id here>",
 		"SecretAccessKey": "<not-so-secret key here>",
 		"Region": "<bucket region name here if you specified one>",
-		"BucketName": "<bucket name here>"
+		"BucketName": "<bucket name here>",
 
 		// Local file system (Caddy recommended: https://caddyserver.com)
 		"url": "http://127.0.0.1:2015/"
