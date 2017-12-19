@@ -79,9 +79,9 @@ func (c HTTPChecker) Check() (Result, error) {
 	if c.Client == nil {
 		fmt.Println(c.InsecureSSLSkipVerify)
 		if c.InsecureSSLSkipVerify == true {
-			c.Client = DefaultHTTPClient
-		} else {
 			c.Client = DefaultInsecureHTTPSClient
+		} else {
+			c.Client = DefaultHTTPClient
 		}
 	}
 	if c.UpStatus == 0 {
