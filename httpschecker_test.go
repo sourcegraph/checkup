@@ -14,7 +14,7 @@ func TestHTTPSChecker(t *testing.T) {
 		w.Header().Set("X-Host", r.Host)
 		fmt.Fprintln(w, "I'm up")
 	}))
-	endpt := "https://" + srv.Listener.Addr().String()
+	endpt := "http://" + srv.Listener.Addr().String()
 	hc := HTTPSChecker{Name: "Test", URL: endpt, Attempts: 2}
 
 	// Try an up server
