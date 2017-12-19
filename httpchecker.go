@@ -1,7 +1,6 @@
 package checkup
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -63,11 +62,8 @@ type HTTPChecker struct {
 	Client *http.Client `json:"-"`
 
 	// Headers contains headers to added to the request
-	// that is sent for the check
+	// that is sent for the check	Headers http.Header `json:"headers,omitempty"`
 	Headers http.Header `json:"headers,omitempty"`
-
-	//Skip SSL verification
-	InsecureSSLSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // Check performs checks using c according to its configuration.
@@ -77,12 +73,7 @@ func (c HTTPChecker) Check() (Result, error) {
 		c.Attempts = 1
 	}
 	if c.Client == nil {
-		fmt.Println(c.InsecureSSLSkipVerify)
-		if c.InsecureSSLSkipVerify == true {
-			c.Client = DefaultInsecureHTTPSClient
-		} else {
-			c.Client = DefaultHTTPClient
-		}
+		c.Client = DefaultHTTPClient
 	}
 	if c.UpStatus == 0 {
 		c.UpStatus = http.StatusOK
@@ -93,7 +84,6 @@ func (c HTTPChecker) Check() (Result, error) {
 	if err != nil {
 		return result, err
 	}
-
 	if c.Headers != nil {
 		for key, header := range c.Headers {
 			if strings.EqualFold(key, "host") {
@@ -194,27 +184,6 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 var DefaultHTTPClient = &http.Client{
 	Transport: &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   10 * time.Second,
-			KeepAlive: 0,
-		}).Dial,
-		TLSHandshakeTimeout:   5 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		MaxIdleConnsPerHost:   1,
-		DisableCompression:    true,
-		DisableKeepAlives:     true,
-		ResponseHeaderTimeout: 5 * time.Second,
-	},
-	CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	},
-	Timeout: 10 * time.Second,
-}
-
-var DefaultInsecureHTTPSClient = &http.Client{
-	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   10 * time.Second,
 			KeepAlive: 0,
