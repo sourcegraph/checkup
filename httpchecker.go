@@ -62,7 +62,7 @@ type HTTPChecker struct {
 	Client *http.Client `json:"-"`
 
 	// Headers contains headers to added to the request
-	// that is sent for the check	Headers http.Header `json:"headers,omitempty"`
+	// that is sent for the check
 	Headers http.Header `json:"headers,omitempty"`
 }
 
