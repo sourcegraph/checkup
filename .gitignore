@@ -7,4 +7,3 @@ bin/
 builds/
 dist/
 .envrc
-cmd/checkup/checkup.exe
