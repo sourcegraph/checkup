@@ -97,19 +97,6 @@ Here are the configuration structures you can use, which are explained fully [in
 }
 ```
 
-#### HTTP Checkers
-
-**[godoc: HTTPSChecker](https://godoc.org/github.com/sourcegraph/checkup#HTTPSChecker)**
-
-```json
-{
-	"type": "https",
-	"endpoint_name": "Example HTTPS",
-	"endpoint_url": "https://www.example.com"
-	// for more fields, see the godoc
-}
-```
-
 
 #### TCP Checkers
 

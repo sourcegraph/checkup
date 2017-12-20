@@ -177,8 +177,6 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			switch ch.(type) {
 			case HTTPChecker:
 				typeName = "http"
-			case HTTPSChecker:
-				typeName = "https"
 			case TCPChecker:
 				typeName = "tcp"
 			case DNSChecker:
@@ -286,13 +284,6 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		switch t.Type {
 		case "http":
 			var checker HTTPChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		case "https":
-			var checker HTTPSChecker
 			err = json.Unmarshal(raw.Checkers[i], &checker)
 			if err != nil {
 				return err
