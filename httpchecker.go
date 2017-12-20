@@ -1,6 +1,7 @@
 package checkup
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -84,10 +85,13 @@ func (c HTTPChecker) Check() (Result, error) {
 	if err != nil {
 		return result, err
 	}
-
 	if c.Headers != nil {
 		for key, header := range c.Headers {
-			req.Header.Add(key, strings.Join(header, ", "))
+			if strings.EqualFold(key, "host") {
+				req.Host = header[0]
+			} else {
+				req.Header.Add(key, strings.Join(header, ", "))
+			}
 		}
 	}
 
@@ -180,7 +184,8 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 // is specified on a HTTPChecker.
 var DefaultHTTPClient = &http.Client{
 	Transport: &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   10 * time.Second,
 			KeepAlive: 0,
