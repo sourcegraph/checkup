@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/monosolutions/checkup"
+	"https://github.com/monosolutions/checkup"
 	"github.com/spf13/cobra"
 )
 

@@ -1,6 +1,6 @@
 package main
 
-import "github.com/monosolutions/checkup/cmd"
+import "github.com/sourcegraph/checkup/cmd"
 
 func main() {
 	cmd.Execute()
