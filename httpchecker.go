@@ -184,7 +184,7 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 // is specified on a HTTPChecker.
 var DefaultHTTPClient = &http.Client{
 	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{},
 		Proxy:           http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   10 * time.Second,
