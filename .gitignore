@@ -6,4 +6,4 @@ pkg/
 bin/
 builds/
 dist/
-.envrc
+checkup.exe
