@@ -51,7 +51,7 @@ checkup.storage = (function() {
 
 	// setup prepares this storage unit to operate.
 	this.setup = function(cfg) {
-		AWS.config.update({accessKeyId: cfg.AccessKeyID, secretAccessKey: cfg.SecretAccessKey})
+		AWS.config.update({accessKeyId: cfg.AccessKeyID, secretAccessKey: cfg.SecretAccessKey, region: cfg.Region})
 		bucket = new AWS.S3({
 			params: {
 				Bucket: cfg.BucketName,
