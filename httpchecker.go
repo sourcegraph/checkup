@@ -69,8 +69,8 @@ type HTTPChecker struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
-func (checker HTTPChecker) createHTTPClient(http.Client) {
-	return &http.Client{
+func newHTTPClient(checker HTTPChecker) *http.Client {
+	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: checker.InsecureSkipVerify},
 			Proxy:           http.ProxyFromEnvironment,
@@ -90,30 +90,30 @@ func (checker HTTPChecker) createHTTPClient(http.Client) {
 		},
 		Timeout: 10 * time.Second,
 	}
-
+	return client
 }
 
 // Check performs checks using c according to its configuration.
 // An error is only returned if there is a configuration error.
-func (c HTTPChecker) Check() (Result, error) {
-	if c.Attempts < 1 {
-		c.Attempts = 1
+func (checker HTTPChecker) Check() (Result, error) {
+	if checker.Attempts < 1 {
+		checker.Attempts = 1
 	}
-	if c.Client == nil {
-		fmt.Printf("Should ignore insecure %t", c.InsecureSkipVerify)
-		c.Client = createHTTPClient(c)
+	if checker.Client == nil {
+		fmt.Printf("Should ignore insecure %t", checker.InsecureSkipVerify)
+		checker.Client = newHTTPClient(checker)
 	}
-	if c.UpStatus == 0 {
-		c.UpStatus = http.StatusOK
+	if checker.UpStatus == 0 {
+		checker.UpStatus = http.StatusOK
 	}
 
-	result := Result{Title: c.Name, Endpoint: c.URL, Timestamp: Timestamp()}
-	req, err := http.NewRequest("GET", c.URL, nil)
+	result := Result{Title: checker.Name, Endpoint: checker.URL, Timestamp: Timestamp()}
+	req, err := http.NewRequest("GET", checker.URL, nil)
 	if err != nil {
 		return result, err
 	}
-	if c.Headers != nil {
-		for key, header := range c.Headers {
+	if checker.Headers != nil {
+		for key, header := range checker.Headers {
 			if strings.EqualFold(key, "host") {
 				req.Host = header[0]
 			} else {
@@ -122,29 +122,29 @@ func (c HTTPChecker) Check() (Result, error) {
 		}
 	}
 
-	result.Times = c.doChecks(req)
+	result.Times = checker.doChecks(req)
 
-	return c.conclude(result), nil
+	return checker.conclude(result), nil
 }
 
-// doChecks executes req using c.Client and returns each attempt.
-func (c HTTPChecker) doChecks(req *http.Request) Attempts {
-	checks := make(Attempts, c.Attempts)
-	for i := 0; i < c.Attempts; i++ {
+// doChecks executes req using checker.Client and returns each attempt.
+func (checker HTTPChecker) doChecks(req *http.Request) Attempts {
+	checks := make(Attempts, checker.Attempts)
+	for i := 0; i < checker.Attempts; i++ {
 		start := time.Now()
-		resp, err := c.Client.Do(req)
+		resp, err := checker.Client.Do(req)
 		checks[i].RTT = time.Since(start)
 		if err != nil {
 			checks[i].Error = err.Error()
 			continue
 		}
-		err = c.checkDown(resp)
+		err = checker.checkDown(resp)
 		if err != nil {
 			checks[i].Error = err.Error()
 		}
 		resp.Body.Close()
-		if c.AttemptSpacing > 0 {
-			time.Sleep(c.AttemptSpacing)
+		if checker.AttemptSpacing > 0 {
+			time.Sleep(checker.AttemptSpacing)
 		}
 	}
 	return checks
@@ -154,8 +154,8 @@ func (c HTTPChecker) doChecks(req *http.Request) Attempts {
 // computes remaining values needed to fill out the result.
 // It detects degraded (high-latency) responses and makes
 // the conclusion about the result's status.
-func (c HTTPChecker) conclude(result Result) Result {
-	result.ThresholdRTT = c.ThresholdRTT
+func (checker HTTPChecker) conclude(result Result) Result {
+	result.ThresholdRTT = checker.ThresholdRTT
 
 	// Check errors (down)
 	for i := range result.Times {
@@ -166,10 +166,10 @@ func (c HTTPChecker) conclude(result Result) Result {
 	}
 
 	// Check round trip time (degraded)
-	if c.ThresholdRTT > 0 {
+	if checker.ThresholdRTT > 0 {
 		stats := result.ComputeStats()
-		if stats.Median > c.ThresholdRTT {
-			result.Notice = fmt.Sprintf("median round trip time exceeded threshold (%s)", c.ThresholdRTT)
+		if stats.Median > checker.ThresholdRTT {
+			result.Notice = fmt.Sprintf("median round trip time exceeded threshold (%s)", checker.ThresholdRTT)
 			result.Degraded = true
 			return result
 		}
@@ -182,14 +182,14 @@ func (c HTTPChecker) conclude(result Result) Result {
 // checkDown checks whether the endpoint is down based on resp and
 // the configuration of c. It returns a non-nil error if down.
 // Note that it does not check for degraded response.
-func (c HTTPChecker) checkDown(resp *http.Response) error {
+func (checker HTTPChecker) checkDown(resp *http.Response) error {
 	// Check status code
-	if resp.StatusCode != c.UpStatus {
+	if resp.StatusCode != checker.UpStatus {
 		return fmt.Errorf("response status %s", resp.Status)
 	}
 
 	// Check response body
-	if c.MustContain == "" && c.MustNotContain == "" {
+	if checker.MustContain == "" && checker.MustNotContain == "" {
 		return nil
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -197,11 +197,11 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 		return fmt.Errorf("reading response body: %v", err)
 	}
 	body := string(bodyBytes)
-	if c.MustContain != "" && !strings.Contains(body, c.MustContain) {
-		return fmt.Errorf("response does not contain '%s'", c.MustContain)
+	if checker.MustContain != "" && !strings.Contains(body, checker.MustContain) {
+		return fmt.Errorf("response does not contain '%s'", checker.MustContain)
 	}
-	if c.MustNotContain != "" && strings.Contains(body, c.MustNotContain) {
-		return fmt.Errorf("response contains '%s'", c.MustNotContain)
+	if checker.MustNotContain != "" && strings.Contains(body, checker.MustNotContain) {
+		return fmt.Errorf("response contains '%s'", checker.MustNotContain)
 	}
 
 	return nil
