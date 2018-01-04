@@ -96,11 +96,13 @@ func newHTTPClient(checker HTTPChecker) *http.Client {
 // Check performs checks using c according to its configuration.
 // An error is only returned if there is a configuration error.
 func (checker HTTPChecker) Check() (Result, error) {
+	fmt.Printf("Should ignore insecure %t", checker.InsecureSkipVerify)
+
 	if checker.Attempts < 1 {
 		checker.Attempts = 1
 	}
 	if checker.Client == nil {
-		fmt.Printf("Should ignore insecure %t", checker.InsecureSkipVerify)
+
 		checker.Client = newHTTPClient(checker)
 	}
 	if checker.UpStatus == 0 {
