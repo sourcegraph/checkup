@@ -69,6 +69,30 @@ type HTTPChecker struct {
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
+func (checker HTTPChecker) createHTTPClient(http.Client) {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: checker.InsecureSkipVerify},
+			Proxy:           http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout:   10 * time.Second,
+				KeepAlive: 0,
+			}).Dial,
+			TLSHandshakeTimeout:   5 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			MaxIdleConnsPerHost:   1,
+			DisableCompression:    true,
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: 5 * time.Second,
+		},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 10 * time.Second,
+	}
+
+}
+
 // Check performs checks using c according to its configuration.
 // An error is only returned if there is a configuration error.
 func (c HTTPChecker) Check() (Result, error) {
@@ -76,7 +100,7 @@ func (c HTTPChecker) Check() (Result, error) {
 		c.Attempts = 1
 	}
 	if c.Client == nil {
-		fmt.Printf(c.InsecureSkipVerify)
+		fmt.Printf("Should ignore insecure %t", c.InsecureSkipVerify)
 		c.Client = createHTTPClient(c)
 	}
 	if c.UpStatus == 0 {
@@ -181,30 +205,6 @@ func (c HTTPChecker) checkDown(resp *http.Response) error {
 	}
 
 	return nil
-}
-
-func (checker HTTPChecker) createHTTPClient(http.Client) {
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: checker.InsecureSkipVerify},
-			Proxy:           http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout:   10 * time.Second,
-				KeepAlive: 0,
-			}).Dial,
-			TLSHandshakeTimeout:   5 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			MaxIdleConnsPerHost:   1,
-			DisableCompression:    true,
-			DisableKeepAlives:     true,
-			ResponseHeaderTimeout: 5 * time.Second,
-		},
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-		Timeout: 10 * time.Second,
-	}
-
 }
 
 // DefaultHTTPClient is used when no other http.Client
