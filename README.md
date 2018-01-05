@@ -53,7 +53,7 @@ There are 3 components:
 $ go get -u github.com/sourcegraph/checkup/cmd/checkup
 ```
 
-You'll need Go 1.7 or newer. Verify it's installed properly:
+You'll need Go 1.8 or newer. Verify it's installed properly:
 
 ```bash
 $ checkup --help
@@ -441,6 +441,7 @@ Linux binary:
 ```bash
 git clone git@github.com:sourcegraph/checkup.git
 cd checkup
+docker pull golang:latest
 docker run --net=host --rm \ 
 -v `pwd`:/project \ 
 -w /project golang bash \ 

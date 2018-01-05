@@ -15,7 +15,7 @@ contribution. See the [DCO](DCO) file for details.
 
 ## Getting Started
 
-You'll need Go 1.7 or newer installed.
+You'll need Go 1.8 or newer installed.
 
 1. [Fork this repo](https://github.com/sourcegraph/checkup). This makes a copy of the code you can write to.
 2. If you don't already have this repo (sourcegraph/checkup.git) repo on your computer, get it with `go get github.com/sourcegraph/checkup/cmd/checkup`.
