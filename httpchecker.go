@@ -84,10 +84,13 @@ func (c HTTPChecker) Check() (Result, error) {
 	if err != nil {
 		return result, err
 	}
-
 	if c.Headers != nil {
 		for key, header := range c.Headers {
-			req.Header.Add(key, strings.Join(header, ", "))
+			if strings.EqualFold(key, "host") {
+				req.Host = header[0]
+			} else {
+				req.Header.Add(key, strings.Join(header, ", "))
+			}
 		}
 	}
 
