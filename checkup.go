@@ -227,6 +227,8 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		}
 		var notifierName string
 		switch c.Notifier.(type) {
+		case Slack:
+			notifierName = "slack"
 		default:
 			return result, fmt.Errorf("unknown Notifier type")
 		}
@@ -270,7 +272,10 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			Provider string `json:"provider"`
 		}
 		Notifier struct {
-			Name string `json:"name"`
+			Name     string `json:"name"`
+			Username string `json:"username"`
+			Channel  string `json:"channel"`
+			Webhook  string `json:"webhook"`
 		}
 	}{}
 	err = json.Unmarshal([]byte(b), &types)
@@ -350,6 +355,13 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	}
 	if raw.Notifier != nil {
 		switch types.Notifier.Name {
+		case "slack":
+			var notifier Slack
+			err = json.Unmarshal(raw.Notifier, &notifier)
+			if err != nil {
+				return err
+			}
+			c.Notifier = notifier
 		default:
 			return fmt.Errorf("%s: unknown Notifier type", types.Notifier.Name)
 		}
