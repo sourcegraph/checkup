@@ -74,13 +74,17 @@ You can configure Checkup entirely with a simple JSON document. You should confi
 
 	"storage": {
 		// storage configuration goes here
+	},
+
+	"notifier": {
+		// notifier configuration goes here
 	}
 }
 ```
 
 Save the checkup configuration file as `checkup.json` in your working directory.
 
-We will show JSON samples below, to get you started. **But please [refer to the godoc](https://godoc.org/github.com/sourcegraph/checkup) for a comprehensive description of each type of checker, storage, and notifier you can configure!** 
+We will show JSON samples below, to get you started. **But please [refer to the godoc](https://godoc.org/github.com/sourcegraph/checkup) for a comprehensive description of each type of checker, storage, and notifier you can configure!**
 
 Here are the configuration structures you can use, which are explained fully [in the godoc](https://godoc.org/github.com/sourcegraph/checkup). **Only the required fields are shown, so consult the godoc for more.**
 
@@ -217,7 +221,7 @@ sqlite database file configuration:
 }
 ```
 
-sqlite database file configuration:
+postgresql database file configuration:
 ```json
 {
 	"provider": "sql",
@@ -242,6 +246,19 @@ CREATE TABLE checks (name TEXT NOT NULL PRIMARY KEY, timestamp INT8, results TEX
 
 Currently the status page does not support SQL storage.
 
+#### Slack notifier
+
+slack configuration:
+```json
+{
+	"name": "slack",
+	"username": "username",
+	"channel": "#channel-name",
+	"webhook": "webhook-url"
+}
+```
+
+How to [create webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack)
 
 ## Setting up storage on S3
 
@@ -292,7 +309,7 @@ As you perform checks, the status page will update every so often with the lates
 
 ## Performing checks
 
-You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page. 
+You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page.
 
 For example, if you run checks every 10 minutes, showing the last 24 hours on the status page will require 144 check files to be downloaded on each page load. You can distribute your checks to help avoid localized network problems, but this multiplies the number of files by the number of nodes you run checks on, so keep that in mind.
 
@@ -442,9 +459,9 @@ Linux binary:
 git clone git@github.com:sourcegraph/checkup.git
 cd checkup
 docker pull golang:latest
-docker run --net=host --rm \ 
--v `pwd`:/project \ 
--w /project golang bash \ 
+docker run --net=host --rm \
+-v `pwd`:/project \
+-w /project golang bash \
 -c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
 ```
 
