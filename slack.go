@@ -30,12 +30,11 @@ func (s Slack) Notify(results []Result) error {
 func (s Slack) Send(result Result) error {
 	color := "danger"
 	attach := slack.Attachment{}
-	//attach.AddField(slack.Field{Title: "Endpoint", Value: result.Endpoint})
+	attach.AddField(slack.Field{Title: result.Title, Value: result.Endpoint})
 	attach.AddField(slack.Field{Title: "Status", Value: strings.ToUpper(fmt.Sprint(result.Status()))})
 	attach.Color = &color
-	text := fmt.Sprintf("%s (%s)", result.Title, result.Endpoint)
 	payload := slack.Payload{
-		Text:        text,
+		Text:        result.Title,
 		Username:    s.Username,
 		Channel:     s.Channel,
 		Attachments: []slack.Attachment{attach},
