@@ -248,7 +248,7 @@ Currently the status page does not support SQL storage.
 
 #### Slack notifier
 
-slack configuration:
+Enable notifications in Slack with this Notifier configuration:
 ```json
 {
 	"name": "slack",
@@ -258,7 +258,7 @@ slack configuration:
 }
 ```
 
-How to [create webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack)
+Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack).
 
 ## Setting up storage on S3
 
