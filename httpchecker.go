@@ -61,6 +61,10 @@ type HTTPChecker struct {
 	// used.
 	Client *http.Client `json:"-"`
 
+	// Host is the host to add to the request that is
+	// sent for the check
+	Host string `json:"host,omitempty"`
+
 	// Headers contains headers to added to the request
 	// that is sent for the check
 	Headers http.Header `json:"headers,omitempty"`
@@ -83,6 +87,10 @@ func (c HTTPChecker) Check() (Result, error) {
 	req, err := http.NewRequest("GET", c.URL, nil)
 	if err != nil {
 		return result, err
+	}
+
+	if c.Host != "" {
+		req.Host = c.Host
 	}
 
 	if c.Headers != nil {
