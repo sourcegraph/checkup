@@ -229,6 +229,8 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		switch c.Notifier.(type) {
 		case Slack:
 			notifierName = "slack"
+		case Pushover:
+			notifierName = "pushover"
 		default:
 			return result, fmt.Errorf("unknown Notifier type")
 		}
@@ -357,6 +359,13 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		switch types.Notifier.Name {
 		case "slack":
 			var notifier Slack
+			err = json.Unmarshal(raw.Notifier, &notifier)
+			if err != nil {
+				return err
+			}
+			c.Notifier = notifier
+		case "pushover":
+			var notifier Pushover
 			err = json.Unmarshal(raw.Notifier, &notifier)
 			if err != nil {
 				return err
