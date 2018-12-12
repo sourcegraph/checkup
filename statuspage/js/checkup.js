@@ -81,14 +81,7 @@ checkup.makeTimeTag = function(ms) {
 	// dateTimeString converts ms (in milliseconds) into
 	// a value usable in a <time> tag's datetime attribute.
 	function dateTimeString(ms) {
-		var d = new Date(ms);
-		return d.getFullYear()+"-"
-			+ checkup.leftpad(d.getMonth()+1, 2, "0")+"-"
-			+ checkup.leftpad(d.getDate(), 2, "0")+"T"
-			+ checkup.leftpad(d.getHours(), 2, "0")+":"
-			+ checkup.leftpad(d.getMinutes(), 2, "0")+":"
-			+ checkup.leftpad(d.getSeconds(), 2, "0")+"-"
-			+ checkup.leftpad((d.getTimezoneOffset()/60), 2, "0")+":00";
+		return (new Date(ms)).toUTCString();
 	}
 
 	return '<time class="dynamic" datetime="'+dateTimeString(ms)+'">'
