@@ -66,7 +66,7 @@ Then follow these instructions to get started quickly with Checkup.
 
 You can configure Checkup entirely with a simple JSON document. You should configure storage and at least one checker. Here's the basic outline:
 
-```json
+```js
 {
 	"checkers": [
 		// checker configurations go here
@@ -92,7 +92,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 **[godoc: HTTPChecker](https://godoc.org/github.com/sourcegraph/checkup#HTTPChecker)**
 
-```json
+```js
 {
 	"type": "http",
 	"endpoint_name": "Example HTTP",
@@ -106,7 +106,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 **[godoc: TCPChecker](https://godoc.org/github.com/sourcegraph/checkup#TCPChecker)**
 
-```json
+```js
 {
 	"type": "tcp",
 	"endpoint_name": "Example TCP",
@@ -118,7 +118,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 **[godoc: DNSChecker](https://godoc.org/github.com/sourcegraph/checkup#DNSChecker)**
 
-```json
+```js
 {
 	"type": "dns",
 	"endpoint_name": "Example of endpoint_url looking up host.example.com",
@@ -131,7 +131,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 **[godoc: TLSChecker](https://godoc.org/github.com/sourcegraph/checkup#TLSChecker)**
 
-```json
+```js
 {
 	"type": "tls",
 	"endpoint_name": "Example TLS Protocol Check",
@@ -144,7 +144,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 **[godoc: S3](https://godoc.org/github.com/sourcegraph/checkup#S3)**
 
-```json
+```js
 {
 	"provider": "s3",
 	"access_key_id": "<yours>",
@@ -161,7 +161,7 @@ S3 is the default storage provider assumed by the status page, so the only chang
 
 **[godoc: FS](https://godoc.org/github.com/sourcegraph/checkup#FS)**
 
-```json
+```js
 {
 	"provider": "fs",
 	"dir": "/path/to/your/check_files",
@@ -182,7 +182,7 @@ Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/sta
 
 **[godoc: GitHub](https://godoc.org/github.com/sourcegraph/checkup#GitHub)**
 
-```json
+```js
 {
 	"provider": "github",
 	"access_token": "some_api_access_token_with_repo_scope",
@@ -214,7 +214,7 @@ Where "dir" is a subdirectory within the repo to push all the check files. Setup
 Postgres or sqlite3 databases can be used as storage backends.
 
 sqlite database file configuration:
-```json
+```js
 {
 	"provider": "sql",
 	"sqlite_db_file": "/path/to/your/sqlite.db"
@@ -222,7 +222,7 @@ sqlite database file configuration:
 ```
 
 postgresql database file configuration:
-```json
+```js
 {
 	"provider": "sql",
 	"postgresql": {
@@ -249,7 +249,7 @@ Currently the status page does not support SQL storage.
 #### Slack notifier
 
 Enable notifications in Slack with this Notifier configuration:
-```json
+```js
 {
 	"name": "slack",
 	"username": "username",
