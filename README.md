@@ -451,6 +451,24 @@ Uh oh, having some fires? 🔥 You can create a type that implements `checkup.No
 
 You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
 
+### Building Locally
+
+Requires Go v1.10 or newer.
+
+```bash
+git clone git@github.com:sourcegraph/checkup.git
+cd checkup/cmd/checkup/
+
+# Install dependencies
+go get -v -d
+
+# Build binary
+go build -v -ldflags '-s' -o ../../checkup
+
+# Run tests
+go test -race ../../
+```
+
 ### Building with Docker
 
 Linux binary:
