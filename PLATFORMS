@@ -1,0 +1,13 @@
+freebsd_386
+freebsd_amd64
+freebsd_arm7
+linux_386
+linux_amd64
+linux_arm64
+linux_arm7
+mac_amd64
+openbsd_386
+openbsd_amd64
+solaris_amd64
+windows_386
+windows_amd64
