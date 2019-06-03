@@ -2,7 +2,6 @@
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/sourcegraph/checkup) [![Sourcegraph](https://sourcegraph.com/github.com/sourcegraph/checkup/-/badge.svg)](https://sourcegraph.com/github.com/sourcegraph/checkup?badge)
 
-
 **Checkup is distributed, lock-free, self-hosted health checks and status pages, written in Go.**
 
 **It features an elegant, minimalistic CLI and an idiomatic Go library. They are completely interoperable and their configuration is beautifully symmetric.**
@@ -10,8 +9,6 @@
 Checkup was created by Matt Holt, author of the [Caddy web server](https://caddyserver.com). It is maintained and sponsored by [Sourcegraph](https://sourcegraph.com). If you'd like to dive into the source, you can [start here](https://sourcegraph.com/github.com/sourcegraph/checkup/-/def/GoPackage/github.com/sourcegraph/checkup/-/Checkup).
 
 This tool is a work-in-progress. Please use liberally (with discretion) and report any bugs!
-
-
 
 ## Intro
 
@@ -33,7 +30,6 @@ Checkup implements these storage providers:
 
 Checkup can even send notifications through your service of choice (if an integration exists).
 
-
 ## How it Works
 
 There are 3 components:
@@ -43,7 +39,6 @@ There are 3 components:
 2. **Checks.** You run checks on whatever endpoints you have as often as you want.
 
 3. **Status Page.** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
-
 
 ## Quick Start
 
@@ -61,24 +56,23 @@ $ checkup --help
 
 Then follow these instructions to get started quickly with Checkup.
 
-
 ### Create your Checkup config
 
 You can configure Checkup entirely with a simple JSON document. You should configure storage and at least one checker. Here's the basic outline:
 
 ```js
 {
-	"checkers": [
-		// checker configurations go here
-	],
+  "checkers": [
+    // checker configurations go here
+  ],
 
-	"storage": {
-		// storage configuration goes here
-	},
+  "storage": {
+    // storage configuration goes here
+  },
 
-	"notifier": {
-		// notifier configuration goes here
-	}
+  "notifier": {
+    // notifier configuration goes here
+  }
 }
 ```
 
@@ -94,13 +88,12 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"type": "http",
-	"endpoint_name": "Example HTTP",
-	"endpoint_url": "http://www.example.com"
-	// for more fields, see the godoc
+  "type": "http",
+  "endpoint_name": "Example HTTP",
+  "endpoint_url": "http://www.example.com"
+  // for more fields, see the godoc
 }
 ```
-
 
 #### TCP Checkers
 
@@ -108,9 +101,9 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"type": "tcp",
-	"endpoint_name": "Example TCP",
-	"endpoint_url": "example.com:80"
+  "type": "tcp",
+  "endpoint_name": "Example TCP",
+  "endpoint_url": "example.com:80"
 }
 ```
 
@@ -120,10 +113,10 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"type": "dns",
-	"endpoint_name": "Example of endpoint_url looking up host.example.com",
-	"endpoint_url": "ns.example.com:53",
-	"hostname_fqdn": "host.example.com"
+  "type": "dns",
+  "endpoint_name": "Example of endpoint_url looking up host.example.com",
+  "endpoint_url": "ns.example.com:53",
+  "hostname_fqdn": "host.example.com"
 }
 ```
 
@@ -133,12 +126,11 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"type": "tls",
-	"endpoint_name": "Example TLS Protocol Check",
-	"endpoint_url": "www.example.com:443"
+  "type": "tls",
+  "endpoint_name": "Example TLS Protocol Check",
+  "endpoint_url": "www.example.com:443"
 }
 ```
-
 
 #### Amazon S3 Storage
 
@@ -146,16 +138,15 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"provider": "s3",
-	"access_key_id": "<yours>",
-	"secret_access_key": "<yours>",
-	"bucket": "<yours>",
-	"region": "us-east-1"
+  "provider": "s3",
+  "access_key_id": "<yours>",
+  "secret_access_key": "<yours>",
+  "bucket": "<yours>",
+  "region": "us-east-1"
 }
 ```
 
 S3 is the default storage provider assumed by the status page, so the only change needed for the status page is in the [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) file, with your public, read-only credentials.
-
 
 #### File System Storage
 
@@ -163,9 +154,9 @@ S3 is the default storage provider assumed by the status page, so the only chang
 
 ```js
 {
-	"provider": "fs",
-	"dir": "/path/to/your/check_files",
-	"url": "http://127.0.0.1:2015/check_files"
+  "provider": "fs",
+  "dir": "/path/to/your/check_files",
+  "url": "http://127.0.0.1:2015/check_files"
 }
 ```
 
@@ -184,14 +175,14 @@ Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/sta
 
 ```js
 {
-	"provider": "github",
-	"access_token": "some_api_access_token_with_repo_scope",
-	"repository_owner": "owner",
-	"repository_name": "repo",
-	"committer_name": "Commiter Name",
-	"committer_email": "you@yours.com",
-	"branch": "gh-pages",
-	"dir": "updates"
+  "provider": "github",
+  "access_token": "some_api_access_token_with_repo_scope",
+  "repository_owner": "owner",
+  "repository_name": "repo",
+  "committer_name": "Commiter Name",
+  "committer_email": "you@yours.com",
+  "branch": "gh-pages",
+  "dir": "updates"
 }
 ```
 
@@ -200,10 +191,12 @@ Where "dir" is a subdirectory within the repo to push all the check files. Setup
 1. Create a repository.
 2. Copy the contents of `statuspage/` from this repo to the root of your new repo.
 3. Change index.html to pull in js/fs.js instead of js/s3.js:
+
 ```diff
 - <script src="js/s3.js"></script>
 + <script src="js/fs.js"></script>
 ```
+
 4. Create `updates/.gitkeep`.
 5. Enable GitHub Pages in your settings for your desired branch.
 
@@ -214,25 +207,27 @@ Where "dir" is a subdirectory within the repo to push all the check files. Setup
 Postgres or sqlite3 databases can be used as storage backends.
 
 sqlite database file configuration:
+
 ```js
 {
-	"provider": "sql",
-	"sqlite_db_file": "/path/to/your/sqlite.db"
+  "provider": "sql",
+  "sqlite_db_file": "/path/to/your/sqlite.db"
 }
 ```
 
 postgresql database file configuration:
+
 ```js
 {
-	"provider": "sql",
-	"postgresql": {
-		"user": "postgres",
-		"dbname": "dbname",
-		"host": "localhost",
-		"port": 5432,
-		"password": "password",
-		"sslmode": "disable"
-	}
+  "provider": "sql",
+  "postgresql": {
+    "user": "postgres",
+    "dbname": "dbname",
+    "host": "localhost",
+    "port": 5432,
+    "password": "password",
+    "sslmode": "disable"
+  }
 }
 ```
 
@@ -249,12 +244,13 @@ Currently the status page does not support SQL storage.
 #### Slack notifier
 
 Enable notifications in Slack with this Notifier configuration:
+
 ```js
 {
-	"name": "slack",
-	"username": "username",
-	"channel": "#channel-name",
-	"webhook": "webhook-url"
+  "name": "slack",
+  "username": "username",
+  "channel": "#channel-name",
+  "webhook": "webhook-url"
 }
 ```
 
@@ -281,7 +277,6 @@ This command creates a new IAM user with read-only permission to S3 and also cre
 
 **IMPORTANT SECURITY NOTE:** This new IAM user will have read-only permission to all S3 buckets in your AWS account, and its credentials will be visible to any visitor to your status page. If you do not want to grant visitors to your status page read access to all your S3 buckets, you need to modify this IAM user's permissions to scope its access to the Checkup bucket. If in doubt, restrict access to your status page to trusted visitors. It is recommended that you do NOT include ANY sensitive credentials on the machine running Checkup.
 
-
 ### Explicit Provisioning
 
 If you do not prefer implicit provisioning using your `checkup.json` file, do this instead. Export the information to environment variables and run the provisioning command:
@@ -297,7 +292,6 @@ $ checkup provision s3
 
 If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
-
 ## Setting up the status page
 
 In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you specify how to access the storage system you just provisioned for check files.
@@ -305,7 +299,6 @@ In statuspage/js, use the contents of [config_template.js](https://github.com/so
 The status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
 
 As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
-
 
 ## Performing checks
 
@@ -339,7 +332,6 @@ And replace the duration with your own preference. In addition to the regular `t
 
 You can also get some help using the `-h` option for any command or subcommand.
 
-
 ## Posting status messages
 
 Site reliability engineers should post messages when there are incidents or other news relevant for a status page. This is also very easy:
@@ -350,13 +342,9 @@ $ checkup message --about=Example "Oops. We're trying to fix the problem. Stay t
 
 This stores a check file with your message attached to the result for a check named "Example" which you configured in `checkup.json` earlier.
 
-
-
-
 ## Doing all that, but with Go
 
 Checkup is as easy to use in a Go program as it is on the command line.
-
 
 ### Using Go to set up storage on S3
 
@@ -368,20 +356,18 @@ Then replace `ACCESS_KEY_ID` and `SECRET_ACCESS_KEY` below with the actual value
 
 ```go
 storage := checkup.S3{
-	AccessKeyID:     "ACCESS_KEY_ID",
-	SecretAccessKey: "SECRET_ACCESS_KEY",
-	Bucket:          "BUCKET_NAME",
+  AccessKeyID:     "ACCESS_KEY_ID",
+  SecretAccessKey: "SECRET_ACCESS_KEY",
+  Bucket:          "BUCKET_NAME",
 }
 info, err := storage.Provision()
 if err != nil {
-	log.Fatal(err)
+  log.Fatal(err)
 }
 fmt.Println(info) // don't lose this output!
 ```
 
 This method creates a new IAM user with read-only permission to S3 and also creates a new bucket just for your check files. The credentials of the new user are printed to your screen. **Make note of the PublicAccessKeyID and PublicAccessKey!** You won't be able to see them again.
-
-
 
 ### Using Go to perform checks
 
@@ -389,22 +375,22 @@ First, `go get github.com/sourcegraph/checkup` and import it. Then configure it:
 
 ```go
 c := checkup.Checkup{
-	Checkers: []checkup.Checker{
-		checkup.HTTPChecker{Name: "Example (HTTP)", URL: "http://www.example.com", Attempts: 5},
-		checkup.HTTPChecker{Name: "Example (HTTPS)", URL: "https://www.example.com", Attempts: 5},
-		checkup.TCPChecker{Name:  "Example (TCP)", URL:  "www.example.com:80", Attempts: 5},
-		checkup.TCPChecker{Name:  "Example (TCP SSL)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true},
-		checkup.TCPChecker{Name:  "Example (TCP SSL, self-signed certificate)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true, TLSCAFile: "testdata/ca.pem"},
-		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSSkipVerify: true},
-		checkup.DNSChecker{Name:  "Example DNS test of ns.example.com:53 looking up host.example.com", URL:  "ns.example.com:53", Host: "host.example.com", Attempts: 5},
-	},
-	Storage: checkup.S3{
-		AccessKeyID:     "<yours>",
-		SecretAccessKey: "<yours>",
-		Bucket:          "<yours>",
-		Region:          "us-east-1",
-		CheckExpiry:     24 * time.Hour * 7,
-	},
+  Checkers: []checkup.Checker{
+    checkup.HTTPChecker{Name: "Example (HTTP)", URL: "http://www.example.com", Attempts: 5},
+    checkup.HTTPChecker{Name: "Example (HTTPS)", URL: "https://www.example.com", Attempts: 5},
+    checkup.TCPChecker{Name:  "Example (TCP)", URL:  "www.example.com:80", Attempts: 5},
+    checkup.TCPChecker{Name:  "Example (TCP SSL)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true},
+    checkup.TCPChecker{Name:  "Example (TCP SSL, self-signed certificate)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true, TLSCAFile: "testdata/ca.pem"},
+    checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSSkipVerify: true},
+    checkup.DNSChecker{Name:  "Example DNS test of ns.example.com:53 looking up host.example.com", URL:  "ns.example.com:53", Host: "host.example.com", Attempts: 5},
+  },
+  Storage: checkup.S3{
+    AccessKeyID:     "<yours>",
+    SecretAccessKey: "<yours>",
+    Bucket:          "<yours>",
+    Region:          "us-east-1",
+    CheckExpiry:     24 * time.Hour * 7,
+  },
 }
 ```
 
@@ -419,7 +405,6 @@ select {}
 
 `CheckAndStoreEvery()` returns a `time.Ticker` that you can stop, but in this case we just want it to run forever, so we block forever using an empty `select`.
 
-
 ### Using Go to post status messages
 
 Simply perform a check, add the message to the corresponding result, and then store it:
@@ -427,19 +412,18 @@ Simply perform a check, add the message to the corresponding result, and then st
 ```go
 results, err := c.Check()
 if err != nil {
-	// handle err
+  // handle err
 }
 
 results[0].Message = "We're investigating connectivity issues."
 
 err = c.Storage.Store(results)
 if err != nil {
-	// handle err
+  // handle err
 }
 ```
 
 Of course, real status messages should be as descriptive as possible. You can use HTML in them.
-
 
 ## Other topics
 
@@ -469,18 +453,15 @@ go build -v -ldflags '-s' -o ../../checkup
 go test -race ../../
 ```
 
-### Building with Docker
+### Running with Docker
 
-Linux binary:
+Build and run the image :
 
 ```bash
 git clone git@github.com:sourcegraph/checkup.git
 cd checkup
-docker pull golang:latest
-docker run --net=host --rm \
--v `pwd`:/project \
--w /project golang bash \
--c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
+docker build . -t checkup
+docker run -v $PWD/checkup.json:/project/checkup.json checkup
 ```
 
-This will create a checkup binary in the root project folder.
+
