@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sourcegraph/checkup/notifier/mail"
+	"github.com/sourcegraph/checkup/notifier/mailgun"
 	"github.com/sourcegraph/checkup/notifier/slack"
 )
 
@@ -14,6 +15,8 @@ func notifierDecode(typeName string, config json.RawMessage) (Notifier, error) {
 		return mail.New(config)
 	case slack.Type:
 		return slack.New(config)
+	case mailgun.Type:
+		return mailgun.New(config)
 	default:
 		return nil, fmt.Errorf(errUnknownNotifierType, typeName)
 	}

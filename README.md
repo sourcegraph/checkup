@@ -293,6 +293,20 @@ Enable E-mail notifications with this Notifier configuration:
 
 The settings for `subject`, `smtp.port` (default to 25), `smtp.username` and `smtp.password` are optional.
 
+#### Mailgun notifier
+
+Enable notifications using Mailgun with this Notifier configuration:
+```js
+{
+    "type": "mailgun",
+    "apikey": "mailgun-api-key",
+    "domain": "mailgun-domain",
+    "from": "sender@example.com",
+    "to": "recipient@example.com"
+    "subject": "Custom subject line"
+}
+```
+
 ## Setting up storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):

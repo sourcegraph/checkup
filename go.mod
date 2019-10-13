@@ -11,6 +11,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.3.0
+	github.com/mailgun/mailgun-go/v4 v4.1.0
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/miekg/dns v1.1.29
 	github.com/parnurzeal/gorequest v0.2.16 // indirect
