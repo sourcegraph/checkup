@@ -62,7 +62,7 @@ $ checkup --help
 Then follow these instructions to get started quickly with Checkup.
 
 
-### Create your Checkup config
+### Create Your Checkup Config
 
 You can configure Checkup entirely with a simple JSON document. You should configure storage and at least one checker. Here's the basic outline:
 
@@ -246,7 +246,7 @@ CREATE TABLE checks (name TEXT NOT NULL PRIMARY KEY, timestamp INT8, results TEX
 
 Currently the status page does not support SQL storage.
 
-#### Slack notifier
+#### Slack Notifier
 
 Enable notifications in Slack with this Notifier configuration:
 ```js
@@ -260,7 +260,7 @@ Enable notifications in Slack with this Notifier configuration:
 
 Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack).
 
-## Setting up storage on S3
+## Setting up Storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
 
@@ -298,7 +298,7 @@ $ checkup provision s3
 If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
 
-## Setting up the status page
+## Setting up the Status Page
 
 In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you specify how to access the storage system you just provisioned for check files.
 
@@ -307,7 +307,7 @@ The status page can be served over HTTPS by running `caddy -host status.mysite.c
 As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
 
 
-## Performing checks
+## Performing Checks
 
 You can run checks many different ways: cron, AWS Lambda, or a time.Ticker in your own Go program, to name a few. Checks should be run on a regular basis. How often you run checks depends on your requirements and how much time you render on the status page.
 
@@ -340,7 +340,7 @@ And replace the duration with your own preference. In addition to the regular `t
 You can also get some help using the `-h` option for any command or subcommand.
 
 
-## Posting status messages
+## Posting Status Messages
 
 Site reliability engineers should post messages when there are incidents or other news relevant for a status page. This is also very easy:
 
@@ -353,12 +353,12 @@ This stores a check file with your message attached to the result for a check na
 
 
 
-## Doing all that, but with Go
+## Doing All That, but with Go
 
 Checkup is as easy to use in a Go program as it is on the command line.
 
 
-### Using Go to set up storage on S3
+### Using Go to Set up Storage on S3
 
 First, create an IAM user with credentials as described in the section above.
 
@@ -383,7 +383,7 @@ This method creates a new IAM user with read-only permission to S3 and also crea
 
 
 
-### Using Go to perform checks
+### Using Go to Perform Checks
 
 First, `go get github.com/sourcegraph/checkup` and import it. Then configure it:
 
@@ -420,7 +420,7 @@ select {}
 `CheckAndStoreEvery()` returns a `time.Ticker` that you can stop, but in this case we just want it to run forever, so we block forever using an empty `select`.
 
 
-### Using Go to post status messages
+### Using Go to Post Status Messages
 
 Simply perform a check, add the message to the corresponding result, and then store it:
 
@@ -441,13 +441,13 @@ if err != nil {
 Of course, real status messages should be as descriptive as possible. You can use HTML in them.
 
 
-## Other topics
+## Other Topics
 
-### Getting notified when there are problems
+### Getting Notified When There Are Problems
 
 Uh oh, having some fires? 🔥 You can create a type that implements `checkup.Notifier`. Checkup will invoke `Notify()` after every check, where you can evaluate the results and decide if and how you want to send a notification or trigger some event.
 
-### Other kinds of checks or storage providers
+### Other Kinds of Checks or Storage Providers
 
 You can implement your own Checker and Storage types. If it's general enough, feel free to submit a pull request so others can use it too!
 
