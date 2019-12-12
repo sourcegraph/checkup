@@ -7,3 +7,5 @@ bin/
 builds/
 dist/
 .envrc
+
+vendor/
