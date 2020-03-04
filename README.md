@@ -21,6 +21,7 @@ Checkup currently supports these checkers:
 
 - HTTP
 - TCP (+TLS)
+- ICMP
 - DNS
 - TLS
 
@@ -136,6 +137,16 @@ Here are the configuration structures you can use, which are explained fully [in
 	"type": "tls",
 	"endpoint_name": "Example TLS Protocol Check",
 	"endpoint_url": "www.example.com:443"
+}
+```
+
+**[godoc: ICMPChecker](https://godoc.org/github.com/sourcegraph/checkup#ICMPChecker)**
+
+```js
+{
+	"type": "icmp",
+	"endpoint_name": "Example ICMP",
+	"endpoint_url": "example.com"
 }
 ```
 
@@ -397,6 +408,7 @@ c := checkup.Checkup{
 		checkup.TCPChecker{Name:  "Example (TCP SSL, self-signed certificate)", URL:  "www.example.com:443", Attempts: 5, TLSEnabled: true, TLSCAFile: "testdata/ca.pem"},
 		checkup.TCPChecker{Name:  "Example (TCP SSL, validation disabled)", URL:  "www.example.com:8443", Attempts: 5, TLSEnabled: true, TLSSkipVerify: true},
 		checkup.DNSChecker{Name:  "Example DNS test of ns.example.com:53 looking up host.example.com", URL:  "ns.example.com:53", Host: "host.example.com", Attempts: 5},
+		checkup.ICMPChecker{Name:  "Example (ICMP)", URL:  "www.example.com", Attempts: 5},
 	},
 	Storage: checkup.S3{
 		AccessKeyID:     "<yours>",
