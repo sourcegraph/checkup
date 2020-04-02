@@ -98,7 +98,7 @@ func (c TCPChecker) doChecks() Attempts {
 				conn.Close()
 			}
 		} else {
-			if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err == nil {
+			if conn, err = net.DialTimeout("tcp", c.URL, timeout); err == nil {
 				conn.Close()
 			}
 		}
