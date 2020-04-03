@@ -1,0 +1,47 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            41:1d:fe:89:9c:0c:32:d8:56:1d:57:62:9c:92:53:b0
+        Signature Algorithm: ecdsa-with-SHA256
+        Issuer: O = Acme Co, CN = Root CA
+        Validity
+            Not Before: Apr  3 11:56:34 2020 GMT
+            Not After : Mar 10 11:56:34 2120 GMT
+        Subject: O = Acme Co, CN = test_cert_1
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:1b:cb:95:ee:e3:97:76:1b:34:d4:e7:7a:05:62:
+                    7a:ca:cc:c8:e8:87:11:b0:c8:ab:57:b7:c0:6a:31:
+                    26:dd:b5:5c:f4:46:8b:4d:b2:11:54:c3:74:f3:92:
+                    0d:9c:a0:48:9e:4d:3b:3c:08:ce:06:e4:ad:1a:b3:
+                    82:e0:7e:55:6b
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Basic Constraints: critical
+                CA:FALSE
+            X509v3 Subject Alternative Name: 
+                DNS:localhost, IP Address:127.0.0.1
+    Signature Algorithm: ecdsa-with-SHA256
+         30:45:02:20:4d:a9:21:f8:a6:ae:ee:53:1b:6d:9c:1a:18:a7:
+         ee:d5:d9:2c:71:e1:7d:66:84:ce:8f:cc:0a:47:4b:d4:53:dc:
+         02:21:00:8a:26:d8:48:7a:29:a6:c7:ff:db:2f:69:28:5a:88:
+         b8:7b:dd:cb:bc:5b:f0:7c:ca:14:4a:f6:d0:ad:91:9b:55
+-----BEGIN CERTIFICATE-----
+MIIBnTCCAUOgAwIBAgIQQR3+iZwMMthWHVdinJJTsDAKBggqhkjOPQQDAjAkMRAw
+DgYDVQQKEwdBY21lIENvMRAwDgYDVQQDEwdSb290IENBMCAXDTIwMDQwMzExNTYz
+NFoYDzIxMjAwMzEwMTE1NjM0WjAoMRAwDgYDVQQKEwdBY21lIENvMRQwEgYDVQQD
+DAt0ZXN0X2NlcnRfMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABBvLle7jl3Yb
+NNTnegViesrMyOiHEbDIq1e3wGoxJt21XPRGi02yEVTDdPOSDZygSJ5NOzwIzgbk
+rRqzguB+VWujUTBPMA4GA1UdDwEB/wQEAwIFoDATBgNVHSUEDDAKBggrBgEFBQcD
+ATAMBgNVHRMBAf8EAjAAMBoGA1UdEQQTMBGCCWxvY2FsaG9zdIcEfwAAATAKBggq
+hkjOPQQDAgNIADBFAiBNqSH4pq7uUxttnBoYp+7V2Sxx4X1mhM6PzApHS9RT3AIh
+AIom2Eh6KabH/9svaShaiLh73cu8W/B8yhRK9tCtkZtV
+-----END CERTIFICATE-----

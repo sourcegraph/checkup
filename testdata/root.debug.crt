@@ -1,0 +1,45 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            18:5f:e2:b0:ce:76:c6:8b:5f:f7:0c:17:dc:76:da:19
+        Signature Algorithm: ecdsa-with-SHA256
+        Issuer: O = Acme Co, CN = Root CA
+        Validity
+            Not Before: Apr  3 11:56:34 2020 GMT
+            Not After : Mar 10 11:56:34 2120 GMT
+        Subject: O = Acme Co, CN = Root CA
+        Subject Public Key Info:
+            Public Key Algorithm: id-ecPublicKey
+                Public-Key: (256 bit)
+                pub:
+                    04:0c:6a:d9:96:25:9f:f7:ae:42:d6:42:87:d8:86:
+                    74:73:42:a9:11:43:f2:1f:1f:8b:33:27:2f:3c:b5:
+                    09:6f:d2:5b:45:55:2c:c3:a9:b3:c5:ce:ae:83:0f:
+                    0d:c5:26:10:64:78:a3:60:93:b8:a6:6d:0f:32:3e:
+                    a3:b8:0a:d7:5f
+                ASN1 OID: prime256v1
+                NIST CURVE: P-256
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Certificate Sign
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication
+            X509v3 Basic Constraints: critical
+                CA:TRUE
+    Signature Algorithm: ecdsa-with-SHA256
+         30:45:02:20:15:80:3b:4e:30:4c:d4:46:fa:d9:bd:a2:4a:1d:
+         30:df:24:fb:3e:00:17:aa:12:5c:82:93:1c:83:04:e8:6e:05:
+         02:21:00:92:89:32:81:03:3e:0a:7c:61:13:f1:32:79:d7:53:
+         b2:d1:de:3d:b8:c7:e7:6a:05:61:db:2b:a1:e7:0b:9d:0c
+-----BEGIN CERTIFICATE-----
+MIIBgDCCASagAwIBAgIQGF/isM52xotf9wwX3HbaGTAKBggqhkjOPQQDAjAkMRAw
+DgYDVQQKEwdBY21lIENvMRAwDgYDVQQDEwdSb290IENBMCAXDTIwMDQwMzExNTYz
+NFoYDzIxMjAwMzEwMTE1NjM0WjAkMRAwDgYDVQQKEwdBY21lIENvMRAwDgYDVQQD
+EwdSb290IENBMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEDGrZliWf965C1kKH
+2IZ0c0KpEUPyHx+LMycvPLUJb9JbRVUsw6mzxc6ugw8NxSYQZHijYJO4pm0PMj6j
+uArXX6M4MDYwDgYDVR0PAQH/BAQDAgIEMBMGA1UdJQQMMAoGCCsGAQUFBwMBMA8G
+A1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSAAwRQIgFYA7TjBM1Eb62b2iSh0w
+3yT7PgAXqhJcgpMcgwTobgUCIQCSiTKBAz4KfGET8TJ511Oy0d49uMfnagVh2yuh
+5wudDA==
+-----END CERTIFICATE-----
