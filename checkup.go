@@ -175,6 +175,8 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			}
 			var typeName string
 			switch ch.(type) {
+			case ExecChecker:
+				typeName = "exec"
 			case HTTPChecker:
 				typeName = "http"
 			case TCPChecker:
@@ -287,6 +289,13 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// assertions with the help of the type information
 	for i, t := range types.Checkers {
 		switch t.Type {
+		case "exec":
+			var checker ExecChecker
+			err = json.Unmarshal(raw.Checkers[i], &checker)
+			if err != nil {
+				return err
+			}
+			c.Checkers = append(c.Checkers, checker)
 		case "http":
 			var checker HTTPChecker
 			err = json.Unmarshal(raw.Checkers[i], &checker)
