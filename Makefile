@@ -1,6 +1,8 @@
 .PHONY: all build test docker
 
-all: build test docker
+all: build test
+
+DOCKER_IMAGE := checkup
 
 build:
 	mkdir -p builds/
@@ -10,4 +12,4 @@ test:
 	go test -race -count=1 -v ./...
 
 docker:
-	docker build --no-cache . -t checkup
+	docker build --no-cache . -t $(DOCKER_IMAGE)
