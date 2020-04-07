@@ -144,7 +144,7 @@ func TestTCPCheckerWithAgressiveTimeout(t *testing.T) {
 
 func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/leaf.pem", "testdata/leaf.key")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}
@@ -249,7 +249,7 @@ func TestTCPCheckerWithTLSNoVerify(t *testing.T) {
 
 func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/leaf.pem", "testdata/leaf.key")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}
@@ -280,12 +280,17 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	// Should know the host:port by now
 	endpt := srv.Addr().String()
 	testName := "TestWithTLSNoVerify"
-	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSCAFile: "testdata/ca.pem", Attempts: 2}
+	hc := TCPChecker{Name: testName, URL: endpt, TLSEnabled: true, TLSCAFile: "testdata/root.pem", Attempts: 2}
 
 	// Try an up server
 	result, err := hc.Check()
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
+	}
+	for _, run := range result.Times {
+		if got, want := run.Error, ""; got != want {
+			t.Fatalf("Expected no errors, got %s", got)
+		}
 	}
 
 	if got, want := result.Title, testName; got != want {
@@ -316,6 +321,11 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
+	for _, run := range result.Times {
+		if got, want := run.Error, ""; got != want {
+			t.Fatalf("Expected no errors, got %s", got)
+		}
+	}
 	if got, want := result.Healthy, true; got != want {
 		t.Errorf("Expected result.Healthy=%v, got %v", want, got)
 	}
@@ -325,6 +335,11 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
+	for _, run := range result.Times {
+		if got, want := run.Error, ""; got != want {
+			t.Fatalf("Expected no errors, got %s", got)
+		}
+	}
 	if got, want := result.Degraded, true; got != want {
 		t.Errorf("Expected result.Degraded=%v, got %v", want, got)
 	}
@@ -333,6 +348,11 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 	result, err = hc.Check()
 	if err != nil {
 		t.Errorf("Didn't expect an error: %v", err)
+	}
+	for _, run := range result.Times {
+		if got, want := run.Error, ""; got != want {
+			t.Fatalf("Expected no errors, got %s", got)
+		}
 	}
 	if got, want := result.Down, false; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
@@ -354,7 +374,7 @@ func TestTCPCheckerWithTLSVerifySuccess(t *testing.T) {
 
 func TestTCPCheckerWithTLSVerifyError(t *testing.T) {
 	// Listen on localhost, random port
-	certPair, err := tls.LoadX509KeyPair("testdata/server.pem", "testdata/key.pem")
+	certPair, err := tls.LoadX509KeyPair("testdata/leaf.pem", "testdata/leaf.key")
 	if err != nil {
 		t.Error("Failed to load certificate.", err)
 	}

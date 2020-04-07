@@ -1,3 +1,5 @@
+// +build sql
+
 package checkup
 
 import (

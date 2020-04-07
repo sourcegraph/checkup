@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 )
@@ -71,6 +72,8 @@ func TestCheckAndStoreEvery(t *testing.T) {
 	time.Sleep(170 * time.Millisecond)
 	ticker.Stop()
 
+	f.Lock()
+	defer f.Unlock()
 	if got, want := f.checked, 3; got != want {
 		t.Errorf("Expected %d checks while sleeping, had: %d", want, got)
 	}
@@ -193,6 +196,8 @@ func TestJSON(t *testing.T) {
 var errTest = errors.New("i'm an error")
 
 type fake struct {
+	sync.Mutex
+
 	returnErr  bool
 	checked    int
 	stored     []Result
@@ -201,6 +206,9 @@ type fake struct {
 }
 
 func (f *fake) Check() (Result, error) {
+	f.Lock()
+	defer f.Unlock()
+
 	f.checked++
 	r := Result{Timestamp: time.Now().UTC().UnixNano()}
 	if f.returnErr {
@@ -210,6 +218,9 @@ func (f *fake) Check() (Result, error) {
 }
 
 func (f *fake) Store(results []Result) error {
+	f.Lock()
+	defer f.Unlock()
+
 	f.stored = results
 	if f.returnErr {
 		return errTest
@@ -218,11 +229,17 @@ func (f *fake) Store(results []Result) error {
 }
 
 func (f *fake) Maintain() error {
+	f.Lock()
+	defer f.Unlock()
+
 	f.maintained++
 	return nil
 }
 
 func (f *fake) Notify(results []Result) error {
+	f.Lock()
+	defer f.Unlock()
+
 	f.notified++
 	return nil
 }
