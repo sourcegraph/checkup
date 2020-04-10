@@ -11,6 +11,9 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "exec"
+
 // Checker implements a Checker by running programs with os.Exec.
 type Checker struct {
 	// Name is the name of the endpoint.
@@ -68,6 +71,11 @@ func New(config json.RawMessage) (Checker, error) {
 	var checker Checker
 	err := json.Unmarshal(config, &checker)
 	return checker, err
+}
+
+// Type returns the checker package name
+func (Checker) Type() string {
+	return Type
 }
 
 // Check performs checks using c according to its configuration.

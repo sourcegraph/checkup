@@ -17,6 +17,9 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "s3"
+
 // Storage is a way to store checkup results in an S3 bucket.
 type Storage struct {
 	AccessKeyID     string `json:"access_key_id"`
@@ -36,6 +39,11 @@ func New(config json.RawMessage) (Storage, error) {
 	var storage Storage
 	err := json.Unmarshal(config, &storage)
 	return storage, err
+}
+
+// Type returns the storage driver package name
+func (Storage) Type() string {
+	return Type
 }
 
 // Store stores results on S3 according to the configuration in s.

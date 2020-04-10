@@ -10,6 +10,9 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "fs"
+
 // Storage is a way to store checkup results on the local filesystem.
 type Storage struct {
 	// The path to the directory where check files will be stored.
@@ -29,6 +32,11 @@ func New(config json.RawMessage) (Storage, error) {
 	var storage Storage
 	err := json.Unmarshal(config, &storage)
 	return storage, err
+}
+
+// Type returns the storage driver package name
+func (Storage) Type() string {
+	return Type
 }
 
 // GetIndex returns the index from filesystem.

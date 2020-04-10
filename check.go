@@ -2,9 +2,7 @@ package checkup
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sourcegraph/checkup/check/dns"
 	"github.com/sourcegraph/checkup/check/exec"
@@ -15,36 +13,17 @@ import (
 
 func checkerDecode(typeName string, config json.RawMessage) (Checker, error) {
 	switch typeName {
-	case "dns":
+	case dns.Type:
 		return dns.New(config)
-	case "exec":
+	case exec.Type:
 		return exec.New(config)
-	case "http":
+	case http.Type:
 		return http.New(config)
-	case "tcp":
+	case tcp.Type:
 		return tcp.New(config)
-	case "tls":
+	case tls.Type:
 		return tls.New(config)
 	default:
-		return nil, errors.New(strings.Replace(errUnknownCheckerType, "%T", typeName, -1))
+		return nil, fmt.Errorf(errUnknownCheckerType, typeName)
 	}
-}
-
-func checkerType(ch interface{}) (string, error) {
-	var typeName string
-	switch ch.(type) {
-	case dns.Checker, *dns.Checker:
-		typeName = "dns"
-	case exec.Checker, *exec.Checker:
-		typeName = "exec"
-	case http.Checker, *http.Checker:
-		typeName = "http"
-	case tcp.Checker, *tcp.Checker:
-		typeName = "tcp"
-	case tls.Checker, *tls.Checker:
-		typeName = "tls"
-	default:
-		return "", fmt.Errorf(errUnknownCheckerType, ch)
-	}
-	return typeName, nil
 }

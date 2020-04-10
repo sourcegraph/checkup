@@ -17,6 +17,9 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "github"
+
 var errFileNotFound = fmt.Errorf("file not found on github")
 
 // Storage is a way to store checkup results in a GitHub repository.
@@ -61,6 +64,11 @@ func New(config json.RawMessage) (*Storage, error) {
 	storage := new(Storage)
 	err := json.Unmarshal(config, &storage)
 	return storage, err
+}
+
+// Type returns the storage driver package name
+func (Storage) Type() string {
+	return Type
 }
 
 // ensureClient builds an GitHub API client if none exists and stores it on the struct.

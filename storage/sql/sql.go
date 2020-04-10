@@ -54,6 +54,11 @@ func New(config json.RawMessage) (Storage, error) {
 	return storage, err
 }
 
+// Type returns the storage driver package name
+func (Storage) Type() string {
+	return Type
+}
+
 func (sql Storage) dbConnect() (*sqlx.DB, error) {
 	// Only one SQL backend can be present
 	if sql.SqliteDBFile != "" && sql.PostgreSQL != nil {

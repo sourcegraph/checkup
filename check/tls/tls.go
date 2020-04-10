@@ -12,6 +12,9 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "tls"
+
 // Checker implements a Checker for TLS endpoints.
 //
 // TODO: Implement more checks on the certificate and TLS configuration.
@@ -64,6 +67,11 @@ func New(config json.RawMessage) (Checker, error) {
 	var checker Checker
 	err := json.Unmarshal(config, &checker)
 	return checker, err
+}
+
+// Type returns the checker package name
+func (Checker) Type() string {
+	return Type
 }
 
 // Check performs checks using c according to its configuration.

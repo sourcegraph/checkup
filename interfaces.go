@@ -6,11 +6,13 @@ import (
 
 // Checker can create a types.Result.
 type Checker interface {
+	Type() string
 	Check() (types.Result, error)
 }
 
 // Storage can store results.
 type Storage interface {
+	Type() string
 	Store([]types.Result) error
 }
 
@@ -35,6 +37,7 @@ type Maintainer interface {
 // state to avoid sending repeated notices
 // more often than the admin would like.
 type Notifier interface {
+	Type() string
 	Notify([]types.Result) error
 }
 

@@ -10,9 +10,11 @@ import (
 	"github.com/sourcegraph/checkup/types"
 )
 
+// Type should match the package name
+const Type = "slack"
+
 // Notifier consist of all the sub components required to use Slack API
 type Notifier struct {
-	Name     string `json:"name"`
 	Username string `json:"username"`
 	Channel  string `json:"channel"`
 	Webhook  string `json:"webhook"`
@@ -23,6 +25,11 @@ func New(config json.RawMessage) (Notifier, error) {
 	var notifier Notifier
 	err := json.Unmarshal(config, &notifier)
 	return notifier, err
+}
+
+// Type returns the notifier package name
+func (Notifier) Type() string {
+	return Type
 }
 
 // Notify implements notifier interface

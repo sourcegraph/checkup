@@ -31,7 +31,6 @@ func TestChecker(t *testing.T) {
 		hc := Checker{Name: testName, Command: command, Arguments: []string{"0", testName}, Attempts: 2}
 
 		result, err := hc.Check()
-		t.Logf("%#v", result)
 		assert(err == nil, "expected no error, got %v, %#v", err, result)
 		assert(result.Title == testName, "expected result.Title == %s, got '%s'", testName, result.Title)
 		assert(result.Down == false, "expected result.Down = false, got %v", result.Down)

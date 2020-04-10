@@ -2,9 +2,7 @@ package checkup
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sourcegraph/checkup/storage/fs"
 	"github.com/sourcegraph/checkup/storage/github"
@@ -14,32 +12,15 @@ import (
 
 func storageDecode(typeName string, config json.RawMessage) (Storage, error) {
 	switch typeName {
-	case "s3":
+	case s3.Type:
 		return s3.New(config)
-	case "github":
+	case github.Type:
 		return github.New(config)
-	case "fs":
+	case fs.Type:
 		return fs.New(config)
-	case "sql":
+	case sql.Type:
 		return sql.New(config)
 	default:
-		return nil, errors.New(strings.Replace(errUnknownStorageType, "%T", typeName, -1))
+		return nil, fmt.Errorf(errUnknownStorageType, typeName)
 	}
-}
-
-func storageType(ch interface{}) (string, error) {
-	var typeName string
-	switch ch.(type) {
-	case s3.Storage, *s3.Storage:
-		typeName = "s3"
-	case github.Storage, *github.Storage:
-		typeName = "github"
-	case fs.Storage, *fs.Storage:
-		typeName = "fs"
-	case sql.Storage, *sql.Storage:
-		typeName = "sql"
-	default:
-		return "", fmt.Errorf(errUnknownStorageType, ch)
-	}
-	return typeName, nil
 }
