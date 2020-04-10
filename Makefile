@@ -6,11 +6,13 @@ DOCKER_IMAGE := checkup
 
 build:
 	go fmt ./...
+	go mod tidy
 	mkdir -p builds/
 	go build -o builds/ ./cmd/...
 
 build-sql:
 	go fmt ./...
+	go mod tidy
 	go build -o builds/ -tags sql ./cmd/...
 
 test:
