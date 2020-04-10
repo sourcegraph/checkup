@@ -38,11 +38,11 @@ type Checkup struct {
 	// method will be called by c.CheckAndStore().
 	Storage Storage `json:"storage,omitempty"`
 
-	// Notifier is a notifier that will be passed the
-	// results after checks from all checkers have
+	// Notifiers are list of notifiers to invoke with
+	// the results after checks from all checkers have
 	// completed. Notifier may evaluate and choose to
 	// send a notification of potential problems.
-	Notifier Notifier `json:"notifier,omitempty"`
+	Notifiers []Notifier `json:"notifiers,omitempty"`
 }
 
 // Check performs the health checks. An error is only
@@ -83,12 +83,11 @@ func (c Checkup) Check() ([]types.Result, error) {
 		return results, errs
 	}
 
-	if c.Notifier != nil {
-		err := c.Notifier.Notify(results)
+	for _, service := range c.Notifiers {
+		err := service.Notify(results)
 		if err != nil {
-			log.Printf("ERROR sending notifications: %s", err)
+			log.Printf("ERROR sending notifications for %s: %s", service.Type(), err)
 		}
-		return results, nil
 	}
 
 	return results, nil
@@ -172,13 +171,7 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			if err != nil {
 				return result, err
 			}
-
-			typeName, err := checkerType(ch)
-			if err != nil {
-				return result, err
-			}
-
-			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, typeName, string(chb[1:])))
+			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, ch.Type(), string(chb[1:])))
 			checkers = append(checkers, chb)
 		}
 
@@ -194,30 +187,27 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return result, err
 		}
-
-		providerName, err := storageType(c.Storage)
-		if err != nil {
-			return result, err
-		}
-
-		sb = []byte(fmt.Sprintf(`{"provider":"%s",%s`, providerName, string(sb[1:])))
+		sb = []byte(fmt.Sprintf(`{"type":"%s",%s`, c.Storage.Type(), string(sb[1:])))
 		wrap("storage", sb)
 	}
 
-	// Notifier
-	if c.Notifier != nil {
-		nb, err := json.Marshal(c.Notifier)
-		if err != nil {
-			return result, err
+	// Notifiers
+	if len(c.Notifiers) > 0 {
+		var checkers [][]byte
+		for _, ch := range c.Notifiers {
+			chb, err := json.Marshal(ch)
+			if err != nil {
+				return result, err
+			}
+
+			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, ch.Type(), string(chb[1:])))
+			checkers = append(checkers, chb)
 		}
 
-		notifierName, err := notifierType(c.Notifier)
-		if err != nil {
-			return result, err
-		}
-
-		nb = []byte(fmt.Sprintf(`{"name":"%s",%s`, notifierName, string(nb[1:])))
-		wrap("notifier", nb)
+		allNotifiers := []byte{'['}
+		allNotifiers = append([]byte{'['}, bytes.Join(checkers, []byte(","))...)
+		allNotifiers = append(allNotifiers, ']')
+		wrap("notifiers", allNotifiers)
 	}
 
 	return result, nil
@@ -233,14 +223,18 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// but we can ignore it because we handle it below.
 	type checkup2 *Checkup
 	json.Unmarshal(b, checkup2(c))
-	c.Checkers = []Checker{} // clean the slate
+
+	// clean the slate
+	c.Checkers = []Checker{}
+	c.Notifiers = []Notifier{}
 
 	// Begin unmarshaling interface values by
 	// collecting the raw JSON
 	raw := struct {
-		Checkers []json.RawMessage `json:"checkers"`
-		Storage  json.RawMessage   `json:"storage"`
-		Notifier json.RawMessage   `json:"notifier"`
+		Checkers  []json.RawMessage `json:"checkers"`
+		Storage   json.RawMessage   `json:"storage"`
+		Notifier  json.RawMessage   `json:"notifier"`
+		Notifiers []json.RawMessage `json:"notifiers"`
 	}{}
 	err := json.Unmarshal([]byte(b), &raw)
 	if err != nil {
@@ -248,28 +242,28 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	}
 
 	// Then collect the concrete type information
-	types := struct {
+	configTypes := struct {
 		Checkers []struct {
 			Type string `json:"type"`
 		}
 		Storage struct {
-			Provider string `json:"provider"`
+			Type string `json:"type"`
 		}
 		Notifier struct {
-			Name     string `json:"name"`
-			Username string `json:"username"`
-			Channel  string `json:"channel"`
-			Webhook  string `json:"webhook"`
+			Type string `json:"type"`
+		}
+		Notifiers []struct {
+			Type string `json:"type"`
 		}
 	}{}
-	err = json.Unmarshal([]byte(b), &types)
+	err = json.Unmarshal([]byte(b), &configTypes)
 	if err != nil {
 		return err
 	}
 
 	// Finally, we unmarshal the remaining values using type
 	// assertions with the help of the type information
-	for i, t := range types.Checkers {
+	for i, t := range configTypes.Checkers {
 		checker, err := checkerDecode(t.Type, raw.Checkers[i])
 		if err != nil {
 			return err
@@ -277,20 +271,27 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		c.Checkers = append(c.Checkers, checker)
 	}
 	if raw.Storage != nil {
-		storage, err := storageDecode(types.Storage.Provider, raw.Storage)
+		storage, err := storageDecode(configTypes.Storage.Type, raw.Storage)
 		if err != nil {
 			return err
 		}
 		c.Storage = storage
 	}
 	if raw.Notifier != nil {
-		notifier, err := notifierDecode(types.Notifier.Name, raw.Notifier)
+		notifier, err := notifierDecode(configTypes.Notifier.Type, raw.Notifier)
 		if err != nil {
 			return err
 		}
-		c.Notifier = notifier
+		// Move `notifier` into `notifiers[]`
+		c.Notifiers = append(c.Notifiers, notifier)
 	}
-
+	for i, n := range configTypes.Notifiers {
+		notifier, err := notifierDecode(n.Type, raw.Notifiers[i])
+		if err != nil {
+			return err
+		}
+		c.Notifiers = append(c.Notifiers, notifier)
+	}
 	return nil
 }
 

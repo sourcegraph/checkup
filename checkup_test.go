@@ -18,7 +18,7 @@ func TestCheckAndStore(t *testing.T) {
 		Checkers:         []Checker{f, f},
 		ConcurrentChecks: 1,
 		Timestamp:        time.Now(),
-		Notifier:         f,
+		Notifiers:        []Notifier{f, f},
 	}
 
 	err := c.CheckAndStore()
@@ -36,7 +36,7 @@ func TestCheckAndStore(t *testing.T) {
 			t.Error("Expected timestamps to be the same, but they weren't")
 		}
 	}
-	if got, want := f.notified, 1; got != want {
+	if got, want := f.notified, 2; got != want {
 		t.Errorf("Expected Notify() to be called %d time, called %d times", want, got)
 	}
 	if got, want := f.maintained, 1; got != want {
@@ -177,7 +177,7 @@ func TestPriorityOver(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
-	jsonBytes := []byte(`{"storage":{"provider":"s3","access_key_id":"AAAAAA6WVZYYANEAFL6Q","secret_access_key":"DbvNDdKHaN4n8n3qqqXwvUVqVQTcHVmNYtvcJfTd","region":"us-east-1","bucket":"test","check_expiry":604800000000000},"checkers":[{"type":"http","endpoint_name":"Example (HTTP)","endpoint_url":"http://www.example.com","attempts":5},{"type":"http","endpoint_name":"Example (HTTPS)","endpoint_url":"https://example.com","threshold_rtt":500000000,"attempts":5},{"type":"http","endpoint_name":"localhost","endpoint_url":"http://localhost:2015","threshold_rtt":1000000,"attempts":5}],"timestamp":"0001-01-01T00:00:00Z"}`)
+	jsonBytes := []byte(`{"storage":{"type":"s3","access_key_id":"AAAAAA6WVZYYANEAFL6Q","secret_access_key":"DbvNDdKHaN4n8n3qqqXwvUVqVQTcHVmNYtvcJfTd","region":"us-east-1","bucket":"test","check_expiry":604800000000000},"checkers":[{"type":"http","endpoint_name":"Example (HTTP)","endpoint_url":"http://www.example.com","attempts":5},{"type":"http","endpoint_name":"Example (HTTPS)","endpoint_url":"https://example.com","threshold_rtt":500000000,"attempts":5},{"type":"http","endpoint_name":"localhost","endpoint_url":"http://localhost:2015","threshold_rtt":1000000,"attempts":5}],"timestamp":"0001-01-01T00:00:00Z"}`)
 
 	var c Checkup
 	err := json.Unmarshal(jsonBytes, &c)
