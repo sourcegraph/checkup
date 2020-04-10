@@ -207,6 +207,10 @@ type fake struct {
 	notified   int
 }
 
+func (f *fake) Type() string {
+	return "fake"
+}
+
 func (f *fake) Check() (types.Result, error) {
 	f.Lock()
 	defer f.Unlock()

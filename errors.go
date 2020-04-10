@@ -1,7 +1,7 @@
 package checkup
 
 const (
-	errUnknownCheckerType  = "unknown checker type: %T"
-	errUnknownStorageType  = "unknown storage type: %T"
-	errUnknownNotifierType = "unknown notifier type: %T"
+	errUnknownCheckerType  = "unknown checker type: %s"
+	errUnknownStorageType  = "unknown storage type: %s"
+	errUnknownNotifierType = "unknown notifier type: %s"
 )

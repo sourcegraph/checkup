@@ -260,6 +260,25 @@ Enable notifications in Slack with this Notifier configuration:
 
 Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack).
 
+#### Mail notifier
+
+Enable E-mail notifications with this Notifier configuration:
+```js
+{
+	"from": "from@example.com",
+	"to": [ "support1@examiple.com", "support2@example.com" ],
+	"subject": "Custom subject line",
+	"smtp": {
+		"server": "smtp.example.com",
+		"port": 25,
+		"username": "username",
+		"password": "password"
+	}
+}
+```
+
+The settings for `subject`, `smtp.port` (default to 25), `smtp.username` and `smtp.password` are optional.
+
 ## Setting up storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
