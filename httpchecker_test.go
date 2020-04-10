@@ -11,7 +11,7 @@ import (
 func TestHTTPChecker(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Checkup", r.Header.Get("X-Checkup"))
-		fmt.Fprintln(w, "I'm up")
+		fmt.Fprintln(w, "I'm up", "@"+r.Host)
 	}))
 	endpt := "http://" + srv.Listener.Addr().String()
 	hc := HTTPChecker{Name: "Test", URL: endpt, Attempts: 2}
@@ -107,6 +107,7 @@ func TestHTTPChecker(t *testing.T) {
 	hc.Headers = http.Header{
 		"X-Checkup": []string{"Echo"},
 	}
+	hc.MustNotContain = ""
 	hc.MustContain = "Echo"
 	hc.ThresholdRTT = 0
 	result, err = hc.Check()
@@ -114,6 +115,22 @@ func TestHTTPChecker(t *testing.T) {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
 	if got, want := result.Down, true; got != want {
+		t.Errorf("Expected result.Down=%v, got %v", want, got)
+	}
+
+	// Test with a Host header
+	hc.Headers = http.Header{
+		"Host": []string{"http.check.local"},
+	}
+	hc.MustContain = "@http.check.local"
+	hc.MustNotContain = ""
+	hc.ThresholdRTT = 0
+	result, err = hc.Check()
+
+	if err != nil {
+		t.Errorf("Didn't expect an error: %v", err)
+	}
+	if got, want := result.Down, false; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
 	}
 

@@ -88,6 +88,10 @@ func (c HTTPChecker) Check() (Result, error) {
 	if c.Headers != nil {
 		for key, header := range c.Headers {
 			req.Header.Add(key, strings.Join(header, ", "))
+			// net/http has special Host field which we'll fill out
+			if strings.ToLower(key) == "host" {
+				req.Host = header[0]
+			}
 		}
 	}
 
