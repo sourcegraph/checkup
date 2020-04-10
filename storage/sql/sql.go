@@ -12,6 +12,7 @@ import (
 	_ "github.com/lib/pq"           // Enable postgresql beckend
 	_ "github.com/mattn/go-sqlite3" // Enable sqlite3 backend
 
+	"github.com/sourcegraph/checkup/storage/fs"
 	"github.com/sourcegraph/checkup/types"
 )
 
@@ -160,7 +161,7 @@ func (sql Storage) Store(results []types.Result) error {
 	}
 	defer db.Close()
 
-	name := *GenerateFilename()
+	name := *fs.GenerateFilename()
 	contents, err := json.Marshal(results)
 	if err != nil {
 		return err

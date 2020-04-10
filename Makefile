@@ -1,4 +1,4 @@
-.PHONY: all build test docker
+.PHONY: all build build-sql test docker
 
 all: build test
 
@@ -8,6 +8,10 @@ build:
 	go fmt ./...
 	mkdir -p builds/
 	go build -o builds/ ./cmd/...
+
+build-sql:
+	go fmt ./...
+	go build -o builds/ -tags sql ./cmd/...
 
 test:
 	go test -race -count=1 ./...
