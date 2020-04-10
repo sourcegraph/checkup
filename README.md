@@ -11,7 +11,20 @@ Checkup was created by Matt Holt, author of the [Caddy web server](https://caddy
 
 This tool is a work-in-progress. Please use liberally (with discretion) and report any bugs!
 
+## Recent changes
 
+Due to recent development, some breaking changes have been introduced:
+
+- providers: the json config field `provider` was renamed to `type` for consistency,
+- notifiers: the json config field `name` was renamed to `type` for consistency,
+- sql: by default the sqlite storage engine is disabled (needs build with `-tags sql` to enable),
+
+If you want to build the latest version, it's best to run:
+
+- `make build` - builds checkup without sql support,
+- `make build-sql` - builds checkup with pgsql/sqlite;
+
+The resulting binary will be placed into `builds/checkup`.
 
 ## Intro
 
@@ -76,9 +89,9 @@ You can configure Checkup entirely with a simple JSON document. You should confi
 		// storage configuration goes here
 	},
 
-	"notifier": {
+	"notifiers": [
 		// notifier configuration goes here
-	}
+	]
 }
 ```
 
@@ -90,7 +103,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 #### HTTP Checkers
 
-**[godoc: HTTPChecker](https://godoc.org/github.com/sourcegraph/checkup#HTTPChecker)**
+**[godoc: HTTPChecker](https://godoc.org/github.com/sourcegraph/checkup/check/http)**
 
 ```js
 {
@@ -104,7 +117,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 #### TCP Checkers
 
-**[godoc: TCPChecker](https://godoc.org/github.com/sourcegraph/checkup#TCPChecker)**
+**[godoc: TCPChecker](https://godoc.org/github.com/sourcegraph/checkup/check/tcp)**
 
 ```js
 {
@@ -116,7 +129,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 #### DNS Checkers
 
-**[godoc: DNSChecker](https://godoc.org/github.com/sourcegraph/checkup#DNSChecker)**
+**[godoc: DNSChecker](https://godoc.org/github.com/sourcegraph/checkup/check/dns)**
 
 ```js
 {
@@ -129,7 +142,7 @@ Here are the configuration structures you can use, which are explained fully [in
 
 #### TLS Checkers
 
-**[godoc: TLSChecker](https://godoc.org/github.com/sourcegraph/checkup#TLSChecker)**
+**[godoc: TLSChecker](https://godoc.org/github.com/sourcegraph/checkup/check/tls)**
 
 ```js
 {
@@ -142,11 +155,11 @@ Here are the configuration structures you can use, which are explained fully [in
 
 #### Amazon S3 Storage
 
-**[godoc: S3](https://godoc.org/github.com/sourcegraph/checkup#S3)**
+**[godoc: S3](https://godoc.org/github.com/sourcegraph/checkup/check/s3)**
 
 ```js
 {
-	"provider": "s3",
+	"type": "s3",
 	"access_key_id": "<yours>",
 	"secret_access_key": "<yours>",
 	"bucket": "<yours>",
@@ -159,11 +172,11 @@ S3 is the default storage provider assumed by the status page, so the only chang
 
 #### File System Storage
 
-**[godoc: FS](https://godoc.org/github.com/sourcegraph/checkup#FS)**
+**[godoc: FS](https://godoc.org/github.com/sourcegraph/checkup/storage/fs)**
 
 ```js
 {
-	"provider": "fs",
+	"type": "fs",
 	"dir": "/path/to/your/check_files",
 	"url": "http://127.0.0.1:2015/check_files"
 }
@@ -180,11 +193,11 @@ Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/sta
 
 #### GitHub Storage
 
-**[godoc: GitHub](https://godoc.org/github.com/sourcegraph/checkup#GitHub)**
+**[godoc: GitHub](https://godoc.org/github.com/sourcegraph/checkup/storage/github)**
 
 ```js
 {
-	"provider": "github",
+	"type": "github",
 	"access_token": "some_api_access_token_with_repo_scope",
 	"repository_owner": "owner",
 	"repository_name": "repo",
@@ -209,14 +222,14 @@ Where "dir" is a subdirectory within the repo to push all the check files. Setup
 
 #### SQL Storage (sqlite3/PostgreSQL)
 
-**[godoc: SQL](https://godoc.org/github.com/sourcegraph/checkup#SQL)**
+**[godoc: SQL](https://godoc.org/github.com/sourcegraph/checkup/storage/sql)**
 
 Postgres or sqlite3 databases can be used as storage backends.
 
 sqlite database file configuration:
 ```js
 {
-	"provider": "sql",
+	"type": "sql",
 	"sqlite_db_file": "/path/to/your/sqlite.db"
 }
 ```
@@ -224,7 +237,7 @@ sqlite database file configuration:
 postgresql database file configuration:
 ```js
 {
-	"provider": "sql",
+	"type": "sql",
 	"postgresql": {
 		"user": "postgres",
 		"dbname": "dbname",
@@ -251,7 +264,7 @@ Currently the status page does not support SQL storage.
 Enable notifications in Slack with this Notifier configuration:
 ```js
 {
-	"name": "slack",
+	"type": "slack",
 	"username": "username",
 	"channel": "#channel-name",
 	"webhook": "webhook-url"
@@ -265,6 +278,7 @@ Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/
 Enable E-mail notifications with this Notifier configuration:
 ```js
 {
+	"type": "mail",
 	"from": "from@example.com",
 	"to": [ "support1@examiple.com", "support2@example.com" ],
 	"subject": "Custom subject line",
@@ -472,34 +486,18 @@ You can implement your own Checker and Storage types. If it's general enough, fe
 
 ### Building Locally
 
-Requires Go v1.10 or newer.
-
-```bash
-git clone git@github.com:sourcegraph/checkup.git
-cd checkup/cmd/checkup/
-
-# Install dependencies
-go get -v -d
-
-# Build binary
-go build -v -ldflags '-s' -o ../../checkup
-
-# Run tests
-go test -race ../../
-```
-
-### Building with Docker
-
-Linux binary:
+Requires Go v1.13 or newer.
 
 ```bash
 git clone git@github.com:sourcegraph/checkup.git
 cd checkup
-docker pull golang:latest
-docker run --net=host --rm \
--v `pwd`:/project \
--w /project golang bash \
--c "cd cmd/checkup; go get -v -d; go build -v -ldflags '-s' -o ../../checkup"
+make
 ```
 
-This will create a checkup binary in the root project folder.
+Building the SQL enabled version is done with `make build-sql`.
+
+### Building a Docker image
+
+If you would like to run checkup in a docker container, building it is done by running `make docker`.
+It will build the version without sql support. An SQL supported docker image is currently not provided,
+but there's a plan to do that in the future.
