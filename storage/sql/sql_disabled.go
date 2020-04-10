@@ -3,8 +3,8 @@
 package sql
 
 import (
-	"errors"
 	"encoding/json"
+	"errors"
 
 	"github.com/sourcegraph/checkup/types"
 )

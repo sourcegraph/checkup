@@ -1,9 +1,9 @@
 package slack
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
-	"encoding/json"
 
 	slack "github.com/ashwanthkumar/slack-go-webhook"
 

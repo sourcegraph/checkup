@@ -13,8 +13,8 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 
-	"github.com/sourcegraph/checkup/types"
 	"github.com/sourcegraph/checkup/storage/fs"
+	"github.com/sourcegraph/checkup/types"
 )
 
 var errFileNotFound = fmt.Errorf("file not found on github")

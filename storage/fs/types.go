@@ -21,5 +21,3 @@ func GenerateFilename() *string {
 	s := fmt.Sprintf(FilenameFormatString, types.Timestamp())
 	return &s
 }
-
-

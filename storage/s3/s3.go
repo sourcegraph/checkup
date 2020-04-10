@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/sourcegraph/checkup/types"
 	"github.com/sourcegraph/checkup/storage/fs"
+	"github.com/sourcegraph/checkup/types"
 )
 
 // Storage is a way to store checkup results in an S3 bucket.

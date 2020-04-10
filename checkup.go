@@ -297,4 +297,3 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 // DefaultConcurrentChecks is how many checks,
 // at most, to perform concurrently.
 var DefaultConcurrentChecks = 5
-

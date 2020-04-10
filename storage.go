@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sourcegraph/checkup/storage/s3"
-	"github.com/sourcegraph/checkup/storage/github"
 	"github.com/sourcegraph/checkup/storage/fs"
+	"github.com/sourcegraph/checkup/storage/github"
+	"github.com/sourcegraph/checkup/storage/s3"
 	"github.com/sourcegraph/checkup/storage/sql"
 )
 
