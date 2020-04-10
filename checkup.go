@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
@@ -59,7 +58,7 @@ func (c Checkup) Check() ([]types.Result, error) {
 	}
 
 	results := make([]types.Result, len(c.Checkers))
-	errs := make(Errors, len(c.Checkers))
+	errs := make(types.Errors, len(c.Checkers))
 	throttle := make(chan struct{}, c.ConcurrentChecks)
 	wg := sync.WaitGroup{}
 
@@ -87,8 +86,9 @@ func (c Checkup) Check() ([]types.Result, error) {
 	if c.Notifier != nil {
 		err := c.Notifier.Notify(results)
 		if err != nil {
-			return results, err
+			log.Printf("ERROR sending notifications: %s", err)
 		}
+		return results, nil
 	}
 
 	return results, nil
@@ -298,26 +298,3 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 // at most, to perform concurrently.
 var DefaultConcurrentChecks = 5
 
-// Errors is an error type that concatenates multiple errors.
-type Errors []error
-
-// Error returns a string containing all the errors in e.
-func (e Errors) Error() string {
-	var errs []string
-	for _, err := range e {
-		if err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-	return strings.Join(errs, "; ")
-}
-
-// Empty returns whether e has any non-nil errors in it.
-func (e Errors) Empty() bool {
-	for _, err := range e {
-		if err != nil {
-			return false
-		}
-	}
-	return true
-}

@@ -2,7 +2,6 @@ package slack
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"encoding/json"
 
@@ -28,12 +27,15 @@ func New(config json.RawMessage) (Notifier, error) {
 
 // Notify implements notifier interface
 func (s Notifier) Notify(results []types.Result) error {
+	errs := make(types.Errors, 0)
 	for _, result := range results {
 		if !result.Healthy {
-			s.Send(result)
+			if err := s.Send(result); err != nil {
+				errs = append(errs, err)
+			}
 		}
 	}
-	return nil
+	return errs
 }
 
 // Send request via Slack API to create incident
@@ -50,10 +52,5 @@ func (s Notifier) Send(result types.Result) error {
 		Attachments: []slack.Attachment{attach},
 	}
 
-	err := slack.Send(s.Webhook, "", payload)
-	if len(err) > 0 {
-		log.Printf("ERROR: %s", err)
-	}
-	log.Printf("Create request for %s", result.Endpoint)
-	return nil
+	return types.Errors(slack.Send(s.Webhook, "", payload))
 }
