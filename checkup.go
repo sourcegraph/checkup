@@ -8,12 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/fatih/color"
+	"github.com/sourcegraph/checkup/types"
 )
 
 // Checkup performs a routine checkup on endpoints or
@@ -50,7 +49,7 @@ type Checkup struct {
 // Check performs the health checks. An error is only
 // returned in the case of a misconfiguration or if
 // any one of the Checkers returns an error.
-func (c Checkup) Check() ([]Result, error) {
+func (c Checkup) Check() ([]types.Result, error) {
 	if c.ConcurrentChecks == 0 {
 		c.ConcurrentChecks = DefaultConcurrentChecks
 	}
@@ -59,7 +58,7 @@ func (c Checkup) Check() ([]Result, error) {
 			c.ConcurrentChecks)
 	}
 
-	results := make([]Result, len(c.Checkers))
+	results := make([]types.Result, len(c.Checkers))
 	errs := make(Errors, len(c.Checkers))
 	throttle := make(chan struct{}, c.ConcurrentChecks)
 	wg := sync.WaitGroup{}
@@ -173,21 +172,12 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			if err != nil {
 				return result, err
 			}
-			var typeName string
-			switch ch.(type) {
-			case ExecChecker:
-				typeName = "exec"
-			case HTTPChecker:
-				typeName = "http"
-			case TCPChecker:
-				typeName = "tcp"
-			case DNSChecker:
-				typeName = "dns"
-			case TLSChecker:
-				typeName = "tls"
-			default:
-				return result, fmt.Errorf("unknown Checker type")
+
+			typeName, err := checkerType(ch)
+			if err != nil {
+				return result, err
 			}
+
 			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, typeName, string(chb[1:])))
 			checkers = append(checkers, chb)
 		}
@@ -204,19 +194,12 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return result, err
 		}
-		var providerName string
-		switch c.Storage.(type) {
-		case *GitHub:
-			providerName = "github"
-		case S3:
-			providerName = "s3"
-		case FS:
-			providerName = "fs"
-		case SQL:
-			providerName = "sql"
-		default:
-			return result, fmt.Errorf("unknown Storage type: %T", c.Storage)
+
+		providerName, err := storageType(c.Storage)
+		if err != nil {
+			return result, err
 		}
+
 		sb = []byte(fmt.Sprintf(`{"provider":"%s",%s`, providerName, string(sb[1:])))
 		wrap("storage", sb)
 	}
@@ -227,13 +210,12 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return result, err
 		}
-		var notifierName string
-		switch c.Notifier.(type) {
-		case Slack:
-			notifierName = "slack"
-		default:
-			return result, fmt.Errorf("unknown Notifier type")
+
+		notifierName, err := notifierType(c.Notifier)
+		if err != nil {
+			return result, err
 		}
+
 		nb = []byte(fmt.Sprintf(`{"name":"%s",%s`, notifierName, string(nb[1:])))
 		wrap("notifier", nb)
 	}
@@ -288,319 +270,33 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// Finally, we unmarshal the remaining values using type
 	// assertions with the help of the type information
 	for i, t := range types.Checkers {
-		switch t.Type {
-		case "exec":
-			var checker ExecChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		case "http":
-			var checker HTTPChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		case "tcp":
-			var checker TCPChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		case "dns":
-			var checker DNSChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		case "tls":
-			var checker TLSChecker
-			err = json.Unmarshal(raw.Checkers[i], &checker)
-			if err != nil {
-				return err
-			}
-			c.Checkers = append(c.Checkers, checker)
-		default:
-			return fmt.Errorf("%s: unknown Checker type", t.Type)
+		checker, err := checkerDecode(t.Type, raw.Checkers[i])
+		if err != nil {
+			return err
 		}
+		c.Checkers = append(c.Checkers, checker)
 	}
 	if raw.Storage != nil {
-		switch types.Storage.Provider {
-		case "s3":
-			var storage S3
-			err = json.Unmarshal(raw.Storage, &storage)
-			if err != nil {
-				return err
-			}
-			c.Storage = storage
-		case "fs":
-			var storage FS
-			err = json.Unmarshal(raw.Storage, &storage)
-			if err != nil {
-				return err
-			}
-			c.Storage = storage
-		case "github":
-			storage := &GitHub{}
-			err = json.Unmarshal(raw.Storage, storage)
-			if err != nil {
-				return err
-			}
-			c.Storage = storage
-		case "sql":
-			var storage SQL
-			err = json.Unmarshal(raw.Storage, &storage)
-			if err != nil {
-				return err
-			}
-			c.Storage = storage
-		default:
-			return fmt.Errorf("%s: unknown Storage type", types.Storage.Provider)
+		storage, err := storageDecode(types.Storage.Provider, raw.Storage)
+		if err != nil {
+			return err
 		}
+		c.Storage = storage
 	}
 	if raw.Notifier != nil {
-		switch types.Notifier.Name {
-		case "slack":
-			var notifier Slack
-			err = json.Unmarshal(raw.Notifier, &notifier)
-			if err != nil {
-				return err
-			}
-			c.Notifier = notifier
-		default:
-			return fmt.Errorf("%s: unknown Notifier type", types.Notifier.Name)
+		notifier, err := notifierDecode(types.Notifier.Name, raw.Notifier)
+		if err != nil {
+			return err
 		}
+		c.Notifier = notifier
 	}
 
 	return nil
 }
 
-// Checker can create a Result.
-type Checker interface {
-	Check() (Result, error)
-}
-
-// Storage can store results.
-type Storage interface {
-	Store([]Result) error
-}
-
-// StorageReader can read results from the Storage.
-type StorageReader interface {
-	// Fetch returns the contents of a check file.
-	Fetch(checkFile string) ([]Result, error)
-	// GetIndex returns the storage index, as a map where keys are check
-	// result filenames and values are the associated check timestamps.
-	GetIndex() (map[string]int64, error)
-}
-
-// Maintainer can maintain a store of results by
-// deleting old check files that are no longer
-// needed or performing other required tasks.
-type Maintainer interface {
-	Maintain() error
-}
-
-// Notifier can notify ops or sysadmins of
-// potential problems. A Notifier should keep
-// state to avoid sending repeated notices
-// more often than the admin would like.
-type Notifier interface {
-	Notify([]Result) error
-}
-
 // DefaultConcurrentChecks is how many checks,
 // at most, to perform concurrently.
 var DefaultConcurrentChecks = 5
-
-// FilenameFormatString is the format string used
-// by GenerateFilename to create a filename.
-const FilenameFormatString = "%d-check.json"
-
-// Timestamp returns the UTC Unix timestamp in
-// nanoseconds.
-func Timestamp() int64 {
-	return time.Now().UTC().UnixNano()
-}
-
-// GenerateFilename returns a filename that is ideal
-// for storing the results file on a storage provider
-// that relies on the filename for retrieval that is
-// sorted by date/timeframe. It returns a string pointer
-// to be used by the AWS SDK...
-func GenerateFilename() *string {
-	s := fmt.Sprintf(FilenameFormatString, Timestamp())
-	return &s
-}
-
-// Result is the result of a health check.
-type Result struct {
-	// Title is the title (or name) of the thing that was checked.
-	// It should be unique, as it acts like an identifier to users.
-	Title string `json:"title,omitempty"`
-
-	// Endpoint is the URL/address/path/identifier/locator/whatever
-	// of what was checked.
-	Endpoint string `json:"endpoint,omitempty"`
-
-	// Timestamp is when the check occurred; UTC UnixNano format.
-	Timestamp int64 `json:"timestamp,omitempty"`
-
-	// Times is a list of each individual check attempt.
-	Times Attempts `json:"times,omitempty"`
-
-	// ThresholdRTT is the maximum RTT that was tolerated before
-	// considering performance to be degraded. Leave 0 if irrelevant.
-	ThresholdRTT time.Duration `json:"threshold,omitempty"`
-
-	// Healthy, Degraded, and Down contain the ultimate conclusion
-	// about the endpoint. Exactly one of these should be true;
-	// any more or less is a bug.
-	Healthy  bool `json:"healthy,omitempty"`
-	Degraded bool `json:"degraded,omitempty"`
-	Down     bool `json:"down,omitempty"`
-
-	// Notice contains a description of some condition of this
-	// check that might have affected the result in some way.
-	// For example, that the median RTT is above the threshold.
-	Notice string `json:"notice,omitempty"`
-
-	// Message is an optional message to show on the status page.
-	// For example, what you're doing to fix a problem.
-	Message string `json:"message,omitempty"`
-}
-
-// ComputeStats computes basic statistics about r.
-func (r Result) ComputeStats() Stats {
-	var s Stats
-
-	for _, a := range r.Times {
-		s.Total += a.RTT
-		if a.RTT < s.Min || s.Min == 0 {
-			s.Min = a.RTT
-		}
-		if a.RTT > s.Max || s.Max == 0 {
-			s.Max = a.RTT
-		}
-	}
-	sorted := make(Attempts, len(r.Times))
-	copy(sorted, r.Times)
-	sort.Sort(sorted)
-
-	half := len(sorted) / 2
-	if len(sorted)%2 == 0 {
-		s.Median = (sorted[half-1].RTT + sorted[half].RTT) / 2
-	} else {
-		s.Median = sorted[half].RTT
-	}
-
-	s.Mean = time.Duration(int64(s.Total) / int64(len(r.Times)))
-
-	return s
-}
-
-// String returns a human-readable rendering of r.
-func (r Result) String() string {
-	stats := r.ComputeStats()
-	s := fmt.Sprintf("== %s - %s\n", r.Title, r.Endpoint)
-	s += fmt.Sprintf("  Threshold: %s\n", r.ThresholdRTT)
-	s += fmt.Sprintf("        Max: %s\n", stats.Max)
-	s += fmt.Sprintf("        Min: %s\n", stats.Min)
-	s += fmt.Sprintf("     Median: %s\n", stats.Median)
-	s += fmt.Sprintf("       Mean: %s\n", stats.Mean)
-	s += fmt.Sprintf("        All: %v\n", r.Times)
-	statusLine := fmt.Sprintf(" Assessment: %v\n", r.Status())
-	switch r.Status() {
-	case Healthy:
-		statusLine = color.GreenString(statusLine)
-	case Degraded:
-		statusLine = color.YellowString(statusLine)
-	case Down:
-		statusLine = color.RedString(statusLine)
-	}
-	s += statusLine
-	return s
-}
-
-// Status returns a text representation of the overall status
-// indicated in r.
-func (r Result) Status() StatusText {
-	if r.Down {
-		return Down
-	} else if r.Degraded {
-		return Degraded
-	} else if r.Healthy {
-		return Healthy
-	}
-	return Unknown
-}
-
-// DisableColor disables ANSI colors in the Result default string.
-func DisableColor() {
-	color.NoColor = true
-}
-
-// StatusText is the textual representation of the
-// result of a status check.
-type StatusText string
-
-// PriorityOver returns whether s has priority over other.
-// For example, a Down status has priority over Degraded.
-func (s StatusText) PriorityOver(other StatusText) bool {
-	if s == other {
-		return false
-	}
-	switch s {
-	case Down:
-		return true
-	case Degraded:
-		if other == Down {
-			return false
-		}
-		return true
-	case Healthy:
-		if other == Unknown {
-			return true
-		}
-		return false
-	}
-	return false
-}
-
-// Text representations for the status of a check.
-const (
-	Healthy  StatusText = "healthy"
-	Degraded StatusText = "degraded"
-	Down     StatusText = "down"
-	Unknown  StatusText = "unknown"
-)
-
-// Attempt is an attempt to communicate with the endpoint.
-type Attempt struct {
-	RTT   time.Duration `json:"rtt"`
-	Error string        `json:"error,omitempty"`
-}
-
-// Attempts is a list of Attempt that can be sorted by RTT.
-type Attempts []Attempt
-
-func (a Attempts) Len() int           { return len(a) }
-func (a Attempts) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a Attempts) Less(i, j int) bool { return a[i].RTT < a[j].RTT }
-
-// Stats is a type that holds information about a Result,
-// especially its various Attempts.
-type Stats struct {
-	Total  time.Duration `json:"total,omitempty"`
-	Mean   time.Duration `json:"mean,omitempty"`
-	Median time.Duration `json:"median,omitempty"`
-	Min    time.Duration `json:"min,omitempty"`
-	Max    time.Duration `json:"max,omitempty"`
-}
 
 // Errors is an error type that concatenates multiple errors.
 type Errors []error
@@ -624,52 +320,4 @@ func (e Errors) Empty() bool {
 		}
 	}
 	return true
-}
-
-// Provisioner is a type of storage mechanism that can
-// provision itself for use with checkup. Provisioning
-// need only happen once and is merely a convenience
-// so that the user can get up and running with their
-// status page more quickly. Presumably, the info
-// returned from Provision should be used on the status
-// page side of things ot access the check files (like
-// a key pair that is used for read-only access).
-type Provisioner interface {
-	Provision() (ProvisionInfo, error)
-}
-
-// ProvisionInfo contains the results of provisioning a new
-// storage facility for check files. Its values should be
-// used by the status page in order to obtain read-only
-// access to the check files.
-type ProvisionInfo struct {
-	// The ID of a user that was created for accessing checks.
-	UserID string `json:"user_id"`
-
-	// The username of a user that was created for accessing checks.
-	Username string `json:"username"`
-
-	// The ID or name of the ID/key used to access checks. Expect
-	// this value to be made public. (It should have read-only
-	// access to the checks.)
-	PublicAccessKeyID string `json:"public_access_key_id"`
-
-	// The "secret" associated with the PublicAccessKeyID, but
-	// expect this value to be made public. (It should provide
-	// read-only access to the checks.)
-	PublicAccessKey string `json:"public_access_key"`
-}
-
-// String returns the information in i in a human-readable format
-// along with an important notice.
-func (i ProvisionInfo) String() string {
-	s := "Provision successful\n\n"
-	s += fmt.Sprintf("             User ID: %s\n", i.UserID)
-	s += fmt.Sprintf("            Username: %s\n", i.Username)
-	s += fmt.Sprintf("Public Access Key ID: %s\n", i.PublicAccessKeyID)
-	s += fmt.Sprintf("   Public Access Key: %s\n\n", i.PublicAccessKey)
-	s += `IMPORTANT: Copy the Public Access Key ID and Public Access
-Key into the config.js file for your status page. You will
-not be shown these credentials again.`
-	return s
 }

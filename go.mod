@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/ashwanthkumar/slack-go-webhook v0.0.0-20200209025033-430dd4e66960
-	github.com/aws/aws-sdk-go v1.30.2
+	github.com/aws/aws-sdk-go v1.30.7
 	github.com/elazarl/goproxy v0.0.0-20200315184450-1f3cb6622dad // indirect
 	github.com/fatih/color v1.9.0
 	github.com/google/go-github v17.0.0+incompatible

@@ -6,8 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sourcegraph/checkup"
 	"github.com/spf13/cobra"
+
+	"github.com/sourcegraph/checkup"
+	"github.com/sourcegraph/checkup/storage/s3"
 )
 
 var provisionCmd = &cobra.Command{
@@ -92,7 +94,7 @@ func provisionerEnvVars(cmd *cobra.Command, args []string) (checkup.Provisioner,
 			fmt.Println(cmd.Long)
 			os.Exit(1)
 		}
-		return checkup.S3{
+		return s3.Storage{
 			AccessKeyID:     keyID,
 			SecretAccessKey: secretKey,
 			Bucket:          bucket,

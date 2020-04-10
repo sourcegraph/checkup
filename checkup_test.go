@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/sourcegraph/checkup/types"
 )
 
 func TestCheckAndStore(t *testing.T) {
@@ -80,7 +82,7 @@ func TestCheckAndStoreEvery(t *testing.T) {
 }
 
 func TestComputeStats(t *testing.T) {
-	s := Result{Times: []Attempt{
+	s := types.Result{Times: []types.Attempt{
 		{RTT: 7 * time.Second},
 		{RTT: 4 * time.Second},
 		{RTT: 4 * time.Second},
@@ -107,64 +109,64 @@ func TestComputeStats(t *testing.T) {
 }
 
 func TestResultStatus(t *testing.T) {
-	r := Result{Healthy: true}
-	if got, want := r.Status(), Healthy; got != want {
+	r := types.Result{Healthy: true}
+	if got, want := r.Status(), types.StatusHealthy; got != want {
 		t.Errorf("Expected status '%s' but got: '%s'", want, got)
 	}
 
-	r = Result{Degraded: true}
-	if got, want := r.Status(), Degraded; got != want {
+	r = types.Result{Degraded: true}
+	if got, want := r.Status(), types.StatusDegraded; got != want {
 		t.Errorf("Expected status '%s' but got: '%s'", want, got)
 	}
 
-	r = Result{Down: true}
-	if got, want := r.Status(), Down; got != want {
+	r = types.Result{Down: true}
+	if got, want := r.Status(), types.StatusDown; got != want {
 		t.Errorf("Expected status '%s' but got: '%s'", want, got)
 	}
 
-	r = Result{}
-	if got, want := r.Status(), Unknown; got != want {
+	r = types.Result{}
+	if got, want := r.Status(), types.StatusUnknown; got != want {
 		t.Errorf("Expected status '%s' but got: '%s'", want, got)
 	}
 
 	// These are invalid states, but we need to test anyway in case a
 	// checker is buggy. We expect the worst of the enabled fields.
-	r = Result{Down: true, Degraded: true}
-	if got, want := r.Status(), Down; got != want {
+	r = types.Result{Down: true, Degraded: true}
+	if got, want := r.Status(), types.StatusDown; got != want {
 		t.Errorf("(INVALID RESULT CASE) Expected status '%s' but got: '%s'", want, got)
 	}
-	r = Result{Degraded: true, Healthy: true}
-	if got, want := r.Status(), Degraded; got != want {
+	r = types.Result{Degraded: true, Healthy: true}
+	if got, want := r.Status(), types.StatusDegraded; got != want {
 		t.Errorf("(INVALID RESULT CASE) Expected status '%s' but got: '%s'", want, got)
 	}
-	r = Result{Down: true, Healthy: true}
-	if got, want := r.Status(), Down; got != want {
+	r = types.Result{Down: true, Healthy: true}
+	if got, want := r.Status(), types.StatusDown; got != want {
 		t.Errorf("(INVALID RESULT CASE) Expected status '%s' but got: '%s'", want, got)
 	}
 }
 
 func TestPriorityOver(t *testing.T) {
 	for i, test := range []struct {
-		status   StatusText
-		another  StatusText
+		status   types.StatusText
+		another  types.StatusText
 		expected bool
 	}{
-		{Down, Down, false},
-		{Down, Degraded, true},
-		{Down, Healthy, true},
-		{Down, Unknown, true},
-		{Degraded, Down, false},
-		{Degraded, Degraded, false},
-		{Degraded, Healthy, true},
-		{Degraded, Unknown, true},
-		{Healthy, Down, false},
-		{Healthy, Degraded, false},
-		{Healthy, Healthy, false},
-		{Healthy, Unknown, true},
-		{Unknown, Down, false},
-		{Unknown, Degraded, false},
-		{Unknown, Healthy, false},
-		{Unknown, Unknown, false},
+		{types.StatusDown, types.StatusDown, false},
+		{types.StatusDown, types.StatusDegraded, true},
+		{types.StatusDown, types.StatusHealthy, true},
+		{types.StatusDown, types.StatusUnknown, true},
+		{types.StatusDegraded, types.StatusDown, false},
+		{types.StatusDegraded, types.StatusDegraded, false},
+		{types.StatusDegraded, types.StatusHealthy, true},
+		{types.StatusDegraded, types.StatusUnknown, true},
+		{types.StatusHealthy, types.StatusDown, false},
+		{types.StatusHealthy, types.StatusDegraded, false},
+		{types.StatusHealthy, types.StatusHealthy, false},
+		{types.StatusHealthy, types.StatusUnknown, true},
+		{types.StatusUnknown, types.StatusDown, false},
+		{types.StatusUnknown, types.StatusDegraded, false},
+		{types.StatusUnknown, types.StatusHealthy, false},
+		{types.StatusUnknown, types.StatusUnknown, false},
 	} {
 		actual := test.status.PriorityOver(test.another)
 		if actual != test.expected {
@@ -200,24 +202,24 @@ type fake struct {
 
 	returnErr  bool
 	checked    int
-	stored     []Result
+	stored     []types.Result
 	maintained int
 	notified   int
 }
 
-func (f *fake) Check() (Result, error) {
+func (f *fake) Check() (types.Result, error) {
 	f.Lock()
 	defer f.Unlock()
 
 	f.checked++
-	r := Result{Timestamp: time.Now().UTC().UnixNano()}
+	r := types.Result{Timestamp: time.Now().UTC().UnixNano()}
 	if f.returnErr {
 		return r, errTest
 	}
 	return r, nil
 }
 
-func (f *fake) Store(results []Result) error {
+func (f *fake) Store(results []types.Result) error {
 	f.Lock()
 	defer f.Unlock()
 
@@ -236,7 +238,7 @@ func (f *fake) Maintain() error {
 	return nil
 }
 
-func (f *fake) Notify(results []Result) error {
+func (f *fake) Notify(results []types.Result) error {
 	f.Lock()
 	defer f.Unlock()
 
