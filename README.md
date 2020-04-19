@@ -273,6 +273,19 @@ Enable notifications in Slack with this Notifier configuration:
 
 Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/articles/115005265063-Incoming-WebHooks-for-Slack).
 
+
+#### MS Teams notifier
+
+Enable notifications in MSTeams with this Notifier configuration:
+```js
+{
+	"type": "msteams",
+	"webhook": "webhook-url"
+}
+```
+
+Follow these instructions to [create a webhook](https://docs.microsoft.com/de-de/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-creating).
+
 #### Mail notifier
 
 Enable E-mail notifications with this Notifier configuration:
