@@ -161,7 +161,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 		UserName: aws.String(iamUser),
 	})
 	if err != nil {
-		return info, fmt.Errorf("Error creating user: %s\n\nTry deleting the user in the AWS control panel and try again.", err)
+		return info, fmt.Errorf("Error creating user: %w\n\nTry deleting the user in the AWS control panel and try again.", err)
 	}
 	info.Username = *resp.User.UserName
 	info.UserID = *resp.User.UserId
