@@ -4,12 +4,18 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"time"
 
 	"github.com/sourcegraph/checkup/types"
+)
+
+var (
+	errReadingRootCert = errors.New("error reading root certificate")
+	errParsingRootCert = errors.New("error parsing root certificate")
 )
 
 // Type should match the package name
@@ -86,14 +92,14 @@ func (c Checker) doChecks() types.Attempts {
 
 	timeout := c.Timeout
 	if timeout == 0 {
-		timeout = 1 * time.Second
+		timeout = time.Second
 	}
 
-	checks := make(types.Attempts, c.Attempts)
-	for i := 0; i < c.Attempts; i++ {
-		start := time.Now()
-
-		if c.TLSEnabled {
+	dialer := func() (net.Conn, error) {
+		return net.DialTimeout("tcp", c.URL, timeout)
+	}
+	if c.TLSEnabled {
+		dialer = func() (net.Conn, error) {
 			// Dialer with timeout
 			dialer := &net.Dialer{
 				Timeout: timeout,
@@ -105,22 +111,25 @@ func (c Checker) doChecks() types.Attempts {
 			if c.TLSCAFile != "" {
 				rootPEM, err := ioutil.ReadFile(c.TLSCAFile)
 				if err != nil || rootPEM == nil {
-					checks[i].Error = "failed to read root certificate"
+					return nil, errReadingRootCert
 				}
 				pool := x509.NewCertPool()
-				ok := pool.AppendCertsFromPEM([]byte(rootPEM))
+				ok := pool.AppendCertsFromPEM(rootPEM)
 				if !ok {
-					checks[i].Error = "failed to parse root certificate"
+					return nil, errParsingRootCert
 				}
 				tlsConfig.RootCAs = pool
 			}
-			if conn, err = tls.DialWithDialer(dialer, "tcp", c.URL, &tlsConfig); err == nil {
-				conn.Close()
-			}
-		} else {
-			if conn, err = net.DialTimeout("tcp", c.URL, timeout); err == nil {
-				conn.Close()
-			}
+			return tls.DialWithDialer(dialer, "tcp", c.URL, &tlsConfig)
+		}
+	}
+
+	checks := make(types.Attempts, c.Attempts)
+	for i := 0; i < c.Attempts; i++ {
+		start := time.Now()
+
+		if conn, err = dialer(); err == nil {
+			conn.Close()
 		}
 
 		checks[i].RTT = time.Since(start)

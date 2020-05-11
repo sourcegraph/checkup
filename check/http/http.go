@@ -188,7 +188,7 @@ func (c Checker) checkDown(resp *http.Response) error {
 	}
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("reading response body: %v", err)
+		return fmt.Errorf("reading response body: %w", err)
 	}
 	body := string(bodyBytes)
 	if c.MustContain != "" && !strings.Contains(body, c.MustContain) {

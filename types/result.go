@@ -111,11 +111,12 @@ func (r Result) String() string {
 // Status returns a text representation of the overall status
 // indicated in r.
 func (r Result) Status() StatusText {
-	if r.Down {
+	switch {
+	case r.Down:
 		return StatusDown
-	} else if r.Degraded {
+	case r.Degraded:
 		return StatusDegraded
-	} else if r.Healthy {
+	case r.Healthy:
 		return StatusHealthy
 	}
 	return StatusUnknown

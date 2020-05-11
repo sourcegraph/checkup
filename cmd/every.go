@@ -72,5 +72,4 @@ Examples:
 
 func init() {
 	RootCmd.AddCommand(everyCmd)
-
 }

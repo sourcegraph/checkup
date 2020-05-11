@@ -2,8 +2,8 @@ package checkup
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
@@ -177,15 +177,22 @@ func TestPriorityOver(t *testing.T) {
 }
 
 func TestJSON(t *testing.T) {
-	jsonBytes := []byte(`{"storage":{"type":"s3","access_key_id":"AAAAAA6WVZYYANEAFL6Q","secret_access_key":"DbvNDdKHaN4n8n3qqqXwvUVqVQTcHVmNYtvcJfTd","region":"us-east-1","bucket":"test","check_expiry":604800000000000},"checkers":[{"type":"http","endpoint_name":"Example (HTTP)","endpoint_url":"http://www.example.com","attempts":5},{"type":"http","endpoint_name":"Example (HTTPS)","endpoint_url":"https://example.com","threshold_rtt":500000000,"attempts":5},{"type":"http","endpoint_name":"localhost","endpoint_url":"http://localhost:2015","threshold_rtt":1000000,"attempts":5}],"timestamp":"0001-01-01T00:00:00Z"}`)
+	var (
+		checkup    = new(Checkup)
+		testConfig = "testdata/config.json"
+	)
 
-	var c Checkup
-	err := json.Unmarshal(jsonBytes, &c)
+	jsonBytes, err := ioutil.ReadFile(testConfig)
+	if err != nil {
+		t.Fatalf("Error reading config file: %s", testConfig)
+	}
+
+	err = checkup.UnmarshalJSON(jsonBytes)
 	if err != nil {
 		t.Fatalf("Error unmarshaling: %v", err)
 	}
 
-	result, err := json.Marshal(c)
+	result, err := checkup.MarshalJSON()
 	if err != nil {
 		t.Fatalf("Error marshaling: %v", err)
 	}

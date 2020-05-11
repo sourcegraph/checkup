@@ -486,7 +486,7 @@ You can implement your own Checker and Storage types. If it's general enough, fe
 
 ### Building Locally
 
-Requires Go v1.13 or newer.
+Requires Go v1.14 or newer. Building with the latest Go version is encouraged.
 
 ```bash
 git clone git@github.com:sourcegraph/checkup.git

@@ -22,7 +22,7 @@ func TestChecker(t *testing.T) {
 			if err != nil {
 				break
 			}
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
@@ -118,7 +118,7 @@ func TestCheckerWithAgressiveTimeout(t *testing.T) {
 			if err != nil {
 				break
 			}
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
@@ -165,10 +165,10 @@ func TestCheckerWithTLSNoVerify(t *testing.T) {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
 	}()
 
@@ -270,10 +270,10 @@ func TestCheckerWithTLSVerifySuccess(t *testing.T) {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
 	}()
 
@@ -388,19 +388,19 @@ func TestCheckerWithTLSVerifyError(t *testing.T) {
 	defer srv.Close()
 
 	// Accept a future connection
-	go func(t *testing.T) {
+	go func() {
 		for {
 			conn, err := srv.Accept()
 			if err != nil {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
-	}(t)
+	}()
 
 	// Should know the host:port by now
 	endpt := srv.Addr().String()

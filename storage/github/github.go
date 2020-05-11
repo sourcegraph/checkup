@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -56,7 +57,7 @@ type Storage struct {
 	// deleted.
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 
-	client *github.Client `json:"-"`
+	client *github.Client
 }
 
 // New creates a new Storage instance based on json config
@@ -82,7 +83,7 @@ func (gh *Storage) ensureClient() error {
 	}
 
 	gh.client = github.NewClient(oauth2.NewClient(
-		oauth2.NoContext,
+		context.Background(),
 		oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: gh.AccessToken},
 		),
@@ -96,9 +97,8 @@ func (gh *Storage) ensureClient() error {
 func (gh *Storage) fullPathName(filename string) string {
 	if strings.HasPrefix(filename, gh.Dir) {
 		return filename
-	} else {
-		return filepath.Join(gh.Dir, filename)
 	}
+	return filepath.Join(gh.Dir, filename)
 }
 
 // readFile reads a file from the Git repository at its latest revision.
@@ -214,11 +214,11 @@ func (gh *Storage) readIndex() (map[string]int64, string, error) {
 	index := map[string]int64{}
 
 	contents, sha, err := gh.readFile(fs.IndexName)
-	if err != nil && err != errFileNotFound {
-		return nil, "", err
-	}
-	if err == errFileNotFound {
+	if errors.Is(err, errFileNotFound) {
 		return index, "", nil
+	}
+	if err != nil {
+		return nil, "", err
 	}
 
 	err = json.Unmarshal(contents, &index)
@@ -245,6 +245,9 @@ func (gh *Storage) Store(results []types.Result) error {
 		return err
 	}
 	err = gh.writeFile(name, "", contents)
+	if err != nil {
+		return err
+	}
 
 	// Read current index file
 	index, indexSHA, err := gh.readIndex()

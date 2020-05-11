@@ -59,7 +59,7 @@ func (s Storage) Store(results []types.Result) error {
 		config.Credentials = credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, "")
 	}
 
-	svc := newS3(session.New(), config)
+	svc := newS3(session.Must(session.NewSession()), config)
 	params := &s3.PutObjectInput{
 		Bucket: &s.Bucket,
 		Key:    fs.GenerateFilename(),
@@ -82,7 +82,7 @@ func (s Storage) Maintain() error {
 		config.Credentials = credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, "")
 	}
 
-	svc := newS3(session.New(), config)
+	svc := newS3(session.Must(session.NewSession()), config)
 
 	var marker *string
 	for {
@@ -151,7 +151,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 		s.Region = "us-east-1"
 	}
 
-	svcIam := iam.New(session.New(), &aws.Config{
+	svcIam := iam.New(session.Must(session.NewSession()), &aws.Config{
 		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
 		Region:      &s.Region,
 	})
@@ -161,7 +161,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 		UserName: aws.String(iamUser),
 	})
 	if err != nil {
-		return info, fmt.Errorf("Error creating user: %s\n\nTry deleting the user in the AWS control panel and try again.", err)
+		return info, fmt.Errorf("Error creating user: %w\n\nTry deleting the user in the AWS control panel and try again.", err)
 	}
 	info.Username = *resp.User.UserName
 	info.UserID = *resp.User.UserId
@@ -186,7 +186,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 	info.PublicAccessKey = *resp3.AccessKey.SecretAccessKey
 
 	// Prepare to talk to S3
-	svcS3 := s3.New(session.New(), &aws.Config{
+	svcS3 := s3.New(session.Must(session.NewSession()), &aws.Config{
 		Credentials: credentials.NewStaticCredentials(s.AccessKeyID, s.SecretAccessKey, ""),
 		Region:      &s.Region,
 	})

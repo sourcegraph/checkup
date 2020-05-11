@@ -102,6 +102,7 @@ func (c Checker) doChecks() types.Attempts {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
+		// #nosec G204
 		command := exec.CommandContext(ctx, c.Command, c.Arguments...)
 		output, err := command.CombinedOutput()
 
