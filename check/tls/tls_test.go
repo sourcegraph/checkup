@@ -144,7 +144,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 		return tls.Certificate{}, fmt.Errorf("cannot generate private key; unknown key type %v", keyType)
 	}
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("failed to generate private key: %v", err)
+		return tls.Certificate{}, fmt.Errorf("failed to generate private key: %w", err)
 	}
 
 	// create certificate structure with proper values
@@ -153,7 +153,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("failed to generate serial number: %v", err)
+		return tls.Certificate{}, fmt.Errorf("failed to generate serial number: %w", err)
 	}
 	cert := &x509.Certificate{
 		SerialNumber: serialNumber,
@@ -179,7 +179,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 	// its ASN1 encoding then decoding it. Either way, we need both representations.
 	derBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, publicKey(privKey), privKey)
 	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("could not create certificate: %v", err)
+		return tls.Certificate{}, fmt.Errorf("could not create certificate: %w", err)
 	}
 	finalCert, err := x509.ParseCertificate(derBytes)
 	if err != nil {

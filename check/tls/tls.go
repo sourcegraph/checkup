@@ -94,10 +94,10 @@ func (c Checker) Check() (types.Result, error) {
 		for _, fname := range c.TrustedRoots {
 			pemData, err := ioutil.ReadFile(fname)
 			if err != nil {
-				return types.Result{}, fmt.Errorf("error loading file: %v", err)
+				return types.Result{}, fmt.Errorf("error loading file: %w", err)
 			}
 			if !c.tlsConfig.RootCAs.AppendCertsFromPEM(pemData) {
-				return types.Result{}, fmt.Errorf("error appending certs from PEM %s: %v", fname, err)
+				return types.Result{}, fmt.Errorf("error appending certs from PEM %s: %w", fname, err)
 			}
 		}
 	}
