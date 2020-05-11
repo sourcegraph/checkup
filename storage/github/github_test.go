@@ -130,7 +130,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 				Content: github.String(base64Encoded(toJSON(index))),
 			},
 		}
-		for filename, _ := range index {
+		for filename := range index {
 			entries = append(entries, github.TreeEntry{
 				SHA:     github.String(sha(resultsBytes)),
 				Path:    github.String(filepath.Join(specimen.Dir, filename)),
@@ -269,7 +269,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 
 			if _, ok := gitRepo.Files[pathForGitRepo(path)]; !ok {
 				fmt.Printf("path=%s index=%+v repo: %+v\n", path, index, gitRepo.Files)
-				http.Error(w, "file was deleted", 401)
+				http.Error(w, "file was deleted", http.StatusUnauthorized)
 				return
 			}
 			gitRepo.Files[pathForGitRepo(path)] = false
@@ -284,7 +284,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			})
 			return
 		}
-		http.Error(w, path+" is not handled", 403)
+		http.Error(w, path+" is not handled", http.StatusForbidden)
 		t.Errorf("Cannot handle %s %s (path=%s)", r.Method, r.URL.Path, path)
 	})
 
@@ -341,7 +341,7 @@ func TestGitHubWithoutSubdir(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error reading body, got: %v", err)
 		}
-		if bytes.Compare(b, resultsBytes) != 0 {
+		if !bytes.Equal(b, resultsBytes) {
 			t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
 		}
 
@@ -415,7 +415,7 @@ func TestGitHubWithSubdir(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Expected no error reading body, got: %v", err)
 		}
-		if bytes.Compare(b, resultsBytes) != 0 {
+		if !bytes.Equal(b, resultsBytes) {
 			t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
 		}
 

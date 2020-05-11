@@ -35,8 +35,8 @@ func TestChecker(t *testing.T) {
 			if err != nil {
 				break
 			}
-			conn.Read(nil) // necessary, otherwise client-side Dial hangs or returns EOF
-			conn.Close()
+			_, _ = conn.Read(nil) // necessary, otherwise client-side Dial hangs or returns EOF
+			_ = conn.Close()
 		}
 	}()
 

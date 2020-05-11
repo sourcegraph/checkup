@@ -70,7 +70,7 @@ func (c Checker) doChecks() types.Attempts {
 
 	timeout := c.Timeout
 	if timeout == 0 {
-		timeout = 1 * time.Second
+		timeout = time.Second
 	}
 
 	checks := make(types.Attempts, c.Attempts)
@@ -92,7 +92,7 @@ func (c Checker) doChecks() types.Attempts {
 				continue
 			}
 		}
-		if conn, err = net.DialTimeout("tcp", c.URL, c.Timeout); err != nil {
+		if conn, err = net.DialTimeout("tcp", c.URL, timeout); err != nil {
 			checks[i].Error = err.Error()
 		} else {
 			conn.Close()

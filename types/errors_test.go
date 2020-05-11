@@ -5,10 +5,15 @@ import (
 	"testing"
 )
 
+var (
+	err1 = errors.New("Err 1")
+	err2 = errors.New("Err 2")
+)
+
 func TestErrors(t *testing.T) {
 	errs := []error{
-		errors.New("Err 1"),
-		errors.New("Err 2"),
+		err1,
+		err2,
 	}
 	errsT := Errors(errs)
 

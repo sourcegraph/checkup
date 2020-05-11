@@ -165,10 +165,10 @@ func TestCheckerWithTLSNoVerify(t *testing.T) {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
 	}()
 
@@ -270,10 +270,10 @@ func TestCheckerWithTLSVerifySuccess(t *testing.T) {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
 	}()
 
@@ -395,10 +395,10 @@ func TestCheckerWithTLSVerifyError(t *testing.T) {
 				return
 			}
 			// Keep connection open for enough time to complete test
-			conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
+			_ = conn.SetDeadline(time.Now().Add(100 * time.Millisecond))
 			tmp := make([]byte, 1)
-			conn.Read(tmp)
-			conn.Close()
+			_, _ = conn.Read(tmp)
+			_ = conn.Close()
 		}
 	}(t)
 

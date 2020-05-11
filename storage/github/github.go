@@ -56,7 +56,7 @@ type Storage struct {
 	// deleted.
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
 
-	client *github.Client `json:"-"`
+	client *github.Client
 }
 
 // New creates a new Storage instance based on json config
@@ -82,7 +82,7 @@ func (gh *Storage) ensureClient() error {
 	}
 
 	gh.client = github.NewClient(oauth2.NewClient(
-		oauth2.NoContext,
+		context.Background(),
 		oauth2.StaticTokenSource(
 			&oauth2.Token{AccessToken: gh.AccessToken},
 		),
@@ -245,6 +245,9 @@ func (gh *Storage) Store(results []types.Result) error {
 		return err
 	}
 	err = gh.writeFile(name, "", contents)
+	if err != nil {
+		return err
+	}
 
 	// Read current index file
 	index, indexSHA, err := gh.readIndex()

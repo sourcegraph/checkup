@@ -58,7 +58,7 @@ func TestStorage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}
-	if bytes.Compare(b, resultsBytes) != 0 {
+	if !bytes.Equal(b, resultsBytes) {
 		t.Errorf("Contents of file are wrong\nExpected %s\nGot %s", resultsBytes, b)
 	}
 

@@ -175,8 +175,9 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			checkers = append(checkers, chb)
 		}
 
-		allCheckers := []byte{'['}
-		allCheckers = append([]byte{'['}, bytes.Join(checkers, []byte(","))...)
+		allCheckers := []byte{}
+		allCheckers = append(allCheckers, '[')
+		allCheckers = append(allCheckers, bytes.Join(checkers, []byte(","))...)
 		allCheckers = append(allCheckers, ']')
 		wrap("checkers", allCheckers)
 	}
@@ -204,8 +205,9 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			checkers = append(checkers, chb)
 		}
 
-		allNotifiers := []byte{'['}
-		allNotifiers = append([]byte{'['}, bytes.Join(checkers, []byte(","))...)
+		allNotifiers := []byte{}
+		allNotifiers = append(allNotifiers, '[')
+		allNotifiers = append(allNotifiers, bytes.Join(checkers, []byte(","))...)
 		allNotifiers = append(allNotifiers, ']')
 		wrap("notifiers", allNotifiers)
 	}
@@ -222,7 +224,9 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// interface types will ultimately cause an error,
 	// but we can ignore it because we handle it below.
 	type checkup2 *Checkup
-	json.Unmarshal(b, checkup2(c))
+	if err := json.Unmarshal(b, checkup2(c)); err != nil {
+		return err
+	}
 
 	// clean the slate
 	c.Checkers = []Checker{}

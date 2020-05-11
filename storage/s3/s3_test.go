@@ -77,7 +77,7 @@ func TestS3Store(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}
-	if bytes.Compare(bodyBytes, resultsBytes) != 0 {
+	if !bytes.Equal(bodyBytes, resultsBytes) {
 		t.Errorf("Contents of file are wrong\nExpected %s\n     Got %s", resultsBytes, bodyBytes)
 	}
 }
