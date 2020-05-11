@@ -224,9 +224,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// interface types will ultimately cause an error,
 	// but we can ignore it because we handle it below.
 	type checkup2 *Checkup
-	if err := json.Unmarshal(b, checkup2(c)); err != nil {
-		return err
-	}
+	_ = json.Unmarshal(b, checkup2(c))
 
 	// clean the slate
 	c.Checkers = []Checker{}
@@ -240,7 +238,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		Notifier  json.RawMessage   `json:"notifier"`
 		Notifiers []json.RawMessage `json:"notifiers"`
 	}{}
-	err := json.Unmarshal([]byte(b), &raw)
+	err := json.Unmarshal(b, &raw)
 	if err != nil {
 		return err
 	}
@@ -260,7 +258,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			Type string `json:"type"`
 		}
 	}{}
-	err = json.Unmarshal([]byte(b), &configTypes)
+	err = json.Unmarshal(b, &configTypes)
 	if err != nil {
 		return err
 	}

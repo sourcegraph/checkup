@@ -80,5 +80,4 @@ file.`,
 func init() {
 	RootCmd.AddCommand(messageCmd)
 	messageCmd.Flags().StringVarP(&about, "about", "a", "", "The name/title of the endpoint this message is about")
-
 }

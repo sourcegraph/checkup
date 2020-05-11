@@ -8,11 +8,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
 	"time"
 )
+
+var errUnknownPrivateKeyType = errors.New("unknown private key type")
 
 func TestChecker(t *testing.T) {
 	selfSigned, err := makeSelfSignedCert("localhost", "", time.Hour*24*30)
@@ -141,7 +144,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 	case "rsa8192":
 		privKey, err = rsa.GenerateKey(rand.Reader, 8192)
 	default:
-		return tls.Certificate{}, fmt.Errorf("cannot generate private key; unknown key type %v", keyType)
+		return tls.Certificate{}, fmt.Errorf("cannot generate private key: %w", errUnknownPrivateKeyType)
 	}
 	if err != nil {
 		return tls.Certificate{}, fmt.Errorf("failed to generate private key: %w", err)
@@ -172,7 +175,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 		case *ecdsa.PrivateKey:
 			return &k.PublicKey
 		}
-		return fmt.Errorf("unknown private key type")
+		return errUnknownPrivateKeyType
 	}
 
 	// TODO: I don't know a way to get a proper x509.Certificate without getting

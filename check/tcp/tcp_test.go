@@ -22,7 +22,7 @@ func TestChecker(t *testing.T) {
 			if err != nil {
 				break
 			}
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
@@ -118,7 +118,7 @@ func TestCheckerWithAgressiveTimeout(t *testing.T) {
 			if err != nil {
 				break
 			}
-			conn.Close()
+			_ = conn.Close()
 		}
 	}()
 
@@ -388,7 +388,7 @@ func TestCheckerWithTLSVerifyError(t *testing.T) {
 	defer srv.Close()
 
 	// Accept a future connection
-	go func(t *testing.T) {
+	go func() {
 		for {
 			conn, err := srv.Accept()
 			if err != nil {
@@ -400,7 +400,7 @@ func TestCheckerWithTLSVerifyError(t *testing.T) {
 			_, _ = conn.Read(tmp)
 			_ = conn.Close()
 		}
-	}(t)
+	}()
 
 	// Should know the host:port by now
 	endpt := srv.Addr().String()

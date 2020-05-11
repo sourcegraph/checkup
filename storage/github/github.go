@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -96,9 +97,8 @@ func (gh *Storage) ensureClient() error {
 func (gh *Storage) fullPathName(filename string) string {
 	if strings.HasPrefix(filename, gh.Dir) {
 		return filename
-	} else {
-		return filepath.Join(gh.Dir, filename)
 	}
+	return filepath.Join(gh.Dir, filename)
 }
 
 // readFile reads a file from the Git repository at its latest revision.
@@ -214,11 +214,11 @@ func (gh *Storage) readIndex() (map[string]int64, string, error) {
 	index := map[string]int64{}
 
 	contents, sha, err := gh.readFile(fs.IndexName)
-	if err != nil && err != errFileNotFound {
-		return nil, "", err
-	}
-	if err == errFileNotFound {
+	if errors.Is(err, errFileNotFound) {
 		return index, "", nil
+	}
+	if err != nil {
+		return nil, "", err
 	}
 
 	err = json.Unmarshal(contents, &index)

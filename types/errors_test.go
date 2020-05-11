@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	err1 = errors.New("Err 1")
-	err2 = errors.New("Err 2")
+	err1 = errors.New("err 1")
+	err2 = errors.New("err 2")
 )
 
 func TestErrors(t *testing.T) {
@@ -17,7 +17,7 @@ func TestErrors(t *testing.T) {
 	}
 	errsT := Errors(errs)
 
-	want := "Err 1; Err 2"
+	want := "err 1; err 2"
 	if got := errsT.Error(); want != got {
 		t.Errorf("Errors, wanted '%s', got '%s'", want, got)
 	}

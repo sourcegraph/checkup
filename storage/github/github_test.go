@@ -2,9 +2,10 @@ package github
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,12 @@ import (
 	"github.com/google/go-github/github"
 
 	"github.com/sourcegraph/checkup/types"
+)
+
+const (
+	GET    = "GET"
+	DELETE = "DELETE"
+	PUT    = "PUT"
 )
 
 var (
@@ -44,7 +51,7 @@ func toJSON(data interface{}) []byte {
 }
 
 func sha(data []byte) string {
-	return fmt.Sprintf("%x", sha1.Sum(data))
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }
 
 func pathForGitRepo(path string) string {
@@ -101,8 +108,8 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 
 	mux.HandleFunc("/repos/o/r/git/refs/heads/"+specimen.Branch, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
-		if got := r.Method; got != "GET" {
-			t.Errorf("Request method: %v, want %v", got, "GET")
+		if got, want := r.Method, GET; got != want {
+			t.Errorf("Request method: %v, want %v", got, want)
 		}
 		mustWriteJSON(w, github.Reference{
 			Ref: github.String("refs/heads/" + specimen.Branch),
@@ -147,17 +154,17 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 	mux.HandleFunc("/repos/o/r/contents/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Processing %s %s\n", r.Method, r.URL.Path)
 		path := strings.TrimPrefix(r.URL.Path, "/repos/o/r/contents")
-		if got := r.Method; !(got == "GET" || got == "PUT" || got == "DELETE") {
-			t.Errorf("Request method: %v, want GET or PUT", got)
+		if got := r.Method; !(got == GET || got == PUT || got == DELETE) {
+			t.Errorf("Request method: %v, want GET, PUT or DELETE", got)
 		}
 		if got := r.FormValue("ref"); got != "" && got != "heads/b" {
 			t.Errorf("Expected heads/b, got %v", got)
 		}
-		if r.Method == "GET" && strings.HasSuffix(path, "/index.json") {
+		if r.Method == GET && strings.HasSuffix(path, "/index.json") {
 			mustWriteJSON(w, repositoryContent(path, serverSHAForRepo, index))
 			return
 		}
-		if r.Method == "PUT" && strings.HasSuffix(path, "/index.json") {
+		if r.Method == PUT && strings.HasSuffix(path, "/index.json") {
 			// 1. Enforce body contains message, committer, content (base64-encoded), sha
 			stuff := struct {
 				Message   string            `json:"message"`
@@ -189,7 +196,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			})
 			return
 		}
-		if r.Method == "GET" && strings.HasSuffix(path, "-check.json") {
+		if r.Method == GET && strings.HasSuffix(path, "-check.json") {
 			_, ok := index[pathForIndex(path)]
 			if ok {
 				mustWriteJSON(w, repositoryContent(path, serverSHAForRepo, results))
@@ -198,7 +205,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			}
 			return
 		}
-		if r.Method == "PUT" && strings.HasSuffix(path, "-check.json") {
+		if r.Method == PUT && strings.HasSuffix(path, "-check.json") {
 			index[pathForIndex(path)] = time.Now().UnixNano()
 
 			gitRepo.Files[pathForGitRepo(path)] = true
@@ -237,7 +244,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			})
 			return
 		}
-		if r.Method == "DELETE" && strings.HasSuffix(path, "-check.json") {
+		if r.Method == DELETE && strings.HasSuffix(path, "-check.json") {
 			// 1. Enforce body contains message, committer, content (base64-encoded), sha
 			stuff := struct {
 				Message   string            `json:"message"`
@@ -358,7 +365,7 @@ func TestGitHubWithoutSubdir(t *testing.T) {
 		if err := specimen.Maintain(); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
-		if _, _, err := specimen.readFile(name); err != nil && err != errFileNotFound {
+		if _, _, err := specimen.readFile(name); err != nil && !errors.Is(err, errFileNotFound) {
 			t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
 		}
 	})
@@ -432,7 +439,7 @@ func TestGitHubWithSubdir(t *testing.T) {
 		if err := specimen.Maintain(); err != nil {
 			t.Fatalf("Expected no error, got %v", err)
 		}
-		if _, _, err := specimen.readFile(checkfile); err != nil && err != errFileNotFound {
+		if _, _, err := specimen.readFile(checkfile); err != nil && !errors.Is(err, errFileNotFound) {
 			t.Fatalf("Expected checkfile to be deleted, but Stat() returned error: %v", err)
 		}
 	})
