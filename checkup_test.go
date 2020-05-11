@@ -2,8 +2,8 @@ package checkup
 
 import (
 	"bytes"
-	"io/ioutil"
 	"errors"
+	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
@@ -178,7 +178,7 @@ func TestPriorityOver(t *testing.T) {
 
 func TestJSON(t *testing.T) {
 	var (
-		checkup = new(Checkup)
+		checkup    = new(Checkup)
 		testConfig = "testdata/config.json"
 	)
 
