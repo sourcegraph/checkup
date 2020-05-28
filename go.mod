@@ -9,6 +9,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/gregdel/pushover v0.0.0-20200416074932-c8ad547caed4
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.1.0

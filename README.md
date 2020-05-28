@@ -307,6 +307,18 @@ Enable notifications using Mailgun with this Notifier configuration:
 }
 ```
 
+#### Pushover notifier
+
+Enable notifications using Pushover with this Notifier configuration:
+```js
+{
+    "type": "pushover",
+    "token": "API_TOKEN",
+    "recipient": "USER_KEY"
+    "subject": "Custom subject line"
+}
+```
+
 ## Setting up storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
