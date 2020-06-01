@@ -62,7 +62,7 @@ func TestChecker(t *testing.T) {
 		t.Errorf("Didn't expect an error: %v", err)
 	}
 	if got, want := result.Degraded, true; got != want {
-		t.Errorf("Expected result.Down=%v, got %v", want, got)
+		t.Errorf("Expected result.Degraded=%v, got %v", want, got)
 	}
 
 	hc.ThresholdRTT = 0

@@ -93,9 +93,6 @@ func (c Checker) Check() (types.Result, error) {
 	if c.Client == nil {
 		c.Client = DefaultHTTPClient
 	}
-	if c.UpStatus == 0 {
-		c.UpStatus = http.StatusOK
-	}
 
 	result := types.NewResult()
 	result.Title = c.Name
@@ -178,7 +175,23 @@ func (c Checker) conclude(result types.Result) types.Result {
 // Note that it does not check for degraded response.
 func (c Checker) checkDown(resp *http.Response) error {
 	// Check status code
-	if resp.StatusCode != c.UpStatus {
+	var validStatus map[int]bool
+	if c.UpStatus > 0 {
+		// Explicit match against expected UpStatus
+		validStatus = map[int]bool{
+			c.UpStatus: true,
+		}
+	} else {
+		// Treat 200-204 as successful
+		validStatus = map[int]bool{
+			http.StatusOK:                   true,
+			http.StatusCreated:              true,
+			http.StatusAccepted:             true,
+			http.StatusNonAuthoritativeInfo: true,
+			http.StatusNoContent:            true,
+		}
+	}
+	if !validStatus[resp.StatusCode] {
 		return fmt.Errorf("response status %s", resp.Status)
 	}
 
