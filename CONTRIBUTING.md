@@ -10,7 +10,8 @@ contribution accepted.
 
 By contributing to this project you agree to the [Developer Certificate of Origin
 (DCO)](https://developercertificate.org/). This document was created by the Linux Kernel community
-and is a simple statement that you, as a contributor, have the legal right to make the contribution.
+and is a simple statement that you, as a contributor, have the legal right to make the
+contribution. See the [DCO](DCO) file for details.
 
 ## Getting Started
 
