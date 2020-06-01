@@ -14,7 +14,7 @@ checkup.storage = (function() {
 	// download.
 	function getCheckFileList(timeframe, callback) {
 		var after = time.Now() - timeframe;
-		checkup.getJSON(url+'/index.json', function(index) {
+		checkup.getJSON(url+'/index.json?t=' + Date.now(), function(index) {
 			var names = [];
 			for (var name in index) {
 				if (index[name] >= after) {
