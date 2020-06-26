@@ -7,6 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.30.7
 	github.com/elazarl/goproxy v0.0.0-20200315184450-1f3cb6622dad // indirect
 	github.com/fatih/color v1.9.0
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/gregdel/pushover v0.0.0-20200416074932-c8ad547caed4
