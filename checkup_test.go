@@ -76,7 +76,7 @@ func TestCheckAndStoreEvery(t *testing.T) {
 
 	f.Lock()
 	defer f.Unlock()
-	if got, want := f.checked, 3; got != want {
+	if got, want := f.checked, 4; got != want {
 		t.Errorf("Expected %d checks while sleeping, had: %d", want, got)
 	}
 }
