@@ -17,7 +17,7 @@ requestUri:"/{Bucket}?versioning"},input:{type:"structure",required:["Bucket","V
 
 var checkup = checkup || {};
 
-checkup.storage = (function() {
+checkup.storageDriverS3 = (function() {
 	var bucket, bucketName, region;
 
 	// getCheckFileList gets the list of check files within
@@ -102,4 +102,4 @@ checkup.storage = (function() {
 	};
 
 	return this;
-})();
+});

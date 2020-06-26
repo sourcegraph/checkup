@@ -6,7 +6,7 @@ FS Storage Adapter for Checkup.js
 
 var checkup = checkup || {};
 
-checkup.storage = (function() {
+checkup.storageDriverLocal = (function() {
 	var url;
 
 	// getCheckFileList gets the list of check files within
@@ -69,4 +69,4 @@ checkup.storage = (function() {
 	};
 
 	return this;
-})();
+});
