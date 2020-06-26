@@ -21,6 +21,7 @@ Due to recent development, some breaking changes have been introduced:
 - sql: storage engine is deprecated in favor of new storage engines postgres, mysql, sqlite3
 - mailgun: the `to` parameter now takes a list of e-mail addresses (was a single recipient)
 - LOGGING IS NOT SWALLOWED ANYMORE, DON'T PARSE `checkup` OUTPUT IN SCRIPTS
+- default for status page config has been set to local source (use with `checkup serve`)
 
 If you want to build the latest version, it's best to run:
 
@@ -59,10 +60,8 @@ Checkup can even send notifications through your service of choice (if an integr
 There are 3 components:
 
 1. **Storage.** You set up storage space for the results of the checks.
-
 2. **Checks.** You run checks on whatever endpoints you have as often as you want.
-
-3. **Status Page.** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
+3. **Status Page.** You (or GitHub) host the status page.
 
 
 ## Quick Start
@@ -190,8 +189,7 @@ service as DEGRADED. Additional options available on godoc link above.
 }
 ```
 
-S3 is the default storage provider assumed by the status page, so the only change needed for the status page is in the [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) file, with your public, read-only credentials.
-
+To serve files for your status page from S3, copy `statuspage/config_s3.js` over `statuspage/config.js`, and fill out the required public, read-only credentials.
 
 #### File System Storage
 
@@ -200,19 +198,9 @@ S3 is the default storage provider assumed by the status page, so the only chang
 ```js
 {
     "type": "fs",
-    "dir": "/path/to/your/check_files",
-    "url": "http://127.0.0.1:2015/check_files"
+    "dir": "/path/to/your/check_files"
 }
 ```
-
-Change [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspage/index.html) to load fs.js instead of s3.js:
-
-```diff
-- <script src="js/s3.js"></script>
-+ <script src="js/fs.js"></script>
-```
-
-Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) so the status page knows how to load your check files.
 
 #### GitHub Storage
 
@@ -233,14 +221,10 @@ Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/sta
 
 Where "dir" is a subdirectory within the repo to push all the check files. Setup instructions:
 
-1. Create a repository.
-2. Copy the contents of `statuspage/` from this repo to the root of your new repo.
-3. Change index.html to pull in js/fs.js instead of js/s3.js:
-```diff
-- <script src="js/s3.js"></script>
-+ <script src="js/fs.js"></script>
-```
-4. Create `updates/.gitkeep`.
+1. Create a repository,
+2. Copy the contents of `statuspage/` from this repo to the root of your new repo,
+3. Update the URL in `config.js` to `https://your-username.github.com/dir/`,
+4. Create `updates/.gitkeep`,
 5. Enable GitHub Pages in your settings for your desired branch.
 
 #### MySQL Storage
@@ -395,11 +379,26 @@ $ checkup provision s3
 If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
 
-## Setting up the status page
+## Checkup status page
 
-In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you specify how to access the storage system you just provisioned for check files.
+Checkup now has a local HTTP server that supports serving checks stored in:
 
-The status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
+- FS (local filesystem storage),
+- MySQL
+- PostgreSQL
+- SQLite3 (not enabled by default)
+
+You can run `checkup serve` from the folder which contains `checkup.json`
+and the `statuspage/` folder.
+
+### Setting up the status page for GitHub
+
+You will need to edit `
+
+### Setting up the status page for S3
+
+In statuspage/js, use the contents of [config_s3.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_s3.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page.
+This is where you specify how to access the S3 storage bucket you just provisioned for check files.
 
 As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
 
@@ -558,7 +557,7 @@ cd checkup
 make
 ```
 
-Building the SQL enabled version is done with `make build-sql`.
+Building the SQLite3 enabled version is done with `make build-sqlite3`. PostgreSQL and MySQL are enabled by default.
 
 ### Building a Docker image
 
