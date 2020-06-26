@@ -13,12 +13,8 @@ func TestSQL(t *testing.T) {
 	results := []types.Result{{Title: "Testing"}}
 
 	specimen := Storage{
-		Host:     "postgres-test-db",
-		User:     "test",
-		Password: "test",
-		DBName:   "test",
-		SSLMode:  "disable",
-		Create:   true,
+		DSN:    "host=postgres-test-db user=test password=test dbname=test sslmode=disable",
+		Create: true,
 	}
 
 	if err := specimen.Store(results); err != nil {

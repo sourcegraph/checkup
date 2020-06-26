@@ -9,12 +9,7 @@ const Type = "postgres"
 
 // Storage is a way to store checkup results in a PostgreSQL database.
 type Storage struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	User     string `json:"user"`
-	Password string `json:"password,omitempty"`
-	DBName   string `json:"dbname"`
-	SSLMode  string `json:"sslmode,omitempty"`
+	DSN string `json:"dsn"`
 
 	// Issue create statements for database schema
 	Create bool `json:"create"`

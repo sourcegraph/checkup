@@ -3,7 +3,6 @@ package postgres
 import (
 	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -26,28 +25,10 @@ func (Storage) Type() string {
 }
 
 func (opts Storage) connectionString() (string, error) {
-	var dsn string
-	if opts.DBName == "" {
-		return dsn, errors.New("missing PostgreSQL database name")
+	if opts.DSN == "" {
+		return "", errors.New("missing PostgreSQL DSN")
 	}
-	if opts.User == "" {
-		return dsn, errors.New("missing PostgreSQL username")
-	}
-	if opts.Host != "" {
-		dsn += " host=" + opts.Host
-	}
-	if opts.Port != 0 {
-		dsn += " port=" + strconv.Itoa(opts.Port)
-	}
-	dsn += " user=" + opts.User
-	if opts.Password != "" {
-		dsn += " password=" + opts.Password
-	}
-	dsn += " dbname=" + opts.DBName
-	if opts.SSLMode != "" {
-		dsn += " sslmode=" + opts.SSLMode
-	}
-	return dsn, nil
+	return opts.DSN, nil
 }
 
 func (opts Storage) dbConnect() (*sqlx.DB, error) {
