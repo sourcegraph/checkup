@@ -20,6 +20,7 @@ Due to recent development, some breaking changes have been introduced:
 - sql: by default the sqlite storage engine is disabled (needs build with `-tags sql` to enable),
 - sql: storage engine is deprecated in favor of new storage engines postgres, mysql, sqlite3
 - mailgun: the `to` parameter now takes a list of e-mail addresses (was a single recipient)
+- LOGGING IS NOT SWALLOWED ANYMORE, DON'T PARSE `checkup` OUTPUT IN SCRIPTS
 
 If you want to build the latest version, it's best to run:
 
