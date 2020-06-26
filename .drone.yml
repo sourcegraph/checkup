@@ -19,12 +19,12 @@ steps:
     - make test-postgres
     - make build-postgres
 
-- name: test-sqlite
+- name: test-sqlite3
   image: golang:1.14
   pull: always
   commands:
-    - make test-sqlite
-    - make build-sqlite
+    - make test-sqlite3
+    - make build-sqlite3
 
 services:
 - name: postgres-test-db

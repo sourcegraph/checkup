@@ -1,6 +1,6 @@
-// +build !sqlite
+// +build !sqlite3
 
-package sqlite
+package sqlite3
 
 import (
 	"encoding/json"

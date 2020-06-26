@@ -1,6 +1,6 @@
-// +build sqlite
+// +build sqlite3
 
-package sqlite
+package sqlite3
 
 import (
 	"io/ioutil"
@@ -25,8 +25,8 @@ func TestSQL(t *testing.T) {
 	dbFile := filepath.Join(dir, "checkuptest.db")
 
 	specimen := Storage{
-		SqliteDBFile: dbFile,
-		Create:       true,
+		DSN:    dbFile,
+		Create: true,
 	}
 
 	if err := specimen.Store(results); err != nil {

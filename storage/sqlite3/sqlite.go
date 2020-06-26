@@ -1,6 +1,6 @@
-// +build sqlite
+// +build sqlite3
 
-package sqlite
+package sqlite3
 
 import (
 	"encoding/json"
@@ -26,11 +26,19 @@ func (Storage) Type() string {
 	return Type
 }
 
-func (opts Storage) dbConnect() (*sqlx.DB, error) {
-	if opts.SqliteDBFile == "" {
-		return nil, errors.New("missing SQLite DB filename")
+func (opts Storage) connectionString() (string, error) {
+	if opts.DSN == "" {
+		return "", errors.New("missing SQLite3 DSN (filename)")
 	}
-	handle, err := sqlx.Connect("sqlite3", opts.SqliteDBFile)
+	return opts.DSN, nil
+}
+
+func (opts Storage) dbConnect() (*sqlx.DB, error) {
+	dsn, err := opts.connectionString()
+	if err != nil {
+		return nil, err
+	}
+	handle, err := sqlx.Connect(opts.Type(), dsn)
 	if err != nil {
 		return nil, err
 	}

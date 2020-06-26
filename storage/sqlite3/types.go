@@ -1,16 +1,16 @@
-package sqlite
+package sqlite3
 
 import (
 	"time"
 )
 
 // Type should match the package name
-const Type = "sqlite"
+const Type = "sqlite3"
 
 // Storage is a way to store checkup results in a SQLite database.
 type Storage struct {
-	// SqliteDBFile is the sqlite3 DB where check results will be stored.
-	SqliteDBFile string `json:"sqlite_db_file,omitempty"`
+	// DSN is the sqlite3 DB where check results will be stored.
+	DSN string `json:"dsn,omitempty"`
 
 	// Issue create statements for database schema
 	Create bool `json:"create"`
