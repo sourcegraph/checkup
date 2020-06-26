@@ -11,6 +11,9 @@ checkup.config = {
 	// depends on your storage provider. Any credentials and other values
 	// here will be visible to everyone, so use keys with ONLY read access!
 	"storage": {
+		// Storage type (fs for local, s3 for AWS S3)
+		"type": "s3",
+
 		// Amazon S3 - if using, ensure these are public, READ-ONLY credentials!
 		"AccessKeyID": "<key id here>",
 		"SecretAccessKey": "<not-so-secret key here>",
