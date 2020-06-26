@@ -26,36 +26,36 @@ func (Storage) Type() string {
 }
 
 func (opts Storage) connectionString() (string, error) {
-	var pgOptions string
+	var dsn string
 	if opts.DBName == "" {
-		return pgOptions, errors.New("missing PostgreSQL database name")
+		return dsn, errors.New("missing PostgreSQL database name")
 	}
 	if opts.User == "" {
-		return pgOptions, errors.New("missing PostgreSQL username")
+		return dsn, errors.New("missing PostgreSQL username")
 	}
 	if opts.Host != "" {
-		pgOptions += " host=" + opts.Host
+		dsn += " host=" + opts.Host
 	}
 	if opts.Port != 0 {
-		pgOptions += " port=" + strconv.Itoa(opts.Port)
+		dsn += " port=" + strconv.Itoa(opts.Port)
 	}
-	pgOptions += " user=" + opts.User
+	dsn += " user=" + opts.User
 	if opts.Password != "" {
-		pgOptions += " password=" + opts.Password
+		dsn += " password=" + opts.Password
 	}
-	pgOptions += " dbname=" + opts.DBName
+	dsn += " dbname=" + opts.DBName
 	if opts.SSLMode != "" {
-		pgOptions += " sslmode=" + opts.SSLMode
+		dsn += " sslmode=" + opts.SSLMode
 	}
-	return pgOptions, nil
+	return dsn, nil
 }
 
 func (opts Storage) dbConnect() (*sqlx.DB, error) {
-	pgOptions, err := opts.connectionString()
+	dsn, err := opts.connectionString()
 	if err != nil {
 		return nil, err
 	}
-	handle, err := sqlx.Connect("postgres", pgOptions)
+	handle, err := sqlx.Connect(opts.Type(), dsn)
 	if err != nil {
 		return nil, err
 	}
