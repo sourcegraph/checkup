@@ -127,11 +127,15 @@ func (c Checkup) CheckAndStore() error {
 // to perform the checks.
 func (c Checkup) CheckAndStoreEvery(interval time.Duration) *time.Ticker {
 	ticker := time.NewTicker(interval)
+	check := func() {
+		if err := c.CheckAndStore(); err != nil {
+			log.Println(err)
+		}
+	}
 	go func() {
+		check()
 		for range ticker.C {
-			if err := c.CheckAndStore(); err != nil {
-				log.Println(err)
-			}
+			check()
 		}
 	}()
 	return ticker
