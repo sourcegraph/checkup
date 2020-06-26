@@ -5,6 +5,13 @@ kind: pipeline
 name: checkup
 
 steps:
+- name: test-mysql
+  image: golang:1.14
+  pull: always
+  commands:
+    - make test-mysql
+    - make build-mysql
+
 - name: test-postgres
   image: golang:1.14
   pull: always
@@ -26,3 +33,12 @@ services:
     POSTGRES_PASSWORD: test
     POSTGRES_USER: test
     POSTGRES_DB: test
+
+- name: mysql-test-db
+  pull: always
+  image: percona/percona-server:8.0.17
+  environment:
+    MYSQL_RANDOM_ROOT_PASSWORD: true
+    MYSQL_USER: test
+    MYSQL_PASSWORD: test
+    MYSQL_DATABASE: test
