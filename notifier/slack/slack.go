@@ -42,6 +42,9 @@ func (s Notifier) Notify(results []types.Result) error {
 			}
 		}
 	}
+	if len(errs) == 0 {
+		return nil
+	}
 	return errs
 }
 
