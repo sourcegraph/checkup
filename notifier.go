@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/sourcegraph/checkup/notifier/discord"
 	"github.com/sourcegraph/checkup/notifier/mail"
 	"github.com/sourcegraph/checkup/notifier/mailgun"
 	"github.com/sourcegraph/checkup/notifier/pushover"
@@ -20,6 +21,8 @@ func notifierDecode(typeName string, config json.RawMessage) (Notifier, error) {
 		return mailgun.New(config)
 	case pushover.Type:
 		return pushover.New(config)
+	case discord.Type:
+		return discord.New(config)
 	default:
 		return nil, fmt.Errorf(errUnknownNotifierType, typeName)
 	}
