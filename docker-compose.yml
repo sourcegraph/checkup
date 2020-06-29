@@ -1,0 +1,12 @@
+version: '2.4'
+
+services:
+  checkup:
+    hostname: checkup
+    image: checkup:latest
+    ports:
+      - 3000
+    volumes:
+      - ./checkup.json:/app/checkup.json
+      - ./checks:/app/checks
+    restart: always
