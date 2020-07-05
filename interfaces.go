@@ -41,6 +41,13 @@ type Notifier interface {
 	Notify([]types.Result) error
 }
 
+// Exporter is a service to send
+// Result data for additional processing.
+type Exporter interface {
+	Type() string
+	Export([]types.Result) error
+}
+
 // Provisioner is a type of storage mechanism that can
 // provision itself for use with checkup. Provisioning
 // need only happen once and is merely a convenience

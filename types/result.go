@@ -28,6 +28,9 @@ type Result struct {
 	// considering performance to be degraded. Leave 0 if irrelevant.
 	ThresholdRTT time.Duration `json:"threshold,omitempty"`
 
+	// Stats is a placeholder to hold ComputeStats() if ThresholdRTT > 0
+	Stats Stats `json:"-"`
+
 	// Healthy, Degraded, and Down contain the ultimate conclusion
 	// about the endpoint. Exactly one of these should be true;
 	// any more or less is a bug.

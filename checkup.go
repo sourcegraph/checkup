@@ -43,6 +43,13 @@ type Checkup struct {
 	// completed. Notifier may evaluate and choose to
 	// send a notification of potential problems.
 	Notifiers []Notifier `json:"notifiers,omitempty"`
+
+	// Exporters are a list of services optionally
+	// available to Checkers.  If configured, a check
+	// will run the Export() function after finalizing
+	// each Result and push the result information to
+	// the external service.
+	Exporters []Exporter `json:"exporters,omitempty"`
 }
 
 // Check performs the health checks. An error is only
@@ -87,6 +94,13 @@ func (c Checkup) Check() ([]types.Result, error) {
 		err := service.Notify(results)
 		if err != nil {
 			log.Printf("ERROR sending notifications for %s: %s", service.Type(), err)
+		}
+	}
+
+	for _, exporter := range c.Exporters {
+		err := exporter.Export(results)
+		if err != nil {
+			log.Printf("ERROR sending exports for %s: %s", exporter.Type(), err)
 		}
 	}
 
@@ -212,6 +226,25 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		wrap("notifiers", allNotifiers)
 	}
 
+	// Exporters
+	if len(c.Exporters) > 0 {
+		var checkers [][]byte
+		for _, ch := range c.Exporters {
+			chb, err := json.Marshal(ch)
+			if err != nil {
+				return result, err
+			}
+
+			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, ch.Type(), string(chb[1:])))
+			checkers = append(checkers, chb)
+		}
+
+		allExporters := []byte{'['}
+		allExporters = append([]byte{'['}, bytes.Join(checkers, []byte(","))...)
+		allExporters = append(allExporters, ']')
+		wrap("exporters", allExporters)
+	}
+
 	return result, nil
 }
 
@@ -229,6 +262,7 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 	// clean the slate
 	c.Checkers = []Checker{}
 	c.Notifiers = []Notifier{}
+	c.Exporters = []Exporter{}
 
 	// Begin unmarshaling interface values by
 	// collecting the raw JSON
@@ -237,6 +271,8 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 		Storage   json.RawMessage   `json:"storage"`
 		Notifier  json.RawMessage   `json:"notifier"`
 		Notifiers []json.RawMessage `json:"notifiers"`
+		Exporter  json.RawMessage   `json:"exporter"`
+		Exporters []json.RawMessage `json:"exporters"`
 	}{}
 	err := json.Unmarshal(b, &raw)
 	if err != nil {
@@ -255,6 +291,12 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			Type string `json:"type"`
 		}
 		Notifiers []struct {
+			Type string `json:"type"`
+		}
+		Exporter struct {
+			Type string `json:"type"`
+		}
+		Exporters []struct {
 			Type string `json:"type"`
 		}
 	}{}
@@ -293,6 +335,21 @@ func (c *Checkup) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		c.Notifiers = append(c.Notifiers, notifier)
+	}
+	if raw.Exporter != nil {
+		exporter, err := exporterDecode(configTypes.Exporter.Type, raw.Exporter)
+		if err != nil {
+			return err
+		}
+		// Move `exporter` into `exporters[]`
+		c.Exporters = append(c.Exporters, exporter)
+	}
+	for i, n := range configTypes.Exporters {
+		exporter, err := exporterDecode(n.Type, raw.Exporters[i])
+		if err != nil {
+			return err
+		}
+		c.Exporters = append(c.Exporters, exporter)
 	}
 	return nil
 }

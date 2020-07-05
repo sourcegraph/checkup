@@ -119,8 +119,8 @@ func (c Checker) conclude(result types.Result) types.Result {
 
 	// Check round trip time (degraded)
 	if c.ThresholdRTT > 0 {
-		stats := result.ComputeStats()
-		if stats.Median > c.ThresholdRTT {
+		result.Stats = result.ComputeStats()
+		if result.Stats.Median > c.ThresholdRTT {
 			result.Notice = fmt.Sprintf("median round trip time exceeded threshold (%s)", c.ThresholdRTT)
 			result.Degraded = true
 			return result
