@@ -89,6 +89,13 @@ func (fs Storage) Fetch(name string) ([]types.Result, error) {
 func (fs Storage) Store(results []types.Result) error {
 	// Write results to a new file
 	name := *GenerateFilename()
+
+	// Create path
+	err := os.MkdirAll(fs.Dir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
 	f, err := os.Create(filepath.Join(fs.Dir, name))
 	if err != nil {
 		return err

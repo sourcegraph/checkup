@@ -6,7 +6,7 @@ FS Storage Adapter for Checkup.js
 
 var checkup = checkup || {};
 
-checkup.storage = (function() {
+checkup.storageDriverLocal = (function() {
 	var url;
 
 	// getCheckFileList gets the list of check files within
@@ -28,6 +28,10 @@ checkup.storage = (function() {
 	// setup prepares this storage unit to operate.
 	this.setup = function(cfg) {
 		url = cfg.url;
+		// trim trailing slash
+		if (url.substring(-1) === "/") {
+			url = url.substring(url, 0, -1)
+		}
 	};
 
 	// getChecksWithin gets all the checks within timeframe as a unit
@@ -65,4 +69,4 @@ checkup.storage = (function() {
 	};
 
 	return this;
-})();
+});

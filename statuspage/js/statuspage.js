@@ -9,6 +9,11 @@ if (!('remove' in Element.prototype)) {
     };
 }
 // Configure access to storage
+var storageType = checkup.config.storage.type || 'fs';
+checkup.storage = checkup.storageDriverLocal()
+if (storageType.toLowerCase() === "s3") {
+	checkup.storage = checkup.storageDriverS3()
+}
 checkup.storage.setup(checkup.config.storage);
 
 // Once the DOM is loaded, go ahead and render the graphs

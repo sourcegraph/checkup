@@ -6,4 +6,5 @@ pkg/
 bin/
 builds/
 dist/
+checks/
 .envrc
