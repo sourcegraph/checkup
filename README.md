@@ -43,6 +43,7 @@ Checkup implements these storage providers:
 - Local file system
 - GitHub
 - SQL (sqlite3 or PostgreSQL)
+- Azure Application Insights
 
 Checkup can even send notifications through your service of choice (if an integration exists).
 
@@ -258,6 +259,45 @@ CREATE TABLE checks (name TEXT NOT NULL PRIMARY KEY, timestamp INT8, results TEX
 ```
 
 Currently the status page does not support SQL storage.
+
+#### Azure Application Insights Storage
+
+**[godoc: appinsights](https://godoc.org/github.com/sourcegraph/checkup/storage/appinsights)**
+
+Azure Application Insights can be used as a storage backend, enabling Checkup to be used as a source of custom availability tests and metrics.  An example use case is documented [here](https://docs.microsoft.com/en-us/azure/azure-monitor/app/availability-azure-functions).
+
+A sample storage configuration with all required and optional keys:
+```js
+{
+  "type": "appinsights",
+  "test_location": "data center 1",
+  "instrumentation_key": "11111111-1111-1111-1111-111111111111",
+  "retry_interval": 1,
+  "max_retries": 3,
+  "tags": {
+    "service": "front end",
+    "product": "main web app"
+  }
+} 
+```
+
+The following keys are optional:
+
+- `test_location` (default is **Checkup Monitor**)
+- `retry_interval` (default is 0)
+- `max_retries` (default is 0)
+- `tags`
+
+When check results are sent to Application Insights, the following values are included in the logged telemetry:
+
+- `success` is set to `1` if the check passes, `0` otherwise
+- `message` is set to `Up`, `Down`, or `Degraded`
+- `duration` is set to the average of all check result round-trip times and is displayed as a string in milliseconds
+- `customMeasurements` is set to a JSON object including the number of the check as a string and the round-trip time of the check in nanoseconds
+- If the check included a `threshold_rtt` setting, it will be added to the `customDimensions` JSON object as key `ThresholdRTT` with a time duration string value (ie: `200ms`)
+- If any tags were included in the storage configuation, they will be added to the `customDimensions` JSON object
+
+Currently the status page does not support Application Insights storage.
 
 #### Slack notifier
 
