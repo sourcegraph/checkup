@@ -266,7 +266,7 @@ Currently the status page does not support SQL storage.
 
 Azure Application Insights can be used as a storage backend, enabling Checkup to be used as a source of custom availability tests and metrics.  An example use case is documented [here](https://docs.microsoft.com/en-us/azure/azure-monitor/app/availability-azure-functions).
 
-A sample storage configuration with all required and optional keys:
+A sample storage configuration with retries enabled:
 ```js
 {
   "type": "appinsights",
@@ -286,7 +286,10 @@ The following keys are optional:
 - `test_location` (default is **Checkup Monitor**)
 - `retry_interval` (default is 0)
 - `max_retries` (default is 0)
+- `timeout` (defaults to 2 seconds if omitted or set to 0)
 - `tags`
+
+If retries are disabled, the plugin will wait up to `timeout` seconds to submit telemetry before closing.
 
 When check results are sent to Application Insights, the following values are included in the logged telemetry:
 

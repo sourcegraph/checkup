@@ -21,31 +21,68 @@ var results = []types.Result{{
 	Title:        "Testing",
 	Endpoint:     "http://www.example.com",
 	ThresholdRTT: 100000000,
+	Timestamp:    time.Now().UnixNano(),
 	Healthy:      true,
+	Times: []types.Attempt{{
+		RTT: 40 * time.Millisecond,
+	}},
 }}
 
+func TestNew(t *testing.T) {
+	type test struct {
+		retries  time.Duration
+		interval time.Duration
+		timeout  time.Duration
+		wantErr  bool
+	}
+	tests := []test{
+		{retries: -1, interval: 0, timeout: 0, wantErr: true},
+		{retries: 0, interval: -1, timeout: 0, wantErr: true},
+		{retries: 0, interval: 0, timeout: -1, wantErr: true},
+		{retries: 0, interval: 0, timeout: 0, wantErr: false},
+		{retries: 1, interval: 0, timeout: 0, wantErr: false},
+		{retries: 0, interval: 1, timeout: 0, wantErr: false},
+		{retries: 0, interval: 0, timeout: 1, wantErr: false},
+	}
+
+	for _, tc := range tests {
+		config, _ := setup(0, tc.retries, tc.interval, tc.timeout, results)
+		c, _ := json.Marshal(config)
+		msg := fmt.Sprintf("Expected error from New() to be %v, got: %v", tc.wantErr, !tc.wantErr)
+
+		_, err := New(c)
+		if tc.wantErr {
+			if err == nil {
+				t.Fatalf(msg)
+			}
+		} else {
+			if err != nil {
+				t.Fatalf(msg)
+			}
+		}
+	}
+}
 func TestStoreNoRetry(t *testing.T) {
 	type test struct {
 		retries  time.Duration
 		interval time.Duration
-		wantErr  bool
+		timeout  time.Duration
 	}
 	tests := []test{
-		{retries: 0, interval: 0, wantErr: false},
-		{retries: -1, interval: 0, wantErr: true},
-		{retries: 0, interval: -1, wantErr: true},
-		{retries: 1, interval: 0, wantErr: false},
-		{retries: 0, interval: 1, wantErr: false},
+		{retries: 0, interval: 0, timeout: 0},
+		{retries: 1, interval: 0, timeout: 0},
+		{retries: 0, interval: 1, timeout: 0},
+		{retries: 0, interval: 0, timeout: 1},
 	}
 
 	for _, tc := range tests {
-		config, server := setup(0, tc.retries, tc.interval, results, t)
+		config, server := setup(0, tc.retries, tc.interval, tc.timeout, results)
 		defer server.Close()
 		c, _ := json.Marshal(config)
 
 		specimen, err := New(c)
-		if err == nil && tc.wantErr {
-			t.Fatalf("Expected error from New() to be %v, got: %v", tc.wantErr, err == nil)
+		if err != nil {
+			t.Fatalf("Expected no error from New(), got: %v", err)
 		}
 
 		if err := specimen.Store(results); err != nil {
@@ -55,7 +92,7 @@ func TestStoreNoRetry(t *testing.T) {
 }
 
 func TestStoreWithRetry(t *testing.T) {
-	config, server := setup(2, 1, 1, results, t)
+	config, server := setup(2, 1, 1, 0, results)
 	defer server.Close()
 	c, _ := json.Marshal(config)
 
@@ -69,7 +106,7 @@ func TestStoreWithRetry(t *testing.T) {
 	}
 }
 
-func setup(delay time.Duration, retries time.Duration, interval time.Duration, results []types.Result, t *testing.T) (Storage, *httptest.Server) {
+func setup(delay time.Duration, retries time.Duration, interval time.Duration, timeout time.Duration, results []types.Result) (Storage, *httptest.Server) {
 	forceRetry := false
 	if interval > 0 && retries > 0 {
 		forceRetry = true
@@ -113,6 +150,7 @@ func setup(delay time.Duration, retries time.Duration, interval time.Duration, r
 			"tag1": "test tag",
 		},
 		TelemetryConfig: telemetryConfig,
+		Timeout:         timeout,
 	}
 	if interval > -1 || retries > -1 {
 		config.MaxRetries = retries

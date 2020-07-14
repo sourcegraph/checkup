@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/microsoft/ApplicationInsights-Go/appinsights"
 	"github.com/sourcegraph/checkup/types"
 )
@@ -38,13 +37,18 @@ type Storage struct {
 	// be greater than 0.  Default is 0 (disabled).
 	RetryInterval time.Duration `json:"retry_interval,omitempty"`
 
-	// TelemetryClient is the appinsights.Client with which to
-	// send Application Insights trackAvailability() events
-	// Automatically created if InstrumentationKey is set.
-	TelemetryClient appinsights.TelemetryClient
+	// Timeout specifies the number of seconds to wait for telemetry submission
+	// before returning error from close() if retries are disabled.  If omitted or
+	// set to 0, timeout will be 2 seconds.  If retries are enabled, this setting
+	// is ignored.
+	Timeout time.Duration `json:"timeout,omitempty"`
 
-	// TelemetryConfig is used to modify the behavior of TelemetryClient
+	// TelemetryConfig defines the settings for client
 	TelemetryConfig *appinsights.TelemetryConfiguration
+
+	// client is the appinsights.Client used to
+	// send Application Insights trackAvailability() events
+	client appinsights.TelemetryClient
 }
 
 // New creates a new Storage instance based on json config
@@ -62,6 +66,12 @@ func New(config json.RawMessage) (Storage, error) {
 	if storage.RetryInterval < 0 {
 		err = fmt.Errorf("Invalid storage retry_interval: %d", storage.RetryInterval)
 	}
+	if storage.Timeout < 0 {
+		err = fmt.Errorf("Invalid storage timeout: %d", storage.Timeout)
+	}
+	if storage.Timeout == 0 {
+		storage.Timeout = 2
+	}
 	return storage, err
 }
 
@@ -73,9 +83,9 @@ func (Storage) Type() string {
 // Store takes a list of Checker results and sends them to the configured
 // Application Insights instance.
 func (c Storage) Store(results []types.Result) error {
-	c.TelemetryClient = appinsights.NewTelemetryClientFromConfig(c.TelemetryConfig)
+	c.client = appinsights.NewTelemetryClientFromConfig(c.TelemetryConfig)
 	for k, v := range c.Tags {
-		c.TelemetryClient.Context().CommonProperties[k] = v
+		c.client.Context().CommonProperties[k] = v
 	}
 	for _, result := range results {
 		c.send(result)
@@ -90,14 +100,14 @@ func (c Storage) Store(results []types.Result) error {
 func (c Storage) close() error {
 	if c.RetryInterval <= 0 || c.MaxRetries <= 0 {
 		select {
-		case <-c.TelemetryClient.Channel().Close():
+		case <-c.client.Channel().Close():
 			return nil
-		case <-time.After(2 * time.Second):
-			return fmt.Errorf("Failed to submit telemetry during close")
+		case <-time.After(c.Timeout * time.Second):
+			return fmt.Errorf("Failed to submit telemetry before timeout expired")
 		}
 	}
 	select {
-	case <-c.TelemetryClient.Channel().Close(c.RetryInterval * time.Second):
+	case <-c.client.Channel().Close(c.RetryInterval * time.Second):
 		return nil
 	case <-time.After((c.MaxRetries + 1) * c.RetryInterval * time.Second):
 		return fmt.Errorf("Failed to submit telemetry after retries")
@@ -108,33 +118,24 @@ func (c Storage) close() error {
 // Multiple test result measurements will be added to the telemetry item's
 // customMeasurements field
 func (c Storage) send(conclude types.Result) {
-	total := int64(0)
+	message := string(conclude.Status())
 
-	message := "Up"
-	if conclude.Degraded {
-		message = "Degraded"
-	} else if conclude.Down {
-		message = "Down"
-	}
 	if conclude.Notice != "" {
-		message = fmt.Sprintf("%s - %s ", message, conclude.Notice)
+		message = fmt.Sprintf("%s - %s", message, conclude.Notice)
 	}
 
-	availability := appinsights.NewAvailabilityTelemetry(conclude.Title, 0, conclude.Healthy)
+	stats := conclude.ComputeStats()
+	availability := appinsights.NewAvailabilityTelemetry(conclude.Title, stats.Mean, conclude.Healthy)
 	availability.RunLocation = c.TestLocation
 	availability.Message = message
-	availability.Id = uuid.New().String()
+	availability.Id = fmt.Sprintf("%d", conclude.Timestamp)
 	for i := 0; i < len(conclude.Times); i++ {
 		k := strconv.Itoa(i)
-		total += int64(conclude.Times[i].RTT)
 		availability.GetMeasurements()[k] = float64(conclude.Times[i].RTT)
-	}
-	if len(conclude.Times) > 0 {
-		availability.Duration = time.Duration(total / int64(len(conclude.Times)))
 	}
 	availability.GetProperties()["ThresholdRTT"] = conclude.ThresholdRTT.String()
 
 	// Submit the telemetry
-	c.TelemetryClient.Track(availability)
+	c.client.Track(availability)
 	return
 }
