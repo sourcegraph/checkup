@@ -5,6 +5,7 @@ package sql
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -65,6 +66,9 @@ func (sql Storage) dbConnect() (*sqlx.DB, error) {
 	if sql.SqliteDBFile != "" && sql.PostgreSQL != nil {
 		return nil, errors.New("several SQL backends are configured")
 	}
+
+	fmt.Println("The 'sql' backend is deprecated and will be removed in the future.")
+	fmt.Println("Please switch to a database-specific storage configuration.")
 
 	// SQLite3 configuration
 	if sql.SqliteDBFile != "" {

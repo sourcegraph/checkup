@@ -18,11 +18,15 @@ Due to recent development, some breaking changes have been introduced:
 - providers: the json config field `provider` was renamed to `type` for consistency,
 - notifiers: the json config field `name` was renamed to `type` for consistency,
 - sql: by default the sqlite storage engine is disabled (needs build with `-tags sql` to enable),
+- sql: storage engine is deprecated in favor of new storage engines postgres, mysql, sqlite3
+- mailgun: the `to` parameter now takes a list of e-mail addresses (was a single recipient)
+- LOGGING IS NOT SWALLOWED ANYMORE, DON'T PARSE `checkup` OUTPUT IN SCRIPTS
+- default for status page config has been set to local source (use with `checkup serve`)
 
 If you want to build the latest version, it's best to run:
 
-- `make build` - builds checkup without sql support,
-- `make build-sql` - builds checkup with pgsql/sqlite;
+- `make build` - builds checkup with mysql and postgresql support,
+- `make build-sqlite3` - builds checkup with additional sqlite3 support
 
 The resulting binary will be placed into `builds/checkup`.
 
@@ -42,8 +46,12 @@ Checkup implements these storage providers:
 - Amazon S3
 - Local file system
 - GitHub
-- SQL (sqlite3 or PostgreSQL)
+- MySQL
+- PostgreSQL
+- SQLite3
 - Azure Application Insights
+
+*Currently the status page does not support SQL or Azure Application Insights storage back-ends.*
 
 Checkup can even send notifications through your service of choice (if an integration exists).
 
@@ -53,10 +61,8 @@ Checkup can even send notifications through your service of choice (if an integr
 There are 3 components:
 
 1. **Storage.** You set up storage space for the results of the checks.
-
 2. **Checks.** You run checks on whatever endpoints you have as often as you want.
-
-3. **Status Page.** You host the status page. [Caddy](https://caddyserver.com) makes this super easy. The status page downloads recent check files from storage and renders the results client-side.
+3. **Status Page.** You (or GitHub) host the status page.
 
 
 ## Quick Start
@@ -82,17 +88,17 @@ You can configure Checkup entirely with a simple JSON document. You should confi
 
 ```js
 {
-	"checkers": [
-		// checker configurations go here
-	],
+    "checkers": [
+        // checker configurations go here
+    ],
 
-	"storage": {
-		// storage configuration goes here
-	},
+    "storage": {
+        // storage configuration goes here
+    },
 
-	"notifiers": [
-		// notifier configuration goes here
-	]
+    "notifiers": [
+        // notifier configuration goes here
+    ]
 }
 ```
 
@@ -102,57 +108,73 @@ We will show JSON samples below, to get you started. **But please [refer to the 
 
 Here are the configuration structures you can use, which are explained fully [in the godoc](https://godoc.org/github.com/sourcegraph/checkup). **Only the required fields are shown, so consult the godoc for more.**
 
-#### HTTP Checkers
+#### HTTP Checker
 
-**[godoc: HTTPChecker](https://godoc.org/github.com/sourcegraph/checkup/check/http)**
+**[godoc: check/http](https://godoc.org/github.com/sourcegraph/checkup/check/http)**
 
 ```js
 {
-	"type": "http",
-	"endpoint_name": "Example HTTP",
-	"endpoint_url": "http://www.example.com"
-	// for more fields, see the godoc
+    "type": "http",
+    "endpoint_name": "Example HTTP",
+    "endpoint_url": "http://www.example.com"
+    // for more fields, see the godoc
 }
 ```
 
 
-#### TCP Checkers
+#### TCP Checker
 
-**[godoc: TCPChecker](https://godoc.org/github.com/sourcegraph/checkup/check/tcp)**
+**[godoc: check/tcp](https://godoc.org/github.com/sourcegraph/checkup/check/tcp)**
 
 ```js
 {
-	"type": "tcp",
-	"endpoint_name": "Example TCP",
-	"endpoint_url": "example.com:80"
+    "type": "tcp",
+    "endpoint_name": "Example TCP",
+    "endpoint_url": "example.com:80"
 }
 ```
 
 #### DNS Checkers
 
-**[godoc: DNSChecker](https://godoc.org/github.com/sourcegraph/checkup/check/dns)**
+**[godoc: check/dns](https://godoc.org/github.com/sourcegraph/checkup/check/dns)**
 
 ```js
 {
-	"type": "dns",
-	"endpoint_name": "Example of endpoint_url looking up host.example.com",
-	"endpoint_url": "ns.example.com:53",
-	"hostname_fqdn": "host.example.com"
+    "type": "dns",
+    "endpoint_name": "Example of endpoint_url looking up host.example.com",
+    "endpoint_url": "ns.example.com:53",
+    "hostname_fqdn": "host.example.com"
 }
 ```
 
 #### TLS Checkers
 
-**[godoc: TLSChecker](https://godoc.org/github.com/sourcegraph/checkup/check/tls)**
+**[godoc: check/tls](https://godoc.org/github.com/sourcegraph/checkup/check/tls)**
 
 ```js
 {
-	"type": "tls",
-	"endpoint_name": "Example TLS Protocol Check",
-	"endpoint_url": "www.example.com:443"
+    "type": "tls",
+    "endpoint_name": "Example TLS Protocol Check",
+    "endpoint_url": "www.example.com:443"
 }
 ```
 
+#### Exec Checkers
+
+**[godoc: check/exec](https://godoc.org/github.com/sourcegraph/checkup/check/exec)**
+
+The exec checker can run any command, and expects an zero-value exit code
+on success. Non-zero exit codes are considered errors. You can configure
+the check with `"raise":"warning"` if you want to consider a failing
+service as DEGRADED. Additional options available on godoc link above.
+
+```js
+{
+    "type": "exec",
+    "name": "Example Exec Check",
+    "command": "testdata/exec.sh"
+}
+```
 
 #### Amazon S3 Storage
 
@@ -160,16 +182,15 @@ Here are the configuration structures you can use, which are explained fully [in
 
 ```js
 {
-	"type": "s3",
-	"access_key_id": "<yours>",
-	"secret_access_key": "<yours>",
-	"bucket": "<yours>",
-	"region": "us-east-1"
+    "type": "s3",
+    "access_key_id": "<yours>",
+    "secret_access_key": "<yours>",
+    "bucket": "<yours>",
+    "region": "us-east-1"
 }
 ```
 
-S3 is the default storage provider assumed by the status page, so the only change needed for the status page is in the [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) file, with your public, read-only credentials.
-
+To serve files for your status page from S3, copy `statuspage/config_s3.js` over `statuspage/config.js`, and fill out the required public, read-only credentials.
 
 #### File System Storage
 
@@ -177,20 +198,10 @@ S3 is the default storage provider assumed by the status page, so the only chang
 
 ```js
 {
-	"type": "fs",
-	"dir": "/path/to/your/check_files",
-	"url": "http://127.0.0.1:2015/check_files"
+    "type": "fs",
+    "dir": "/path/to/your/check_files"
 }
 ```
-
-Change [index.html](https://github.com/sourcegraph/checkup/blob/master/statuspage/index.html) to load fs.js instead of s3.js:
-
-```diff
-- <script src="js/s3.js"></script>
-+ <script src="js/fs.js"></script>
-```
-
-Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js) so the status page knows how to load your check files.
 
 #### GitHub Storage
 
@@ -198,67 +209,78 @@ Then fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/sta
 
 ```js
 {
-	"type": "github",
-	"access_token": "some_api_access_token_with_repo_scope",
-	"repository_owner": "owner",
-	"repository_name": "repo",
-	"committer_name": "Commiter Name",
-	"committer_email": "you@yours.com",
-	"branch": "gh-pages",
-	"dir": "updates"
+    "type": "github",
+    "access_token": "some_api_access_token_with_repo_scope",
+    "repository_owner": "owner",
+    "repository_name": "repo",
+    "committer_name": "Commiter Name",
+    "committer_email": "you@example.com",
+    "branch": "gh-pages",
+    "dir": "updates"
 }
 ```
 
 Where "dir" is a subdirectory within the repo to push all the check files. Setup instructions:
 
-1. Create a repository.
-2. Copy the contents of `statuspage/` from this repo to the root of your new repo.
-3. Change index.html to pull in js/fs.js instead of js/s3.js:
-```diff
-- <script src="js/s3.js"></script>
-+ <script src="js/fs.js"></script>
-```
-4. Create `updates/.gitkeep`.
+1. Create a repository,
+2. Copy the contents of `statuspage/` from this repo to the root of your new repo,
+3. Update the URL in `config.js` to `https://your-username.github.com/dir/`,
+4. Create `updates/.gitkeep`,
 5. Enable GitHub Pages in your settings for your desired branch.
 
-#### SQL Storage (sqlite3/PostgreSQL)
+#### MySQL Storage
 
-**[godoc: SQL](https://godoc.org/github.com/sourcegraph/checkup/storage/sql)**
+**[godoc: storage/mysql](https://godoc.org/github.com/sourcegraph/checkup/storage/mysql)**
 
-Postgres or sqlite3 databases can be used as storage backends.
+A MySQL database can be configured as a storage backend.
 
-sqlite database file configuration:
+Example configuration:
+
 ```js
 {
-	"type": "sql",
-	"sqlite_db_file": "/path/to/your/sqlite.db"
+    "type": "mysql",
+    "create": true,
+    "dsn": "checkup:checkup@tcp(mysql-checkup-db:3306)/checkup"
 }
 ```
 
-postgresql database file configuration:
+When `create` is set to true, checkup will issue `CREATE TABLE` statements required for storage.
+
+#### SQLite3 Storage (requires CGO to build, not available as a default)
+
+**[godoc: storage/sqlite3](https://godoc.org/github.com/sourcegraph/checkup/storage/sqlite3)**
+
+A SQLite3 database can be configured as a storage backend.
+
+Example configuration:
+
 ```js
 {
-	"type": "sql",
-	"postgresql": {
-		"user": "postgres",
-		"dbname": "dbname",
-		"host": "localhost",
-		"port": 5432,
-		"password": "password",
-		"sslmode": "disable"
-	}
+    "type": "sqlite3",
+    "create": true,
+    "dsn": "/path/to/your/sqlite.db"
 }
 ```
 
-The SQL engine used depends on which one is configured.
+When `create` is set to true, checkup will issue `CREATE TABLE` statements required for storage.
 
-For all database backends, the database must exist and a "checks" table should be created:
+#### PostgreSQL Storage
 
+**[godoc: storage/postgres](https://godoc.org/github.com/sourcegraph/checkup/storage/postgres)**
+
+A PostgreSQL database can be configured as a storage backend.
+
+Example configuration:
+
+```js
+{
+    "type": "postgres",
+    "dsn": "host=postgres-checkup-db user=checkup password=checkup dbname=checkup sslmode=disable"
+}
 ```
-CREATE TABLE checks (name TEXT NOT NULL PRIMARY KEY, timestamp INT8, results TEXT);
-```
 
-Currently the status page does not support SQL storage.
+When `create` is set to true, checkup will issue `CREATE TABLE` statements required for storage.
+
 
 #### Azure Application Insights Storage
 
@@ -307,10 +329,10 @@ Currently the status page does not support Application Insights storage.
 Enable notifications in Slack with this Notifier configuration:
 ```js
 {
-	"type": "slack",
-	"username": "username",
-	"channel": "#channel-name",
-	"webhook": "webhook-url"
+    "type": "slack",
+    "username": "username",
+    "channel": "#channel-name",
+    "webhook": "webhook-url"
 }
 ```
 
@@ -321,16 +343,16 @@ Follow these instructions to [create a webhook](https://get.slack.help/hc/en-us/
 Enable E-mail notifications with this Notifier configuration:
 ```js
 {
-	"type": "mail",
-	"from": "from@example.com",
-	"to": [ "support1@examiple.com", "support2@example.com" ],
-	"subject": "Custom subject line",
-	"smtp": {
-		"server": "smtp.example.com",
-		"port": 25,
-		"username": "username",
-		"password": "password"
-	}
+    "type": "mail",
+    "from": "from@example.com",
+    "to": [ "support1@example.com", "support2@example.com" ],
+    "subject": "Custom subject line",
+    "smtp": {
+        "server": "smtp.example.com",
+        "port": 25,
+        "username": "username",
+        "password": "password"
+    }
 }
 ```
 
@@ -342,11 +364,11 @@ Enable notifications using Mailgun with this Notifier configuration:
 ```js
 {
     "type": "mailgun",
+    "from": "sender@example.com",
+    "to": [ "support1@example.com", "support2@example.com" ],
+    "subject": "Custom subject line"
     "apikey": "mailgun-api-key",
     "domain": "mailgun-domain",
-    "from": "sender@example.com",
-    "to": "recipient@example.com"
-    "subject": "Custom subject line"
 }
 ```
 
@@ -400,11 +422,26 @@ $ checkup provision s3
 If you'd rather do this manually, see the [instructions on the wiki](https://github.com/sourcegraph/checkup/wiki/Provisioning-S3-Manually) but keeping in mind the region must be **US Standard**.
 
 
-## Setting up the status page
+## Checkup status page
 
-In statuspage/js, use the contents of [config_template.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_template.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page. This is where you specify how to access the storage system you just provisioned for check files.
+Checkup now has a local HTTP server that supports serving checks stored in:
 
-The status page can be served over HTTPS by running `caddy -host status.mysite.com` on the command line. (You can use [getcaddy.com](https://getcaddy.com) to install Caddy.)
+- FS (local filesystem storage),
+- MySQL
+- PostgreSQL
+- SQLite3 (not enabled by default)
+
+You can run `checkup serve` from the folder which contains `checkup.json`
+and the `statuspage/` folder.
+
+### Setting up the status page for GitHub
+
+You will need to edit `
+
+### Setting up the status page for S3
+
+In statuspage/js, use the contents of [config_s3.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config_s3.js) to fill out [config.js](https://github.com/sourcegraph/checkup/blob/master/statuspage/js/config.js), which is used by the status page.
+This is where you specify how to access the S3 storage bucket you just provisioned for check files.
 
 As you perform checks, the status page will update every so often with the latest results. **Only checks that are stored will appear on the status page.**
 
@@ -563,7 +600,7 @@ cd checkup
 make
 ```
 
-Building the SQL enabled version is done with `make build-sql`.
+Building the SQLite3 enabled version is done with `make build-sqlite3`. PostgreSQL and MySQL are enabled by default.
 
 ### Building a Docker image
 

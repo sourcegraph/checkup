@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine as builder
+FROM golang:1.14-alpine as builder
 
 ENV CGO_ENABLED=0
 
@@ -12,4 +12,10 @@ WORKDIR /app
 
 COPY --from=builder /app/builds/checkup /usr/local/bin/checkup
 
+ADD statuspage/ /app/statuspage
+
+USER nobody
+EXPOSE 3000
+
 ENTRYPOINT ["checkup"]
+CMD ["serve"]
