@@ -55,10 +55,12 @@ type Storage struct {
 func New(config json.RawMessage) (Storage, error) {
 	var storage Storage
 	err := json.Unmarshal(config, &storage)
-	storage.TelemetryConfig.InstrumentationKey = storage.InstrumentationKey
 
-	if storage.TestLocation == "" {
-		storage.TestLocation = "Checkup Monitor"
+	if storage.InstrumentationKey == "" {
+		err = fmt.Errorf("Must supply value for InstrumentationKey")
+	}
+	if storage.MaxRetries < 0 {
+		err = fmt.Errorf("Invalid storage max_retries: %d", storage.MaxRetries)
 	}
 	if storage.MaxRetries < 0 {
 		err = fmt.Errorf("Invalid storage max_retries: %d", storage.MaxRetries)
@@ -68,6 +70,13 @@ func New(config json.RawMessage) (Storage, error) {
 	}
 	if storage.Timeout < 0 {
 		err = fmt.Errorf("Invalid storage timeout: %d", storage.Timeout)
+	}
+
+	if storage.TestLocation == "" {
+		storage.TestLocation = "Checkup Monitor"
+	}
+	if storage.TestLocation == "" {
+		storage.TestLocation = "Checkup Monitor"
 	}
 	if storage.Timeout == 0 {
 		storage.Timeout = 2
@@ -83,6 +92,7 @@ func (Storage) Type() string {
 // Store takes a list of Checker results and sends them to the configured
 // Application Insights instance.
 func (c Storage) Store(results []types.Result) error {
+	c.TelemetryConfig.InstrumentationKey = c.InstrumentationKey
 	c.client = appinsights.NewTelemetryClientFromConfig(c.TelemetryConfig)
 	for k, v := range c.Tags {
 		c.client.Context().CommonProperties[k] = v
