@@ -149,7 +149,7 @@ func setup(delay time.Duration, retries time.Duration, interval time.Duration, t
 		Tags: map[string]string{
 			"tag1": "test tag",
 		},
-		TelemetryConfig: telemetryConfig,
+		telemetryConfig: telemetryConfig,
 		Timeout:         timeout,
 	}
 	if interval > -1 || retries > -1 {

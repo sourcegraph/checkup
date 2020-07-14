@@ -43,8 +43,8 @@ type Storage struct {
 	// is ignored.
 	Timeout time.Duration `json:"timeout,omitempty"`
 
-	// TelemetryConfig defines the settings for client
-	TelemetryConfig *appinsights.TelemetryConfiguration
+	// telemetryConfig defines the settings for client
+	telemetryConfig *appinsights.TelemetryConfiguration
 
 	// client is the appinsights.Client used to
 	// send Application Insights trackAvailability() events
@@ -72,6 +72,7 @@ func New(config json.RawMessage) (Storage, error) {
 		err = fmt.Errorf("Invalid storage timeout: %d", storage.Timeout)
 	}
 
+	storage.telemetryConfig = appinsights.NewTelemetryConfiguration(storage.InstrumentationKey)
 	if storage.TestLocation == "" {
 		storage.TestLocation = "Checkup Monitor"
 	}
@@ -92,8 +93,8 @@ func (Storage) Type() string {
 // Store takes a list of Checker results and sends them to the configured
 // Application Insights instance.
 func (c Storage) Store(results []types.Result) error {
-	c.TelemetryConfig.InstrumentationKey = c.InstrumentationKey
-	c.client = appinsights.NewTelemetryClientFromConfig(c.TelemetryConfig)
+	c.telemetryConfig.InstrumentationKey = c.InstrumentationKey
+	c.client = appinsights.NewTelemetryClientFromConfig(c.telemetryConfig)
 	for k, v := range c.Tags {
 		c.client.Context().CommonProperties[k] = v
 	}
