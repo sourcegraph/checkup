@@ -15,6 +15,7 @@ require (
 	github.com/lib/pq v1.3.0
 	github.com/mailgun/mailgun-go/v4 v4.1.0
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/microsoft/ApplicationInsights-Go v0.4.3
 	github.com/miekg/dns v1.1.29
 	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
