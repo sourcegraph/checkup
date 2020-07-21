@@ -30,9 +30,9 @@ var results = []types.Result{{
 
 func TestNew(t *testing.T) {
 	type test struct {
-		retries  time.Duration
-		interval time.Duration
-		timeout  time.Duration
+		retries  int
+		interval int
+		timeout  int
 		wantErr  bool
 	}
 	tests := []test{
@@ -64,9 +64,9 @@ func TestNew(t *testing.T) {
 }
 func TestStoreNoRetry(t *testing.T) {
 	type test struct {
-		retries  time.Duration
-		interval time.Duration
-		timeout  time.Duration
+		retries  int
+		interval int
+		timeout  int
 	}
 	tests := []test{
 		{retries: 0, interval: 0, timeout: 0},
@@ -106,7 +106,7 @@ func TestStoreWithRetry(t *testing.T) {
 	}
 }
 
-func setup(delay time.Duration, retries time.Duration, interval time.Duration, timeout time.Duration, results []types.Result) (Storage, *httptest.Server) {
+func setup(delay time.Duration, retries int, interval int, timeout int, results []types.Result) (Storage, *httptest.Server) {
 	forceRetry := false
 	if interval > 0 && retries > 0 {
 		forceRetry = true
