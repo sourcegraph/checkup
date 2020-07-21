@@ -30,18 +30,18 @@ type Storage struct {
 	// MaxRetries specifies the number of retries before returning error
 	// from close().  To enable retries, both RetryInterval and MaxRetries
 	// must be greater than 0.  Default is 0 (disabled).
-	MaxRetries time.Duration `json:"max_retries,omitempty"`
+	MaxRetries int `json:"max_retries,omitempty"`
 
 	// RetryInterval specifies the time between retries in seconds.  To enable retries,
 	// both RetryInterval and MaxRetries must
 	// be greater than 0.  Default is 0 (disabled).
-	RetryInterval time.Duration `json:"retry_interval,omitempty"`
+	RetryInterval int `json:"retry_interval,omitempty"`
 
 	// Timeout specifies the number of seconds to wait for telemetry submission
 	// before returning error from close() if retries are disabled.  If omitted or
 	// set to 0, timeout will be 2 seconds.  If retries are enabled, this setting
 	// is ignored.
-	Timeout time.Duration `json:"timeout,omitempty"`
+	Timeout int `json:"timeout,omitempty"`
 
 	// telemetryConfig defines the settings for client
 	telemetryConfig *appinsights.TelemetryConfiguration
@@ -58,9 +58,6 @@ func New(config json.RawMessage) (Storage, error) {
 
 	if storage.InstrumentationKey == "" {
 		err = fmt.Errorf("Must supply value for InstrumentationKey")
-	}
-	if storage.MaxRetries < 0 {
-		err = fmt.Errorf("Invalid storage max_retries: %d", storage.MaxRetries)
 	}
 	if storage.MaxRetries < 0 {
 		err = fmt.Errorf("Invalid storage max_retries: %d", storage.MaxRetries)
@@ -113,14 +110,14 @@ func (c Storage) close() error {
 		select {
 		case <-c.client.Channel().Close():
 			return nil
-		case <-time.After(c.Timeout * time.Second):
+		case <-time.After(time.Duration(c.Timeout) * time.Second):
 			return fmt.Errorf("Failed to submit telemetry before timeout expired")
 		}
 	}
 	select {
-	case <-c.client.Channel().Close(c.RetryInterval * time.Second):
+	case <-c.client.Channel().Close(time.Duration(c.RetryInterval) * time.Second):
 		return nil
-	case <-time.After((c.MaxRetries + 1) * c.RetryInterval * time.Second):
+	case <-time.After((time.Duration(c.MaxRetries) + 1) * time.Duration(c.RetryInterval) * time.Second):
 		return fmt.Errorf("Failed to submit telemetry after retries")
 	}
 }
