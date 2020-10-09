@@ -1,0 +1,28 @@
+version: "2.4"
+
+services:
+  #-- worker node
+  worker:
+    image: checkup:sqlite3
+    volumes:
+      - ./checkup.json:/app/checkup.json
+      - ./checks:/app/checks
+    entrypoint:
+      - checkup
+      - every
+      - 10s
+    user: "1000:1000"
+    restart: always
+
+  #-- client
+  checkup:
+    hostname: checkup
+    image: checkup:sqlite3
+    ports:
+      - 3000:3000
+    volumes:
+      - ./checkup.json:/app/checkup.json
+      - ./checks:/app/checks
+      - ./statuspage/js/config_sqlite3.js:/app/statuspage/js/config.js
+    user: "1000:1000"
+    restart: always

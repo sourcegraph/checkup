@@ -25,3 +25,6 @@ test-%:
 
 docker:
 	docker build --no-cache . -t $(DOCKER_IMAGE)
+
+docker_sqlite:
+	docker build --no-cache -t $(DOCKER_IMAGE):sqlite3 -f sqlite3.Dockerfile .
