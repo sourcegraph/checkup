@@ -2,7 +2,6 @@ package s3
 
 import (
 	"bytes"
-	"io/ioutil"
 	"strconv"
 	"strings"
 	"testing"
@@ -73,7 +72,7 @@ func TestS3Store(t *testing.T) {
 	}
 
 	// Make sure body bytes are correct
-	bodyBytes, err := ioutil.ReadAll(fakes3.input.Body)
+	bodyBytes, err := io.ReadAll(fakes3.input.Body)
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}

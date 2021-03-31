@@ -2,7 +2,6 @@ package fs
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -125,7 +124,7 @@ func (fs Storage) Maintain() error {
 		return nil
 	}
 
-	files, err := ioutil.ReadDir(fs.Dir)
+	files, err := os.ReadDir(fs.Dir)
 	if err != nil {
 		return err
 	}

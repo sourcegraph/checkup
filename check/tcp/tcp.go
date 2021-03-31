@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"time"
 
@@ -109,7 +108,7 @@ func (c Checker) doChecks() types.Attempts {
 			var tlsConfig tls.Config
 			tlsConfig.InsecureSkipVerify = c.TLSSkipVerify
 			if c.TLSCAFile != "" {
-				rootPEM, err := ioutil.ReadFile(c.TLSCAFile)
+				rootPEM, err := os.ReadFile(c.TLSCAFile)
 				if err != nil || rootPEM == nil {
 					return nil, errReadingRootCert
 				}

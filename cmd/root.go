@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -67,7 +66,7 @@ store the results of the check, use --store.`,
 }
 
 func loadCheckup() checkup.Checkup {
-	configBytes, err := ioutil.ReadFile(configFile)
+	configBytes, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}

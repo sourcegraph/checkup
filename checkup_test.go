@@ -3,7 +3,6 @@ package checkup
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
@@ -182,7 +181,7 @@ func TestJSON(t *testing.T) {
 		testConfig = "testdata/config.json"
 	)
 
-	jsonBytes, err := ioutil.ReadFile(testConfig)
+	jsonBytes, err := os.ReadFile(testConfig)
 	if err != nil {
 		t.Fatalf("Error reading config file: %s", testConfig)
 	}

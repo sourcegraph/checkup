@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -126,7 +125,7 @@ func setup(delay time.Duration, retries int, interval int, timeout int, results 
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(fmt.Sprintf("gzip NewReader: %v", err)))
 		}
-		b, _ := ioutil.ReadAll(req)
+		b, _ := io.ReadAll(req)
 		parsed, err := parsePayload(b)
 		for i, j := range parsed {
 			data := j["data"].(map[string]interface{})

@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"time"
 
@@ -92,7 +91,7 @@ func (c Checker) Check() (types.Result, error) {
 			c.tlsConfig.RootCAs = x509.NewCertPool()
 		}
 		for _, fname := range c.TrustedRoots {
-			pemData, err := ioutil.ReadFile(fname)
+			pemData, err := os.ReadFile(fname)
 			if err != nil {
 				return types.Result{}, fmt.Errorf("error loading file: %w", err)
 			}

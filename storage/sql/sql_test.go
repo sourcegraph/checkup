@@ -3,7 +3,6 @@
 package sql
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,7 +15,7 @@ func TestSQL(t *testing.T) {
 	results := []types.Result{{Title: "Testing"}}
 
 	// Create temporary directory for the tests
-	dir, err := ioutil.TempDir("", "checkup")
+	dir, err := os.MkdirTemp("", "checkup")
 	if err != nil {
 		t.Fatalf("Cannot create temporary directory: %v", err)
 	}
