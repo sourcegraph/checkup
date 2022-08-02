@@ -98,6 +98,10 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 		LastUpdated: time.Now().UnixNano(),
 		Files:       map[string]bool{},
 	}
+	gitCommitMessageSuffix := specimen.CommitMessageSuffix
+	if gitCommitMessageSuffix == "" {
+		gitCommitMessageSuffix = defaultCommitMessageSuffix
+	}
 
 	fixtureFiles := []string{"1501523631505010894-check.json", "1501525202306053005-check.json", "index.json"}
 	for _, file := range fixtureFiles {
@@ -175,7 +179,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if expected := fmt.Sprintf("[checkup] store %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
+			if expected := fmt.Sprintf("[checkup] store %s %s", strings.TrimPrefix(path, "/"), gitCommitMessageSuffix); stuff.Message != expected {
 				t.Errorf("Expected commit message '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != serverSHAForRepo {
@@ -222,7 +226,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if expected := fmt.Sprintf("[checkup] store %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
+			if expected := fmt.Sprintf("[checkup] store %s %s", strings.TrimPrefix(path, "/"), gitCommitMessageSuffix); stuff.Message != expected {
 				t.Errorf("Expected commit message '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != "" {
@@ -255,7 +259,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			if err := json.NewDecoder(r.Body).Decode(&stuff); err != nil {
 				t.Errorf("Expected body to decode fine, but got %+v", err)
 			}
-			if expected := fmt.Sprintf("[checkup] delete %s [ci skip]", strings.TrimPrefix(path, "/")); stuff.Message != expected {
+			if expected := fmt.Sprintf("[checkup] delete %s %s", strings.TrimPrefix(path, "/"), gitCommitMessageSuffix); stuff.Message != expected {
 				t.Errorf("Expected commit message to be '%s', got '%s'", expected, stuff.Message)
 			}
 			if stuff.SHA != sha(resultsBytes) {
@@ -301,12 +305,13 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 func TestGitHubWithoutSubdir(t *testing.T) {
 	// Our subject, our specimen.
 	specimen := &Storage{
-		RepositoryOwner: "o",
-		RepositoryName:  "r",
-		CommitterName:   "John Appleseed",
-		CommitterEmail:  "appleseed@example.org",
-		Branch:          "b",
-		Dir:             "",
+		RepositoryOwner:     "o",
+		RepositoryName:      "r",
+		CommitterName:       "John Appleseed",
+		CommitterEmail:      "appleseed@example.org",
+		Branch:              "b",
+		Dir:                 "",
+		CommitMessageSuffix: "",
 	}
 
 	withGitHubServer(t, *specimen, func(client *github.Client) {
@@ -374,12 +379,13 @@ func TestGitHubWithoutSubdir(t *testing.T) {
 func TestGitHubWithSubdir(t *testing.T) {
 	// Our subject, our specimen.
 	specimen := &Storage{
-		RepositoryOwner: "o",
-		RepositoryName:  "r",
-		CommitterName:   "John Appleseed",
-		CommitterEmail:  "appleseed@example.org",
-		Branch:          "b",
-		Dir:             "subdir/",
+		RepositoryOwner:     "o",
+		RepositoryName:      "r",
+		CommitterName:       "John Appleseed",
+		CommitterEmail:      "appleseed@example.org",
+		Branch:              "b",
+		Dir:                 "subdir/",
+		CommitMessageSuffix: "foo bar",
 	}
 
 	withGitHubServer(t, *specimen, func(client *github.Client) {
