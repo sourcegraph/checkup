@@ -21,6 +21,8 @@ import (
 // Type should match the package name
 const Type = "github"
 
+const defaultCommitMessageSuffix = "[ci skip]"
+
 var errFileNotFound = fmt.Errorf("file not found on github")
 
 // Storage is a way to store checkup results in a GitHub repository.
@@ -56,6 +58,11 @@ type Storage struct {
 	// the zero value, no old check files will be
 	// deleted.
 	CheckExpiry time.Duration `json:"check_expiry,omitempty"`
+
+	// CommitMessageSuffix is a string appended to each commit message.
+	// It could contain something like "[ci skip]" to prevent commits
+	// from triggering automated CI/CD pipelines.
+	CommitMessageSuffix string `json:"commit_message_suffix"`
 
 	client *github.Client
 }
@@ -101,6 +108,14 @@ func (gh *Storage) fullPathName(filename string) string {
 	return filepath.Join(gh.Dir, filename)
 }
 
+// commitMessageSuffix returns the configured commit message suffix, or the default if none is set.
+func (gh *Storage) commitMessageSuffix() string {
+	if gh.CommitMessageSuffix != "" {
+		return gh.CommitMessageSuffix
+	}
+	return defaultCommitMessageSuffix
+}
+
 // readFile reads a file from the Git repository at its latest revision.
 // This method returns the plaintext contents, the SHA associated with the contents
 // If an error occurs, the contents and sha will be nil & empty.
@@ -138,7 +153,7 @@ func (gh *Storage) writeFile(filename string, sha string, contents []byte) error
 	var err error
 	var writeFunc func(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.String(fmt.Sprintf("[checkup] store %s [ci skip]", gh.fullPathName(filename))),
+		Message: github.String(fmt.Sprintf("[checkup] store %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
 		Content: contents,
 		Committer: &github.CommitAuthor{
 			Name:  &gh.CommitterName,
@@ -190,7 +205,7 @@ func (gh *Storage) deleteFile(filename string, sha string) error {
 		gh.RepositoryName,
 		gh.fullPathName(filename),
 		&github.RepositoryContentFileOptions{
-			Message: github.String(fmt.Sprintf("[checkup] delete %s [ci skip]", gh.fullPathName(filename))),
+			Message: github.String(fmt.Sprintf("[checkup] delete %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
 			SHA:     github.String(sha),
 			Branch:  &gh.Branch,
 			Committer: &github.CommitAuthor{

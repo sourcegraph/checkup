@@ -216,11 +216,15 @@ To serve files for your status page from S3, copy `statuspage/config_s3.js` over
     "committer_name": "Commiter Name",
     "committer_email": "you@example.com",
     "branch": "gh-pages",
-    "dir": "updates"
+    "dir": "updates",
+    "commit_message_suffix": "[ci skip]"
 }
 ```
 
-Where "dir" is a subdirectory within the repo to push all the check files. Setup instructions:
+- "dir" is a subdirectory within the repo to push all the check files
+- "commit_message_suffix" is appended to each commit message (default: "[ci skip]", to remove set to " " (single space))
+
+Setup instructions:
 
 1. Create a repository,
 2. Copy the contents of `statuspage/` from this repo to the root of your new repo,
