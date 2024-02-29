@@ -388,6 +388,17 @@ Enable notifications using Pushover with this Notifier configuration:
 }
 ```
 
+#### Gotify notifier
+
+Enable notifications using [Gotify](https://github.com/gotify/server) with this Notifier configuration:
+```js
+{
+    "type": "gotify",
+    "token": "APP_TOKEN",
+    "webhook": "https://push.example.com/message"
+}
+```
+
 ## Setting up storage on S3
 
 The easiest way to do this is to give an IAM user these two privileges (keep the credentials secret):
