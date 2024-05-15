@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sourcegraph/checkup/notifier/discord"
+	"github.com/sourcegraph/checkup/notifier/gotify"
 	"github.com/sourcegraph/checkup/notifier/mail"
 	"github.com/sourcegraph/checkup/notifier/mailgun"
 	"github.com/sourcegraph/checkup/notifier/pushover"
@@ -23,6 +24,8 @@ func notifierDecode(typeName string, config json.RawMessage) (Notifier, error) {
 		return pushover.New(config)
 	case discord.Type:
 		return discord.New(config)
+	case gotify.Type:
+		return gotify.New(config)
 	default:
 		return nil, fmt.Errorf(errUnknownNotifierType, typeName)
 	}
