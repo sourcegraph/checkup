@@ -295,7 +295,7 @@ func (gh *Storage) GetIndex() (map[string]int64, error) {
 }
 
 // Maintain deletes check files that are older than gh.CheckExpiry.
-func (gh *Storage) Maintain() error {
+func (gh Storage) Maintain() error {
 	if gh.CheckExpiry == 0 {
 		return nil
 	}
