@@ -15,6 +15,12 @@ import (
 // Type should match the package name
 const Type = "http"
 
+// UpStatusRange is a range of numeric response codes
+type UpStatusRange struct {
+	Min int `json:"min,omitempty"`
+	Max int `json:"max,omitempty"`
+}
+
 // Checker implements a Checker for HTTP endpoints.
 type Checker struct {
 	// Name is the name of the endpoint.
@@ -26,6 +32,18 @@ type Checker struct {
 	// UpStatus is the HTTP status code expected by
 	// a healthy endpoint. Default is http.StatusOK.
 	UpStatus int `json:"up_status,omitempty"`
+
+	// UpStausRange allows specifying a range of acceptable
+	// status codes for a health endpoint
+	// eg: 200-399 to include acceptable redirect codes,
+	// 200-299 for only 2x series,
+	// or 400-599 to guarantee the asset is gone
+	// if one - but not both - value is provided, the other will
+	// use the default value of min: 0, max: 999
+	// this allows simpler configs like
+	// - up_status_range.min = 400 (anything above 400 series will pass)
+	// - up.status_range.max = 399 (anything below 400 series will pass)
+	UpStatusRange UpStatusRange `json:"up_status_range,omitempty"`
 
 	// ThresholdRTT is the maximum round trip time to
 	// allow for a healthy endpoint. If non-zero and a
@@ -174,7 +192,24 @@ func (c Checker) conclude(result types.Result) types.Result {
 // the configuration of c. It returns a non-nil error if down.
 // Note that it does not check for degraded response.
 func (c Checker) checkDown(resp *http.Response) error {
-	// Check status code
+	// Check status code range
+	if c.UpStatusRange.Min > 0 || c.UpStatusRange.Max > 0 {
+		useMin := 0
+		if c.UpStatusRange.Min > useMin {
+			useMin = c.UpStatusRange.Min
+		}
+
+		useMax := 999
+		if c.UpStatusRange.Max > 0 && c.UpStatusRange.Max < useMax {
+			useMax = c.UpStatusRange.Max
+		}
+
+		if resp.StatusCode >= useMin && resp.StatusCode <= useMax {
+			return nil
+		}
+	}
+
+	// Check single status code
 	var validStatus map[int]bool
 	if c.UpStatus > 0 {
 		// Explicit match against expected UpStatus
