@@ -136,7 +136,7 @@ func (c Storage) send(conclude types.Result) {
 	availability := appinsights.NewAvailabilityTelemetry(conclude.Title, stats.Mean, conclude.Healthy)
 	availability.RunLocation = c.TestLocation
 	availability.Message = message
-	availability.Id = fmt.Sprintf("%d", conclude.Timestamp)
+	availability.Id = strconv.Itoa(conclude.Timestamp)
 	for i := 0; i < len(conclude.Times); i++ {
 		k := strconv.Itoa(i)
 		availability.GetMeasurements()[k] = float64(conclude.Times[i].RTT)
