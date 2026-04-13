@@ -1,12 +1,14 @@
 name: SCIP
 'on':
   - push
+permissions:
+  contents: read
 jobs:
   scip-go:
     runs-on: ubuntu-latest
     container: sourcegraph/scip-go
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       - name: Get src-cli
         run: curl -L https://sourcegraph.com/.api/src-cli/src_linux_amd64 -o /usr/local/bin/src;
           chmod +x /usr/local/bin/src
