@@ -3,6 +3,7 @@ package appinsights
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"strconv"
 	"time"
 
@@ -92,9 +93,7 @@ func (Storage) Type() string {
 func (c Storage) Store(results []types.Result) error {
 	c.telemetryConfig.InstrumentationKey = c.InstrumentationKey
 	c.client = appinsights.NewTelemetryClientFromConfig(c.telemetryConfig)
-	for k, v := range c.Tags {
-		c.client.Context().CommonProperties[k] = v
-	}
+	maps.Copy(c.client.Context().CommonProperties, c.Tags)
 	for _, result := range results {
 		c.send(result)
 	}

@@ -2,7 +2,6 @@ package fs
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +14,7 @@ func TestStorage(t *testing.T) {
 	results := []types.Result{{Title: "Testing"}}
 	resultsBytes := []byte(`[{"title":"Testing"}]` + "\n")
 
-	dir, err := ioutil.TempDir("", "checkup")
+	dir, err := os.MkdirTemp("", "checkup")
 	if err != nil {
 		t.Fatalf("Cannot create temporary directory: %v", err)
 	}
@@ -54,7 +53,7 @@ func TestStorage(t *testing.T) {
 
 	// Make sure check file bytes are correct
 	checkfile := filepath.Join(specimen.Dir, name)
-	b, err := ioutil.ReadFile(checkfile)
+	b, err := os.ReadFile(checkfile)
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}

@@ -32,7 +32,7 @@ var (
 	resultsBytes = []byte(`[{"title":"Testing"}]`)
 )
 
-func mustWriteJSON(w io.Writer, data interface{}) {
+func mustWriteJSON(w io.Writer, data any) {
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		panic(err)
 	}
@@ -42,7 +42,7 @@ func base64Encoded(input []byte) string {
 	return base64.StdEncoding.EncodeToString(input)
 }
 
-func toJSON(data interface{}) []byte {
+func toJSON(data any) []byte {
 	encoded, err := json.Marshal(data)
 	if err != nil {
 		panic(err)
@@ -62,15 +62,15 @@ func pathForIndex(path string) string {
 	return filepath.Base(path)
 }
 
-func repositoryContent(path, serverSHAForRepo string, data interface{}) *github.RepositoryContent {
+func repositoryContent(path, serverSHAForRepo string, data any) *github.RepositoryContent {
 	return &github.RepositoryContent{
-		Type:     github.String("file"),
-		Encoding: github.String("base64"),
-		Size:     github.Int(len(base64Encoded(toJSON(data)))),
-		Name:     github.String(filepath.Base(path)),
-		Path:     github.String(path),
-		Content:  github.String(base64Encoded(toJSON(data))),
-		SHA:      github.String(serverSHAForRepo),
+		Type:     new("file"),
+		Encoding: new("base64"),
+		Size:     new(len(base64Encoded(toJSON(data)))),
+		Name:     new(filepath.Base(path)),
+		Path:     new(path),
+		Content:  new(base64Encoded(toJSON(data))),
+		SHA:      new(serverSHAForRepo),
 	}
 }
 
@@ -116,10 +116,10 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			t.Errorf("Request method: %v, want %v", got, want)
 		}
 		mustWriteJSON(w, github.Reference{
-			Ref: github.String("refs/heads/" + specimen.Branch),
+			Ref: new("refs/heads/" + specimen.Branch),
 			Object: &github.GitObject{
-				Type: github.String("commit"),
-				SHA:  github.String(serverSHAForRepo),
+				Type: new("commit"),
+				SHA:  new(serverSHAForRepo),
 			},
 		})
 	})
@@ -136,21 +136,21 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 
 		entries := []github.TreeEntry{
 			{
-				SHA:     github.String(sha(toJSON(index))),
-				Path:    github.String(filepath.Join(specimen.Dir, "index.json")),
-				Content: github.String(base64Encoded(toJSON(index))),
+				SHA:     new(sha(toJSON(index))),
+				Path:    new(filepath.Join(specimen.Dir, "index.json")),
+				Content: new(base64Encoded(toJSON(index))),
 			},
 		}
 		for filename := range index {
 			entries = append(entries, github.TreeEntry{
-				SHA:     github.String(sha(resultsBytes)),
-				Path:    github.String(filepath.Join(specimen.Dir, filename)),
-				Content: github.String(string(resultsBytes)),
+				SHA:     new(sha(resultsBytes)),
+				Path:    new(filepath.Join(specimen.Dir, filename)),
+				Content: new(string(resultsBytes)),
 			})
 		}
 
 		mustWriteJSON(w, github.Tree{
-			SHA:     github.String(serverSHAForRepo),
+			SHA:     new(serverSHAForRepo),
 			Entries: entries,
 		})
 	})
@@ -196,7 +196,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			serverSHAForRepo = sha(toJSON(gitRepo))
 			mustWriteJSON(w, github.RepositoryContentResponse{
 				Content: repositoryContent(path, serverSHAForRepo, index),
-				Commit:  github.Commit{SHA: github.String(serverSHAForRepo)},
+				Commit:  github.Commit{SHA: new(serverSHAForRepo)},
 			})
 			return
 		}
@@ -243,7 +243,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			mustWriteJSON(w, github.RepositoryContentResponse{
 				Content: repositoryContent(path, serverSHAForRepo, results),
 				Commit: github.Commit{
-					SHA: github.String(serverSHAForRepo),
+					SHA: new(serverSHAForRepo),
 				},
 			})
 			return
@@ -290,7 +290,7 @@ func withGitHubServer(t *testing.T, specimen Storage, f func(*github.Client)) {
 			// Response is the same if updating or creating.
 			mustWriteJSON(w, github.RepositoryContentResponse{
 				Commit: github.Commit{
-					SHA: github.String(serverSHAForRepo),
+					SHA: new(serverSHAForRepo),
 				},
 			})
 			return
