@@ -153,7 +153,7 @@ func (gh *Storage) writeFile(filename string, sha string, contents []byte) error
 	var err error
 	var writeFunc func(context.Context, string, string, string, *github.RepositoryContentFileOptions) (*github.RepositoryContentResponse, *github.Response, error)
 	opts := &github.RepositoryContentFileOptions{
-		Message: github.String(fmt.Sprintf("[checkup] store %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
+		Message: new(fmt.Sprintf("[checkup] store %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
 		Content: contents,
 		Committer: &github.CommitAuthor{
 			Name:  &gh.CommitterName,
@@ -171,7 +171,7 @@ func (gh *Storage) writeFile(filename string, sha string, contents []byte) error
 		writeFunc = gh.client.Repositories.CreateFile
 		log.Printf("github: creating %s on branch '%s'", gh.fullPathName(filename), gh.Branch)
 	} else {
-		opts.SHA = github.String(sha)
+		opts.SHA = new(sha)
 		writeFunc = gh.client.Repositories.UpdateFile
 		log.Printf("github: updating %s on branch '%s'", gh.fullPathName(filename), gh.Branch)
 	}
@@ -205,8 +205,8 @@ func (gh *Storage) deleteFile(filename string, sha string) error {
 		gh.RepositoryName,
 		gh.fullPathName(filename),
 		&github.RepositoryContentFileOptions{
-			Message: github.String(fmt.Sprintf("[checkup] delete %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
-			SHA:     github.String(sha),
+			Message: new(fmt.Sprintf("[checkup] delete %s %s", gh.fullPathName(filename), gh.commitMessageSuffix())),
+			SHA:     new(sha),
 			Branch:  &gh.Branch,
 			Committer: &github.CommitAuthor{
 				Name:  &gh.CommitterName,
