@@ -5,7 +5,7 @@ import (
 )
 
 func TestChecker(t *testing.T) {
-	assert := func(ok bool, format string, args ...interface{}) {
+	assert := func(ok bool, format string, args ...any) {
 		if !ok {
 			t.Errorf(format, args...)
 		}

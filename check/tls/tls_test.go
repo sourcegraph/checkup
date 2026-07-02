@@ -130,7 +130,7 @@ func TestChecker(t *testing.T) {
 
 func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.Certificate, error) {
 	// start by generating private key
-	var privKey interface{}
+	var privKey any
 	var err error
 	switch keyType {
 	case "", "ec256":
@@ -168,7 +168,7 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 	}
 	cert.DNSNames = append(cert.DNSNames, hostname)
 
-	publicKey := func(privKey interface{}) interface{} {
+	publicKey := func(privKey any) any {
 		switch k := privKey.(type) {
 		case *rsa.PrivateKey:
 			return &k.PublicKey
