@@ -53,11 +53,11 @@ func TestNew(t *testing.T) {
 		_, err := New(c)
 		if tc.wantErr {
 			if err == nil {
-				t.Fatalf(msg)
+				t.Fatal(msg)
 			}
 		} else {
 			if err != nil {
-				t.Fatalf(msg)
+				t.Fatal(msg)
 			}
 		}
 	}

@@ -77,7 +77,8 @@ func (s Notifier) Send(result types.Result) error {
 		return fmt.Errorf("discord: error marshalling body: %w", err)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// client
 	client := &http.Client{}
