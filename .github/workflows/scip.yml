@@ -1,6 +1,8 @@
 name: SCIP
 'on':
   - push
+permissions:
+  contents: read
 jobs:
   scip-go:
     runs-on: ubuntu-latest
