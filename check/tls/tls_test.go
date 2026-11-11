@@ -11,6 +11,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
+	"strings"
 	"testing"
 	"time"
 )
@@ -128,7 +130,7 @@ func TestChecker(t *testing.T) {
 	}
 }
 
-func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.Certificate, error) {
+func makeCertWithValidity(hostname, keyType string, notBefore, notAfter time.Time) (tls.Certificate, error) {
 	// start by generating private key
 	var privKey interface{}
 	var err error
@@ -150,9 +152,6 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 		return tls.Certificate{}, fmt.Errorf("failed to generate private key: %w", err)
 	}
 
-	// create certificate structure with proper values
-	notBefore := time.Now()
-	notAfter := notBefore.Add(validity)
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
@@ -194,4 +193,143 @@ func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.C
 		PrivateKey:  privKey,
 		Leaf:        finalCert,
 	}, nil
+}
+
+func makeSelfSignedCert(hostname, keyType string, validity time.Duration) (tls.Certificate, error) {
+	notBefore := time.Now()
+	notAfter := notBefore.Add(validity)
+	return makeCertWithValidity(hostname, keyType, notBefore, notAfter)
+}
+
+func makeExpiredCert(hostname, keyType string, expiredAgo time.Duration) (tls.Certificate, error) {
+	notBefore := time.Now().Add(-2 * expiredAgo)
+	notAfter := time.Now().Add(-expiredAgo)
+	return makeCertWithValidity(hostname, keyType, notBefore, notAfter)
+}
+
+func TestCheckerExpiredCertificate(t *testing.T) {
+	expiredAgo := 24 * time.Hour
+	expiredCert, err := makeExpiredCert("localhost", "", expiredAgo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{expiredCert}}
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				break
+			}
+			_, _ = conn.Read(nil)
+			_ = conn.Close()
+		}
+	}()
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tc := Checker{
+		Name:      "TestExpiredCert",
+		URL:       net.JoinHostPort("localhost", port),
+		Attempts:  2,
+		tlsConfig: &tls.Config{RootCAs: x509.NewCertPool()},
+	}
+	tc.tlsConfig.RootCAs.AddCert(expiredCert.Leaf)
+
+	result, err := tc.Check()
+	if err != nil {
+		t.Fatalf("unexpected Check error: %v", err)
+	}
+
+	if got, want := result.Down, true; got != want {
+		t.Errorf("expected result.Down=%v, got %v", want, got)
+	}
+	if got, want := result.Healthy, false; got != want {
+		t.Errorf("expected result.Healthy=%v, got %v", want, got)
+	}
+	if len(result.Times) != tc.Attempts {
+		t.Fatalf("expected %d attempts, got %d", tc.Attempts, len(result.Times))
+	}
+	for i, attempt := range result.Times {
+		if attempt.Error == "" {
+			t.Errorf("expected attempt %d to have an error", i)
+			continue
+		}
+		if !strings.Contains(attempt.Error, "certificate expired") {
+			t.Errorf("expected attempt %d error to contain 'certificate expired', got: %s", i, attempt.Error)
+		}
+		if !strings.Contains(attempt.Error, "ago") {
+			t.Errorf("expected attempt %d error to contain 'ago', got: %s", i, attempt.Error)
+		}
+	}
+}
+
+func TestCheckerExpiredCertificateInsecureSkipVerify(t *testing.T) {
+	expiredAgo := 12 * time.Hour
+	expiredCert, err := makeExpiredCert("localhost", "", expiredAgo)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := &tls.Config{Certificates: []tls.Certificate{expiredCert}}
+	ln, err := tls.Listen("tcp", "127.0.0.1:0", config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				break
+			}
+			_, _ = conn.Read(nil)
+			_ = conn.Close()
+		}
+	}()
+
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tc := Checker{
+		Name:     "TestExpiredCertInsecure",
+		URL:      net.JoinHostPort("localhost", port),
+		Attempts: 1,
+		tlsConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	result, err := tc.Check()
+	if err != nil {
+		t.Fatalf("unexpected Check error: %v", err)
+	}
+
+	if got, want := result.Down, true; got != want {
+		t.Errorf("expected result.Down=%v, got %v", want, got)
+	}
+	if got, want := result.Healthy, false; got != want {
+		t.Errorf("expected result.Healthy=%v, got %v", want, got)
+	}
+	if len(result.Times) != 1 {
+		t.Fatalf("expected 1 attempt, got %d", len(result.Times))
+	}
+	if !strings.Contains(result.Times[0].Error, "certificate expired") {
+		t.Errorf("expected error to contain 'certificate expired', got: %s", result.Times[0].Error)
+	}
+	if !strings.Contains(result.Times[0].Error, "ago") {
+		t.Errorf("expected error to contain 'ago', got: %s", result.Times[0].Error)
+	}
 }

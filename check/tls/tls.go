@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -128,7 +129,16 @@ func (c Checker) doChecks() (types.Attempts, []*tls.Conn) {
 		checks[i].RTT = time.Since(start)
 		conns[i] = conn
 		if err != nil {
-			checks[i].Error = err.Error()
+			var certErr x509.CertificateInvalidError
+			if errors.As(err, &certErr) && certErr.Reason == x509.Expired && certErr.Cert != nil {
+				if certErr.Cert.NotAfter.Before(time.Now()) {
+					checks[i].Error = fmt.Sprintf("certificate expired %s ago: %s", time.Since(certErr.Cert.NotAfter), certErr)
+				} else {
+					checks[i].Error = fmt.Sprintf("certificate is not yet valid: %s", certErr)
+				}
+			} else {
+				checks[i].Error = err.Error()
+			}
 			continue
 		}
 	}
