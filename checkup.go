@@ -30,7 +30,7 @@ type Checkup struct {
 	// Useful if wanting to perform distributed check
 	// "at the same time" even if they might actually
 	// be a few milliseconds or seconds apart.
-	Timestamp time.Time `json:"timestamp,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
 
 	// Storage is the storage mechanism for saving the
 	// results of checks. Required if calling Store().
@@ -148,7 +148,7 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 	// handling; unfortunately this has to mimic c's definition.
 	easy := struct {
 		ConcurrentChecks int       `json:"concurrent_checks,omitempty"`
-		Timestamp        time.Time `json:"timestamp,omitempty"`
+		Timestamp        time.Time `json:"timestamp"`
 	}{
 		ConcurrentChecks: c.ConcurrentChecks,
 		Timestamp:        c.Timestamp,
@@ -175,7 +175,7 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 			if err != nil {
 				return result, err
 			}
-			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, ch.Type(), string(chb[1:])))
+			chb = fmt.Appendf(nil, `{"type":"%s",%s`, ch.Type(), string(chb[1:]))
 			checkers = append(checkers, chb)
 		}
 
@@ -192,7 +192,7 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return result, err
 		}
-		sb = []byte(fmt.Sprintf(`{"type":"%s",%s`, c.Storage.Type(), string(sb[1:])))
+		sb = fmt.Appendf(nil, `{"type":"%s",%s`, c.Storage.Type(), string(sb[1:]))
 		wrap("storage", sb)
 	}
 
@@ -205,7 +205,7 @@ func (c Checkup) MarshalJSON() ([]byte, error) {
 				return result, err
 			}
 
-			chb = []byte(fmt.Sprintf(`{"type":"%s",%s`, ch.Type(), string(chb[1:])))
+			chb = fmt.Appendf(nil, `{"type":"%s",%s`, ch.Type(), string(chb[1:]))
 			checkers = append(checkers, chb)
 		}
 

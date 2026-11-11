@@ -2,7 +2,8 @@ package s3
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
+
 	"strconv"
 	"strings"
 	"testing"
@@ -73,7 +74,7 @@ func TestS3Store(t *testing.T) {
 	}
 
 	// Make sure body bytes are correct
-	bodyBytes, err := ioutil.ReadAll(fakes3.input.Body)
+	bodyBytes, err := io.ReadAll(fakes3.input.Body)
 	if err != nil {
 		t.Fatalf("Expected no error reading body, got: %v", err)
 	}
@@ -122,11 +123,11 @@ func (s *s3Mock) ListObjects(input *s3.ListObjectsInput) (*s3.ListObjectsOutput,
 	return &s3.ListObjectsOutput{
 		Contents: []*s3.Object{
 			{
-				Key:          aws.String("foobar"),
+				Key:          new("foobar"),
 				LastModified: new(time.Time),
 			},
 		},
-		IsTruncated: aws.Bool(input.Marker == nil),
+		IsTruncated: new(input.Marker == nil),
 	}, nil
 }
 

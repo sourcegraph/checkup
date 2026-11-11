@@ -3,7 +3,8 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"net"
 	"net/http"
 	"strings"
@@ -199,7 +200,7 @@ func (c Checker) checkDown(resp *http.Response) error {
 	if c.MustContain == "" && c.MustNotContain == "" {
 		return nil
 	}
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("reading response body: %w", err)
 	}

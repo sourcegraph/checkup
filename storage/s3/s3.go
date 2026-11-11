@@ -113,7 +113,7 @@ func (s Storage) Maintain() error {
 			Bucket: &s.Bucket,
 			Delete: &s3.Delete{
 				Objects: objsToDelete,
-				Quiet:   aws.Bool(true),
+				Quiet:   new(true),
 			},
 		}
 
@@ -168,7 +168,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 
 	// Restrict the user to only reading S3 buckets
 	_, err = svcIam.AttachUserPolicy(&iam.AttachUserPolicyInput{
-		PolicyArn: aws.String("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"),
+		PolicyArn: new("arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"),
 		UserName:  aws.String(iamUser),
 	})
 	if err != nil {
@@ -205,10 +205,10 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 		CORSConfiguration: &s3.CORSConfiguration{
 			CORSRules: []*s3.CORSRule{
 				{
-					AllowedOrigins: []*string{aws.String("*")},
-					AllowedMethods: []*string{aws.String("GET"), aws.String("HEAD")},
-					ExposeHeaders:  []*string{aws.String("ETag")},
-					AllowedHeaders: []*string{aws.String("*")},
+					AllowedOrigins: []*string{new("*")},
+					AllowedMethods: []*string{new("GET"), new("HEAD")},
+					ExposeHeaders:  []*string{new("ETag")},
+					AllowedHeaders: []*string{new("*")},
 					MaxAgeSeconds:  aws.Int64(3000),
 				},
 			},
@@ -221,7 +221,7 @@ func (s Storage) Provision() (types.ProvisionInfo, error) {
 	// Set its policy to allow getting objects
 	_, err = svcS3.PutBucketPolicy(&s3.PutBucketPolicyInput{
 		Bucket: &s.Bucket,
-		Policy: aws.String(`{
+		Policy: new(`{
 			"Version": "2012-10-17",
 			"Statement": [
 				{

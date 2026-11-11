@@ -5,7 +5,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
+
 	"net"
 	"time"
 
@@ -18,11 +19,11 @@ const Type = "tls"
 // Checker implements a Checker for TLS endpoints.
 //
 // TODO: Implement more checks on the certificate and TLS configuration.
-//  - Cipher suites
-//  - Protocol versions
-//  - OCSP stapling
-//  - Multiple SNIs
-//  - Other things that you might see at SSL Labs or other TLS health checks
+//   - Cipher suites
+//   - Protocol versions
+//   - OCSP stapling
+//   - Multiple SNIs
+//   - Other things that you might see at SSL Labs or other TLS health checks
 type Checker struct {
 	// Name is the name of the endpoint.
 	Name string `json:"endpoint_name"`
@@ -92,7 +93,7 @@ func (c Checker) Check() (types.Result, error) {
 			c.tlsConfig.RootCAs = x509.NewCertPool()
 		}
 		for _, fname := range c.TrustedRoots {
-			pemData, err := ioutil.ReadFile(fname)
+			pemData, err := os.ReadFile(fname)
 			if err != nil {
 				return types.Result{}, fmt.Errorf("error loading file: %w", err)
 			}

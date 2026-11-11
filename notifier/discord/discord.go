@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"log"
 	"net/http"
 	"strings"
@@ -97,7 +98,7 @@ func (s Notifier) Send(result types.Result) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Println("discord: error reading response body", err)
 		}

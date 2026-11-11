@@ -5,7 +5,8 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -124,18 +125,18 @@ func setup(delay time.Duration, retries int, interval int, timeout int, results 
 		req, err := gzip.NewReader(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf("gzip NewReader: %v", err)))
+			w.Write(fmt.Appendf(nil, "gzip NewReader: %v", err))
 		}
-		b, _ := ioutil.ReadAll(req)
+		b, _ := io.ReadAll(req)
 		parsed, err := parsePayload(b)
 		for i, j := range parsed {
-			data := j["data"].(map[string]interface{})
-			baseData := data["baseData"].(map[string]interface{})
+			data := j["data"].(map[string]any)
+			baseData := data["baseData"].(map[string]any)
 
 			got, ok := baseData["name"].(string)
 			if !ok || got != results[i].Title {
 				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte(fmt.Sprintf("Expected test result name to be '%s', but got '%s'", results[i].Title, got)))
+				w.Write(fmt.Appendf(nil, "Expected test result name to be '%s', but got '%s'", results[i].Title, got))
 			}
 		}
 	}))
@@ -161,14 +162,14 @@ func setup(delay time.Duration, retries int, interval int, timeout int, results 
 }
 
 // Ref: https://github.com/microsoft/ApplicationInsights-Go/blob/master/appinsights/jsonserializer_test.go
-func parsePayload(payload []byte) (result []map[string]interface{}, err error) {
-	for _, item := range bytes.Split(payload, []byte("\n")) {
+func parsePayload(payload []byte) (result []map[string]any, err error) {
+	for item := range bytes.SplitSeq(payload, []byte("\n")) {
 		if len(item) == 0 {
 			continue
 		}
 
 		decoder := json.NewDecoder(bytes.NewReader(item))
-		msg := make(map[string]interface{})
+		msg := make(map[string]any)
 		if err := decoder.Decode(&msg); err == nil {
 			result = append(result, msg)
 		} else {
