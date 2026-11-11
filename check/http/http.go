@@ -62,6 +62,11 @@ type Checker struct {
 	// occurs between attempts.
 	AttemptSpacing time.Duration `json:"attempt_spacing,omitempty"`
 
+	// AllowedFailures is the number of failed attempts
+	// allowed before the endpoint is considered down.
+	// Default is 0 (any failure marks down).
+	AllowedFailures int `json:"allowed_failures,omitempty" yaml:"allowed_failures,omitempty"`
+
 	// Client is the http.Client with which to make
 	// requests. If not set, DefaultHTTPClient is
 	// used.
@@ -149,11 +154,19 @@ func (c Checker) conclude(result types.Result) types.Result {
 	result.ThresholdRTT = c.ThresholdRTT
 
 	// Check errors (down)
+	var errorCount int
 	for i := range result.Times {
 		if result.Times[i].Error != "" {
-			result.Down = true
-			return result
+			errorCount++
 		}
+	}
+	allowedFailures := c.AllowedFailures
+	if allowedFailures < 0 {
+		allowedFailures = 0
+	}
+	if errorCount > allowedFailures {
+		result.Down = true
+		return result
 	}
 
 	// Check round trip time (degraded)

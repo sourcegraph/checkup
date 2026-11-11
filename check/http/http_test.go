@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -145,5 +146,98 @@ func TestChecker(t *testing.T) {
 	}
 	if got, want := result.Down, true; got != want {
 		t.Errorf("Expected result.Down=%v, got %v", want, got)
+	}
+}
+
+func TestCheckerAllowedFailures(t *testing.T) {
+	var requestCount int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count := atomic.AddInt32(&requestCount, 1)
+		if count == 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "OK")
+	}))
+	defer srv.Close()
+
+	// 1. Default behavior (AllowedFailures: 0) marks down on single failure.
+	hcDefault := Checker{
+		Name:            "Default Failures",
+		URL:             srv.URL,
+		Attempts:        3,
+		AllowedFailures: 0,
+	}
+	atomic.StoreInt32(&requestCount, 0)
+	result, err := hcDefault.Check()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result.Down {
+		t.Errorf("expected result.Down=true with default AllowedFailures=0 and 1 failure, got %v", result.Down)
+	}
+	if result.Healthy {
+		t.Errorf("expected result.Healthy=false, got %v", result.Healthy)
+	}
+
+	// 2. AllowedFailures: 1 permits 1 failed attempt out of N attempts without marking down.
+	hcAllowed := Checker{
+		Name:            "Allowed 1 Failure",
+		URL:             srv.URL,
+		Attempts:        3,
+		AllowedFailures: 1,
+	}
+	atomic.StoreInt32(&requestCount, 0)
+	result, err = hcAllowed.Check()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Down {
+		t.Errorf("expected result.Down=false with AllowedFailures=1 and 1 failure, got %v", result.Down)
+	}
+	if !result.Healthy {
+		t.Errorf("expected result.Healthy=true with AllowedFailures=1 and 1 failure, got %v", result.Healthy)
+	}
+
+	// 3. Errors exceeding AllowedFailures properly mark down.
+	var multiFailCount int32
+	srvMultiFail := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count := atomic.AddInt32(&multiFailCount, 1)
+		if count <= 2 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "OK")
+	}))
+	defer srvMultiFail.Close()
+
+	hcExceeded := Checker{
+		Name:            "Exceeded Failures",
+		URL:             srvMultiFail.URL,
+		Attempts:        3,
+		AllowedFailures: 1,
+	}
+	result, err = hcExceeded.Check()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result.Down {
+		t.Errorf("expected result.Down=true when errors exceed AllowedFailures, got %v", result.Down)
+	}
+	if result.Healthy {
+		t.Errorf("expected result.Healthy=false when errors exceed AllowedFailures, got %v", result.Healthy)
+	}
+}
+
+func TestCheckerUnmarshalAllowedFailures(t *testing.T) {
+	raw := []byte(`{"endpoint_name":"test","endpoint_url":"http://localhost","allowed_failures":2,"attempts":5}`)
+	c, err := New(raw)
+	if err != nil {
+		t.Fatalf("unexpected unmarshal error: %v", err)
+	}
+	if c.AllowedFailures != 2 {
+		t.Errorf("expected AllowedFailures=2, got %d", c.AllowedFailures)
 	}
 }
